@@ -152,7 +152,11 @@ export default function AttendanceBoard({
                       </ul>
                       <div className="mt-3 break-all rounded-md border border-line bg-surface-soft px-3 py-2 text-[12.5px] text-ink">{checkinLink || "링크 준비 중…"}</div>
                       <button onClick={async () => { try { await navigator.clipboard.writeText(checkinLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 1800); } catch {} }} className="mt-2 rounded-full bg-primary px-4 py-1.5 text-[13px] font-semibold text-white hover:bg-primary-pressed">{linkCopied ? "✓ 링크 복사됨" : "🔗 링크 복사"}</button>
-                      <p className="mt-2 text-[12px] text-muted">※ 지금은 테스트 주소(localhost)라 같은 컴퓨터에서만 열려요. 인터넷에 배포하면 회원 폰에서도 열립니다.</p>
+                      {checkinLink.includes("localhost") ? (
+                        <p className="mt-2 text-[12px] text-muted">※ 지금은 테스트 주소(localhost)라 같은 컴퓨터에서만 열려요.</p>
+                      ) : (
+                        <p className="mt-2 text-[12px] text-muted">※ 이 QR을 모임 장소에 띄우거나 인쇄해 두면 회원이 폰으로 스캔해 출석합니다.</p>
+                      )}
                     </div>
                   </div>
                 )}
