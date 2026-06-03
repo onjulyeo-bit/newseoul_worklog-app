@@ -73,6 +73,16 @@ function CopyBox({ label, text }: { label: string; text: string }) {
 const inp = "min-h-[42px] w-full rounded-md border border-line bg-card px-3 text-[16px] text-ink outline-none placeholder:text-muted focus:border-primary-focus";
 const lab = "mb-1 block text-[13px] font-bold text-ink-soft";
 
+// 포스터 디자인 테마 — 글자는 그대로, 배경·강조색만 다양하게.
+type Theme = { key: string; label: string; bg: string; fg: string; kicker: string; muted: string; accent: string; verse: string };
+const THEMES: Theme[] = [
+  { key: "navy",   label: "남색",   bg: "bg-gradient-to-br from-navy via-deep to-deep2",                fg: "text-white", kicker: "text-primary-on-dark", muted: "text-on-dark-muted", accent: "text-primary-on-dark", verse: "border-l-2 border-primary-on-dark bg-white/10" },
+  { key: "dawn",   label: "새벽",   bg: "bg-gradient-to-br from-[#16203c] via-[#46406b] to-[#c98a5e]",  fg: "text-white", kicker: "text-[#ffd9a8]",       muted: "text-white/75",      accent: "text-[#ffd9a8]",       verse: "border-l-2 border-[#ffd9a8] bg-white/10" },
+  { key: "forest", label: "숲",     bg: "bg-gradient-to-br from-[#0f2a22] via-[#163d2f] to-[#21684a]",  fg: "text-white", kicker: "text-[#ecd29a]",       muted: "text-white/75",      accent: "text-[#ecd29a]",       verse: "border-l-2 border-[#ecd29a] bg-white/10" },
+  { key: "sunset", label: "노을",   bg: "bg-gradient-to-br from-[#2a1a3e] via-[#7b3b6e] to-[#e2895a]",  fg: "text-white", kicker: "text-[#ffe3b3]",       muted: "text-white/80",      accent: "text-[#ffe3b3]",       verse: "border-l-2 border-[#ffe3b3] bg-white/10" },
+  { key: "light",  label: "화이트", bg: "bg-gradient-to-br from-white to-[#e9eef7]",                    fg: "text-navy",  kicker: "text-primary",         muted: "text-ink-soft",      accent: "text-primary",         verse: "border-l-2 border-primary bg-primary/5" },
+];
+
 export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   const [f, setF] = useState<Form>({
     session: "", mode: "online", date: "", title: "", verse: "", speaker: "",
@@ -89,6 +99,8 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
 
   const posterRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
+  const [theme, setTheme] = useState(0);
+
   async function savePoster() {
     if (!posterRef.current) return;
     setSaving(true);
@@ -154,16 +166,29 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
         <div className="flex flex-col gap-6">
           <div className="rounded-lg border border-line bg-card p-6">
             <h2 className="mb-3 text-[21px] font-bold text-ink">포스터</h2>
-            <div ref={posterRef} className="mx-auto flex aspect-[3/4] w-full max-w-[320px] flex-col overflow-hidden rounded-[14px] bg-gradient-to-br from-navy via-deep to-deep2 p-6 text-white">
-              <div className="text-[11px] font-bold uppercase tracking-[3px] text-primary-on-dark">NEW SEOUL CBMC</div>
-              <div className="mt-1 text-[18px] font-bold">새서울 CBMC 아름다운 만남</div>
-              <div className="mt-auto">
-                <div className="text-[13px] text-on-dark-muted">{(f.session ? f.session + "회 · " : "") + (f.date ? fmtDate(f.date) : "날짜") + ` · ${modeL(f.mode)}`}</div>
-                <div className="mt-2 text-[21px] font-bold leading-snug">{f.title || "주제"}</div>
-                {f.speaker && <div className="mt-2 text-[14px] font-bold text-primary-on-dark">발제 {f.speaker}</div>}
-                {f.verse && <div className="mt-3 border-l-2 border-primary-on-dark bg-white/10 px-3 py-2 text-[13px] italic">{f.verse}</div>}
+            <div ref={posterRef} className={`relative mx-auto aspect-[3/4] w-full max-w-[320px] overflow-hidden rounded-[14px] ${THEMES[theme].bg} ${THEMES[theme].fg}`}>
+              <div className="relative z-10 flex h-full flex-col p-6">
+                <div className={`text-[11px] font-bold uppercase tracking-[3px] ${THEMES[theme].kicker}`}>NEW SEOUL CBMC</div>
+                <div className="mt-1 text-[18px] font-bold">새서울 CBMC 아름다운 만남</div>
+                <div className="mt-auto">
+                  <div className={`text-[13px] ${THEMES[theme].muted}`}>{(f.session ? f.session + "회 · " : "") + (f.date ? fmtDate(f.date) : "날짜") + ` · ${modeL(f.mode)}`}</div>
+                  <div className="mt-2 text-[21px] font-bold leading-snug">{f.title || "주제"}</div>
+                  {f.speaker && <div className={`mt-2 text-[14px] font-bold ${THEMES[theme].accent}`}>발제 {f.speaker}</div>}
+                  {f.verse && <div className={`mt-3 px-3 py-2 text-[13px] italic ${THEMES[theme].verse}`}>{f.verse}</div>}
+                </div>
               </div>
             </div>
+
+            {/* 디자인 선택 */}
+            <div className="mt-3">
+              <div className="mb-1.5 text-[13px] font-bold text-ink-soft">🎨 디자인 선택</div>
+              <div className="flex flex-wrap gap-2">
+                {THEMES.map((t, i) => (
+                  <button key={t.key} onClick={() => setTheme(i)} className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${theme === i ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary hover:text-primary"}`}>{t.label}</button>
+                ))}
+              </div>
+            </div>
+
             <button onClick={savePoster} disabled={saving} className="mt-3 rounded-full bg-primary px-4 py-2 text-[15px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{saving ? "만드는 중…" : "🖼 이미지로 저장 (PNG)"}</button>
           </div>
 
