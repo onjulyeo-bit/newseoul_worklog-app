@@ -87,13 +87,23 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
     setF((s) => ({ ...s, session: m.session_no != null ? String(m.session_no) : "", mode: (m.mode === "online" ? "online" : "offline"), date: m.date, title: m.title ?? s.title, speaker: m.speaker ?? s.speaker }));
   };
 
-  // 포스터 편집기에 넘길 초기 글자(양식에서 자동)
+  // 포스터 편집기에 넘길 초기 글자(양식에서 자동) — 업로드한 포스터 구조 기준
+  const fmtPosterDate = (d: string) => {
+    if (!d) return "";
+    const t = new Date(d + "T00:00");
+    const yy = String(t.getFullYear()).slice(2);
+    const mm = String(t.getMonth() + 1).padStart(2, "0");
+    const dd = String(t.getDate()).padStart(2, "0");
+    return `${yy}.${mm}.${dd} (${DAYS[t.getDay()]})`;
+  };
   const seed: Seed = {
-    org: "새서울 CBMC 아름다운 만남",
-    meta: [f.session ? `${f.session}회` : "", f.date ? fmtDate(f.date) : "", modeL(f.mode)].filter(Boolean).join(" · "),
+    headline: `${f.session ? f.session + "회 " : ""}새서울 CBMC 아름다운 만남`,
+    category: "새서울 포럼",
     title: f.title || "주제",
-    speaker: f.speaker ? `발제 ${f.speaker}` : "",
     verse: f.verse || "",
+    speaker: f.speaker ? `발제 : ${f.speaker}` : "",
+    dateLine: f.date ? `${fmtPosterDate(f.date)} 오전 7시` : "",
+    modeLabel: modeL(f.mode),
   };
 
   return (
