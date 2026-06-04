@@ -104,13 +104,6 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
   const [scrim, setScrim] = useState(true);
   const [bgTab, setBgTab] = useState<"lib" | "stock" | "ai" | "theme">("lib");
   const [bgColor, setBgColor] = useState(""); // 직접 고른 단색 (있으면 테마 그라데이션 대신 사용)
-  const [hasEyeDropper, setHasEyeDropper] = useState(false);
-  useEffect(() => { setHasEyeDropper(typeof window !== "undefined" && "EyeDropper" in window); }, []);
-  async function pickEyedropper() {
-    const ED = (window as unknown as { EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> } }).EyeDropper;
-    if (!ED) return;
-    try { const r = await new ED().open(); setBgColor(r.sRGBHex); setBgImage(""); } catch {}
-  }
 
   const posterRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
@@ -471,7 +464,6 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
                     🎨 색선택
                     <input type="color" value={bgColor || "#1a2238"} onChange={(e) => { setBgColor(e.target.value); setBgImage(""); }} className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0" />
                   </label>
-                  {hasEyeDropper && <button onClick={pickEyedropper} className="rounded-md border border-line px-2 py-1 text-[11px] font-semibold text-ink-soft hover:border-primary hover:text-primary">🎯 스포이드</button>}
                   {SOLIDS.map((c) => (
                     <button key={c} onClick={() => { setBgColor(c); setBgImage(""); }} className={`h-7 w-7 rounded-full border ${bgColor.toLowerCase() === c.toLowerCase() ? "border-primary ring-2 ring-primary" : "border-line"}`} style={{ background: c }} />
                   ))}
