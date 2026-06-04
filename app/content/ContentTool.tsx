@@ -101,6 +101,23 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   const [saving, setSaving] = useState(false);
   const [theme, setTheme] = useState(0);
 
+  // AI 배경 이미지 (Cloudflare 무료)
+  const [bgPrompt, setBgPrompt] = useState("");
+  const [bgImage, setBgImage] = useState("");
+  const [genning, setGenning] = useState(false);
+  const [genErr, setGenErr] = useState("");
+  async function genBg() {
+    const p = bgPrompt.trim() || (f.title ? `${f.title} 분위기` : "잔잔한 새벽 하늘과 따뜻한 햇살");
+    setGenning(true); setGenErr("");
+    try {
+      const res = await fetch("/api/poster-bg", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: p }) });
+      const data = await res.json();
+      if (!res.ok || !data.image) setGenErr(data.error || "생성에 실패했어요. 잠시 후 다시 시도해 주세요.");
+      else setBgImage(data.image);
+    } catch { setGenErr("네트워크 오류가 났어요. 다시 시도해 주세요."); }
+    finally { setGenning(false); }
+  }
+
   async function savePoster() {
     if (!posterRef.current) return;
     setSaving(true);
@@ -109,6 +126,15 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
       const a = document.createElement("a"); a.href = url; a.download = `포스터_${f.session || f.date || "새서울CBMC"}회.png`; a.click();
     } catch { alert("이미지 저장 실패"); } finally { setSaving(false); }
   }
+
+  // 포스터 색: AI 배경이 있으면 흰 글자+어둠막, 없으면 선택한 테마 색
+  const tm = THEMES[theme];
+  const onImg = !!bgImage;
+  const cFg = onImg ? "text-white" : tm.fg;
+  const cKicker = onImg ? "text-white/90" : tm.kicker;
+  const cMuted = onImg ? "text-white/80" : tm.muted;
+  const cAccent = onImg ? "text-white" : tm.accent;
+  const cVerse = onImg ? "border-l-2 border-white/70 bg-black/30" : tm.verse;
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -166,27 +192,46 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
         <div className="flex flex-col gap-6">
           <div className="rounded-lg border border-line bg-card p-6">
             <h2 className="mb-3 text-[21px] font-bold text-ink">포스터</h2>
-            <div ref={posterRef} className={`relative mx-auto aspect-[3/4] w-full max-w-[320px] overflow-hidden rounded-[14px] ${THEMES[theme].bg} ${THEMES[theme].fg}`}>
-              <div className="relative z-10 flex h-full flex-col p-6">
-                <div className={`text-[11px] font-bold uppercase tracking-[3px] ${THEMES[theme].kicker}`}>NEW SEOUL CBMC</div>
+            <div ref={posterRef} className={`relative mx-auto aspect-[3/4] w-full max-w-[320px] overflow-hidden rounded-[14px] ${tm.bg} ${cFg}`}>
+              {onImg && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={bgImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-black/25" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/45 to-transparent" />
+                </>
+              )}
+              <div className={`relative z-10 flex h-full flex-col p-6 ${onImg ? "[text-shadow:0_1px_8px_rgba(0,0,0,.5)]" : ""}`}>
+                <div className={`text-[11px] font-bold uppercase tracking-[3px] ${cKicker}`}>NEW SEOUL CBMC</div>
                 <div className="mt-1 text-[18px] font-bold">새서울 CBMC 아름다운 만남</div>
                 <div className="mt-auto">
-                  <div className={`text-[13px] ${THEMES[theme].muted}`}>{(f.session ? f.session + "회 · " : "") + (f.date ? fmtDate(f.date) : "날짜") + ` · ${modeL(f.mode)}`}</div>
+                  <div className={`text-[13px] ${cMuted}`}>{(f.session ? f.session + "회 · " : "") + (f.date ? fmtDate(f.date) : "날짜") + ` · ${modeL(f.mode)}`}</div>
                   <div className="mt-2 text-[21px] font-bold leading-snug">{f.title || "주제"}</div>
-                  {f.speaker && <div className={`mt-2 text-[14px] font-bold ${THEMES[theme].accent}`}>발제 {f.speaker}</div>}
-                  {f.verse && <div className={`mt-3 px-3 py-2 text-[13px] italic ${THEMES[theme].verse}`}>{f.verse}</div>}
+                  {f.speaker && <div className={`mt-2 text-[14px] font-bold ${cAccent}`}>발제 {f.speaker}</div>}
+                  {f.verse && <div className={`mt-3 px-3 py-2 text-[13px] italic ${cVerse}`}>{f.verse}</div>}
                 </div>
               </div>
             </div>
 
-            {/* 디자인 선택 */}
+            {/* 디자인 테마 선택 */}
             <div className="mt-3">
-              <div className="mb-1.5 text-[13px] font-bold text-ink-soft">🎨 디자인 선택</div>
+              <div className="mb-1.5 text-[13px] font-bold text-ink-soft">🎨 디자인 선택 {onImg && <span className="font-normal text-muted">(AI 배경 켜짐 — 배경 지우면 테마 적용)</span>}</div>
               <div className="flex flex-wrap gap-2">
                 {THEMES.map((t, i) => (
                   <button key={t.key} onClick={() => setTheme(i)} className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${theme === i ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary hover:text-primary"}`}>{t.label}</button>
                 ))}
               </div>
+            </div>
+
+            {/* AI 배경 (Cloudflare 무료) */}
+            <div className="mt-3 rounded-lg border border-line bg-surface-soft p-3">
+              <label className={lab}>✨ AI 배경 (비우면 주제로 자동)</label>
+              <textarea value={bgPrompt} onChange={(e) => setBgPrompt(e.target.value)} placeholder="예: 잔잔한 새벽 하늘, 따뜻한 햇살, 추상 그라데이션" className={`${inp} min-h-[44px] py-2`} />
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button onClick={genBg} disabled={genning} className="rounded-full bg-primary px-4 py-2 text-[14px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{genning ? "그리는 중… (10초쯤)" : "✨ AI 배경 생성"}</button>
+                {bgImage && <button onClick={() => setBgImage("")} className="rounded-full border border-line px-4 py-2 text-[14px] font-semibold text-ink-soft hover:border-primary hover:text-primary">배경 지우기</button>}
+              </div>
+              {genErr && <p className="mt-2 text-[13px] text-unpaid">{genErr}</p>}
             </div>
 
             <button onClick={savePoster} disabled={saving} className="mt-3 rounded-full bg-primary px-4 py-2 text-[15px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{saving ? "만드는 중…" : "🖼 이미지로 저장 (PNG)"}</button>
