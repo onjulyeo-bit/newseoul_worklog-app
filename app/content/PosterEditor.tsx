@@ -4,6 +4,7 @@
 // 레이아웃(틀) 선택 + CBMC 로고(항상 포함) + 배경(테마/AI). 글자는 항상 정확히 렌더(한글 안 깨짐).
 import { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
+import { createClient } from "@/lib/supabase/client";
 
 export type Seed = {
   headline: string; category: string; title: string;
@@ -194,6 +195,42 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
     } catch { setStockErr("네트워크 오류"); } finally { setStockBusy(false); }
   }
 
+  // 배경 보관함 (저장 → 불러쓰기)
+  const [supabase] = useState(() => createClient());
+  const [lib, setLib] = useState<{ id: string; image: string }[]>([]);
+  const [libOpen, setLibOpen] = useState(false);
+  const [libBusy, setLibBusy] = useState(false);
+  async function loadLib() {
+    setLibBusy(true);
+    const { data } = await supabase.from("poster_backgrounds").select("id, image").eq("chapter_id", "새서울").order("created_at", { ascending: false }).limit(60);
+    setLib(data ?? []); setLibBusy(false);
+  }
+  async function openLib() {
+    const willOpen = !libOpen;
+    setLibOpen(willOpen);
+    if (willOpen && lib.length === 0) await loadLib();
+  }
+  async function saveToLib() {
+    if (!bgImage) return;
+    setLibBusy(true);
+    await supabase.from("poster_backgrounds").insert({ image: bgImage });
+    setLibOpen(true);
+    await loadLib();
+  }
+  async function uploadBg(file: File) {
+    setLibBusy(true);
+    try {
+      const dataUrl: string = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file); });
+      setBgImage(dataUrl);
+      await supabase.from("poster_backgrounds").insert({ image: dataUrl });
+      await loadLib();
+    } finally { setLibBusy(false); }
+  }
+  async function delLib(id: string) {
+    await supabase.from("poster_backgrounds").delete().eq("id", id);
+    setLib((l) => l.filter((x) => x.id !== id));
+  }
+
   const [saving, setSaving] = useState(false);
   async function savePoster() {
     if (!posterRef.current) return;
@@ -275,6 +312,33 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
                 <button key={t.key} onClick={() => setTheme(i)} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${theme === i && !bgImage ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{t.label}</button>
               ))}
             </div>
+
+            {/* 배경 보관함 */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button onClick={openLib} className="rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary hover:text-primary">🗂 보관함 {libOpen ? "닫기" : "열기"}</button>
+              <label className="cursor-pointer rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary hover:text-primary">
+                📤 업로드
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBg(f); e.currentTarget.value = ""; }} />
+              </label>
+              {bgImage && <button onClick={saveToLib} disabled={libBusy} className="rounded-full bg-success px-3 py-1 text-[12px] font-semibold text-white hover:opacity-90 disabled:opacity-50">💾 현재 배경 저장</button>}
+            </div>
+            {libOpen && (
+              <div className="mt-2 rounded-lg border border-line bg-surface-soft p-2">
+                {libBusy && <p className="py-2 text-center text-[12px] text-ink-soft">불러오는 중…</p>}
+                {!libBusy && lib.length === 0 && <p className="py-3 text-center text-[12px] text-ink-soft">아직 저장된 배경이 없어요.<br />마음에 드는 배경에서 <b>💾 현재 배경 저장</b> 하거나 <b>📤 업로드</b> 하세요.</p>}
+                {lib.length > 0 && (
+                  <div className="grid max-h-[220px] grid-cols-4 gap-1.5 overflow-y-auto">
+                    {lib.map((b) => (
+                      <div key={b.id} className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={b.image} alt="" onClick={() => setBgImage(b.image)} className="aspect-[3/4] w-full cursor-pointer rounded object-cover transition hover:opacity-80 hover:ring-2 hover:ring-primary" />
+                        <button onClick={() => delLib(b.id)} className="absolute right-0.5 top-0.5 rounded-full bg-black/55 px-1.5 text-[11px] leading-tight text-white hover:bg-unpaid">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input value={bgPrompt} onChange={(e) => setBgPrompt(e.target.value)} placeholder="✨ 장면·키워드 (비우면 제목·말씀에 맞게 자동)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
               <button onClick={genBg} disabled={genning} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{genning ? "그리는 중…" : "AI 배경"}</button>
