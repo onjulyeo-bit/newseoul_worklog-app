@@ -1,5 +1,6 @@
 // 회계 모듈 — 카테고리(개요) 화면. 상세문서(회계모듈_상세문서.md) 기반으로 단계별 구축.
 // 단식부기 · 앱은 분류·집계·보고서까지만 · 계좌번호 등 민감정보 저장 금지.
+import Link from "next/link";
 
 const FLOW = [
   "카카오뱅크에서 월 거래내역 엑셀 다운로드",
@@ -10,7 +11,7 @@ const FLOW = [
 ];
 
 const FEATURES = [
-  { icon: "📥", title: "거래 업로드·자동분류", desc: "카뱅 엑셀 업로드 → 키워드로 자동 분류(메인회계 A · 식대정산 B). 모호한 건만 사람이 확정." },
+  { icon: "📥", title: "거래 업로드·자동분류", desc: "카뱅 엑셀 업로드 → 키워드로 자동 분류(메인회계 A · 식대정산 B). 모호한 건만 사람이 확정.", href: "/finance/import" },
   { icon: "📊", title: "월간 보고서", desc: "수입·지출 요약 + 식대 정산표(인원수만) + 잔액 대조. PDF·링크로 감사 공유." },
   { icon: "👥", title: "연회비 납부 현황", desc: "입금액·비고란으로 정회원/부부/준회원 자동 판정 → 회원별 납부 현황 자동 채움." },
   { icon: "🍽", title: "식대 정산표", desc: "회차별 입금·결재·차액. 월 누계 차액 한 줄만 메인회계에 반영. 출석 모듈과 연동." },
@@ -40,16 +41,23 @@ export default function FinancePage() {
       <section className="mt-4">
         <h2 className="mb-2 text-[16px] font-bold text-ink">들어갈 기능 (단계별 제작)</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-lg border border-line bg-card p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-[20px]">{f.icon}</span>
-                <span className="text-[15px] font-bold text-ink">{f.title}</span>
-                <span className="ml-auto rounded-full bg-surface-soft px-2 py-0.5 text-[11px] font-semibold text-ink-soft">준비 중</span>
-              </div>
-              <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">{f.desc}</p>
-            </div>
-          ))}
+          {FEATURES.map((f) => {
+            const inner = (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-[20px]">{f.icon}</span>
+                  <span className="text-[15px] font-bold text-ink">{f.title}</span>
+                  <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${f.href ? "bg-primary text-white" : "bg-surface-soft text-ink-soft"}`}>{f.href ? "열기 →" : "준비 중"}</span>
+                </div>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">{f.desc}</p>
+              </>
+            );
+            return f.href ? (
+              <Link key={f.title} href={f.href} className="rounded-lg border border-line bg-card p-4 transition hover:border-primary hover:shadow-sm">{inner}</Link>
+            ) : (
+              <div key={f.title} className="rounded-lg border border-line bg-card p-4">{inner}</div>
+            );
+          })}
         </div>
       </section>
 
