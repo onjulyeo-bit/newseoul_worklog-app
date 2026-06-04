@@ -24,6 +24,11 @@ export default function FinancePage() {
       <h1 className="text-[22px] font-bold text-ink">회계</h1>
       <p className="mt-1 text-[15px] text-ink-soft">회비·입출금을 자동 분류하고, 감사 보고서까지 자동으로. <b className="text-ink">매월 말 5분</b>이면 끝나요.</p>
 
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Link href="/finance/import" className="rounded-full bg-primary px-4 py-2 text-[14px] font-semibold text-white hover:bg-primary-pressed">📥 거래 업로드</Link>
+        <Link href="/finance/transactions" className="rounded-full border border-line px-4 py-2 text-[14px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📒 거래 내역·수정</Link>
+      </div>
+
       {/* 매월 흐름 */}
       <section className="mt-4 rounded-lg border border-line bg-card p-5">
         <h2 className="text-[16px] font-bold text-ink">📆 매월 운영 흐름</h2>
