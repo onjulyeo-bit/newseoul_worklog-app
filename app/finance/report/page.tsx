@@ -73,6 +73,10 @@ export default function ReportPage() {
 
   const balance = tx.length ? tx[tx.length - 1].balance : null;
 
+  const fmtD = (d: string) => d.slice(0, 10).replace(/-/g, ".");
+  const periodLabel = ptype === "all" ? "전체 기간" : ptype === "month" ? `${period.slice(0, 4)}년 ${+period.slice(5, 7)}월` : ptype === "year" ? `${period}년` : `${period.slice(0, 4)}년 ${period.slice(6)}분기`;
+  const range = tx.length ? `${fmtD(tx[0].txn_date)} ~ ${fmtD(tx[tx.length - 1].txn_date)}` : "—";
+
   const sec = "rounded-lg border border-line bg-card p-5";
   const th = "px-3 py-2 text-left text-[12px] font-bold text-ink-soft";
 
@@ -84,6 +88,9 @@ export default function ReportPage() {
         <button onClick={() => window.print()} className="ml-auto rounded-full border border-line px-4 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">🖨 인쇄 · PDF 저장</button>
       </div>
       <h1 className="mt-1 text-[22px] font-bold text-ink">회계 보고서</h1>
+      {!loading && rows.length > 0 && (
+        <p className="mt-0.5 text-[14px] text-ink-soft">정산 기간: <b className="text-ink">{periodLabel}</b> <span className="text-muted">({range})</span></p>
+      )}
 
       {/* 기간 선택 */}
       <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card px-3 py-2">
