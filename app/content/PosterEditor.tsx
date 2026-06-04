@@ -100,6 +100,7 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
   const [theme, setTheme] = useState(0);
   const [bgImage, setBgImage] = useState("");
   const [scrim, setScrim] = useState(true);
+  const [bgTab, setBgTab] = useState<"lib" | "stock" | "ai" | "theme">("lib");
 
   const posterRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
@@ -155,7 +156,7 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
   const [genErr, setGenErr] = useState("");
   const [aiProvider, setAiProvider] = useState<"cloudflare" | "recraft">("cloudflare");
   const [rcStyle, setRcStyle] = useState("realistic_image");
-  const [rcSize, setRcSize] = useState("1024x1365");
+  const rcSize = "1024x1365";
   const [tone, setTone] = useState("");
   const [count, setCount] = useState(2);
   const [candidates, setCandidates] = useState<string[]>([]);
@@ -198,7 +199,6 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
   // 배경 보관함 — Supabase Storage('backgrounds' 버킷). 대시보드에서 여러 장 미리 올려둘 수 있음.
   const [supabase] = useState(() => createClient());
   const [lib, setLib] = useState<{ name: string; url: string }[]>([]);
-  const [libOpen, setLibOpen] = useState(false);
   const [libBusy, setLibBusy] = useState(false);
   async function loadLib() {
     setLibBusy(true);
@@ -208,11 +208,8 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
       .map((f) => ({ name: f.name, url: supabase.storage.from("backgrounds").getPublicUrl(f.name).data.publicUrl }));
     setLib(items); setLibBusy(false);
   }
-  async function openLib() {
-    const willOpen = !libOpen;
-    setLibOpen(willOpen);
-    if (willOpen) await loadLib();
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadLib(); }, []);
   // 공개 URL → dataURL(내보내기 안전)로 적용
   async function applyLib(url: string) {
     setLibBusy(true);
@@ -230,7 +227,7 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
       if (error) { alert("업로드 실패: " + error.message); return; }
       const url = supabase.storage.from("backgrounds").getPublicUrl(name).data.publicUrl;
       await applyLib(url);
-      setLibOpen(true); await loadLib();
+      await loadLib();
     } finally { setLibBusy(false); }
   }
   async function saveToLib() {
@@ -241,7 +238,7 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
       const name = `${crypto.randomUUID()}.jpg`;
       const { error } = await supabase.storage.from("backgrounds").upload(name, blob, { contentType: blob.type || "image/jpeg" });
       if (error) { alert("저장 실패: " + error.message); return; }
-      setLibOpen(true); await loadLib();
+      await loadLib();
     } finally { setLibBusy(false); }
   }
   async function delLib(name: string) {
@@ -322,30 +319,35 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
 
         {/* 편집 패널 */}
         <div className="flex flex-col gap-4">
-          {/* 배경 */}
+          {/* 배경 — 방법을 탭으로 (한 번에 하나만 보임) */}
           <div className="rounded-lg border border-line bg-surface-soft p-3">
-            <div className="mb-1.5 text-[12px] font-bold text-ink-soft">🎨 배경 디자인</div>
-            <div className="flex flex-wrap gap-1.5">
-              {THEMES.map((t, i) => (
-                <button key={t.key} onClick={() => setTheme(i)} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${theme === i && !bgImage ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{t.label}</button>
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[12px] font-bold text-ink-soft">🖼 배경</span>
+              {(([["lib", "🗂 보관함"], ["stock", "📷 사진 찾기"], ["ai", "✨ AI 만들기"], ["theme", "🎨 단색"]]) as const).map(([v, l]) => (
+                <button key={v} onClick={() => { setBgTab(v); if (v === "lib") loadLib(); }} className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${bgTab === v ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{l}</button>
               ))}
+              {bgImage && (
+                <span className="ml-auto flex gap-1.5">
+                  <button onClick={saveToLib} disabled={libBusy} className="rounded-full bg-success px-2.5 py-1 text-[11px] font-semibold text-white hover:opacity-90 disabled:opacity-50">💾 저장</button>
+                  <button onClick={() => setBgImage("")} className="rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-ink-soft hover:border-primary">지우기</button>
+                </span>
+              )}
             </div>
 
-            {/* 배경 보관함 */}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button onClick={openLib} className="rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary hover:text-primary">🗂 보관함 {libOpen ? "닫기" : "열기"}</button>
-              <label className="cursor-pointer rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary hover:text-primary">
-                📤 업로드
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBg(f); e.currentTarget.value = ""; }} />
-              </label>
-              {bgImage && <button onClick={saveToLib} disabled={libBusy} className="rounded-full bg-success px-3 py-1 text-[12px] font-semibold text-white hover:opacity-90 disabled:opacity-50">💾 현재 배경 저장</button>}
-            </div>
-            {libOpen && (
-              <div className="mt-2 rounded-lg border border-line bg-surface-soft p-2">
+            {/* 🗂 보관함 */}
+            {bgTab === "lib" && (
+              <div>
+                <div className="mb-2 flex flex-wrap gap-2">
+                  <label className="cursor-pointer rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary hover:text-primary">
+                    📤 내 이미지 업로드
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBg(f); e.currentTarget.value = ""; }} />
+                  </label>
+                  <button onClick={loadLib} className="rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary">↻ 새로고침</button>
+                </div>
                 {libBusy && <p className="py-2 text-center text-[12px] text-ink-soft">불러오는 중…</p>}
-                {!libBusy && lib.length === 0 && <p className="py-3 text-center text-[12px] text-ink-soft">아직 저장된 배경이 없어요.<br />마음에 드는 배경에서 <b>💾 현재 배경 저장</b> 하거나 <b>📤 업로드</b> 하세요.</p>}
+                {!libBusy && lib.length === 0 && <p className="py-4 text-center text-[12px] text-ink-soft">저장된 배경이 없어요.<br /><b>📤 업로드</b> 하거나, ‘사진 찾기·AI 만들기’로 만든 뒤 <b>💾 저장</b>하세요.</p>}
                 {lib.length > 0 && (
-                  <div className="grid max-h-[220px] grid-cols-4 gap-1.5 overflow-y-auto">
+                  <div className="grid max-h-[240px] grid-cols-4 gap-1.5 overflow-y-auto">
                     {lib.map((b) => (
                       <div key={b.name} className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -357,90 +359,99 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
                 )}
               </div>
             )}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <input value={bgPrompt} onChange={(e) => setBgPrompt(e.target.value)} placeholder="✨ 장면·키워드 (비우면 제목·말씀에 맞게 자동)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
-              <button onClick={genBg} disabled={genning} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{genning ? "그리는 중…" : "AI 배경"}</button>
-              {bgImage && <button onClick={() => setBgImage("")} className="rounded-full border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-soft hover:border-primary">배경 지우기</button>}
-            </div>
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {["자연", "들판", "하늘", "바다", "산", "도시", "새벽", "노을", "빛", "길", "꽃", "숲", "강", "구름"].map((w) => (
-                <button key={w} onClick={() => setBgPrompt((p) => (p.trim() ? p.trim() + " " + w : w))} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-ink-soft hover:border-primary hover:text-primary">{w}</button>
-              ))}
-              {bgPrompt && <button onClick={() => setBgPrompt("")} className="rounded-full px-2 py-0.5 text-[11px] text-muted hover:text-unpaid">✕ 지우기</button>}
-            </div>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-bold text-ink-soft">엔진</span>
-              {([["cloudflare", "무료(Flux)"], ["recraft", "Recraft(유료)"]] as const).map(([v, l]) => (
-                <button key={v} onClick={() => setAiProvider(v)} className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${aiProvider === v ? "bg-primary text-white" : "border border-line text-ink-soft"}`}>{l}</button>
-              ))}
-              {aiProvider === "recraft" && (
-                <>
-                  <select value={rcStyle} onChange={(e) => setRcStyle(e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
-                    <option value="realistic_image">실사</option>
-                    <option value="digital_illustration">일러스트</option>
-                    <option value="vector_illustration">벡터/플랫</option>
-                  </select>
-                  <select value={rcSize} onChange={(e) => setRcSize(e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
-                    <option value="1024x1365">세로(3:4)</option>
-                    <option value="1024x1024">정사각</option>
-                    <option value="1365x1024">가로</option>
-                  </select>
-                </>
-              )}
-              <span className="ml-1 text-[11px] font-bold text-ink-soft">톤</span>
-              <select value={tone} onChange={(e) => setTone(e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
-                <option value="">자동</option>
-                <option value="warm">따뜻한</option>
-                <option value="calm">차분한</option>
-                <option value="bright">밝은</option>
-                <option value="majestic">장엄한</option>
-                <option value="minimal">미니멀</option>
-                <option value="vintage">빈티지</option>
-              </select>
-              <select value={count} onChange={(e) => setCount(+e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
-                <option value={1}>1장</option>
-                <option value={2}>2장 중 선택</option>
-              </select>
-            </div>
 
-            {/* 생성된 후보 (2장 중 선택) */}
-            {candidates.length > 0 && (
-              <div className="mt-2 rounded-lg border border-primary/40 bg-primary/5 p-2">
-                <div className="mb-1.5 text-[12px] font-bold text-primary">마음에 드는 배경을 클릭하세요</div>
-                <div className="grid grid-cols-2 gap-2">
-                  {candidates.map((im, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img key={i} src={im} alt="" onClick={() => { setBgImage(im); setCandidates([]); }} className="aspect-[3/4] w-full cursor-pointer rounded-md object-cover transition hover:opacity-80 hover:ring-2 hover:ring-primary" />
+            {/* 📷 사진 찾기 (Pixabay) */}
+            {bgTab === "stock" && (
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input value={stockQ} onChange={(e) => setStockQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchStock()} placeholder="검색 (예: 새벽, 들판, 기도)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
+                  <button onClick={searchStock} disabled={stockBusy} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{stockBusy ? "…" : "검색"}</button>
+                </div>
+                <div className="mt-1.5 flex gap-1">
+                  {(([["all", "전체"], ["photo", "사진"], ["illustration", "일러스트"]]) as const).map(([v, l]) => (
+                    <button key={v} onClick={() => setStockType(v)} className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${stockType === v ? "bg-primary text-white" : "border border-line text-ink-soft"}`}>{l}</button>
                   ))}
                 </div>
+                {stockErr && <p className="mt-1 text-[12px] text-unpaid">{stockErr}</p>}
+                {stock.length > 0 && (
+                  <div className="mt-2 grid max-h-[220px] grid-cols-4 gap-1.5 overflow-y-auto">
+                    {stock.map((im, i) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={i} src={im.thumb} alt="" onClick={() => pickStock(im.full)} className="aspect-square w-full cursor-pointer rounded object-cover transition hover:opacity-75 hover:ring-2 hover:ring-primary" />
+                    ))}
+                  </div>
+                )}
+                <p className="mt-1 text-[11px] text-muted">출처: Pixabay (무료·상업적 사용 가능) · 적용 후 위 💾 저장하면 보관함에</p>
               </div>
             )}
-            <p className="mt-1 text-[11px] text-muted">AI 배경엔 글자가 들어가지 않게 만듭니다. 제목·말씀은 ‘장면’으로 바꿔 그려요.</p>
-            {bgImage && <label className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-soft"><input type="checkbox" checked={scrim} onChange={(e) => setScrim(e.target.checked)} className="accent-primary" /> 글자 잘 보이게 어둠막</label>}
-            {genErr && <p className="mt-1 text-[12px] text-unpaid">{genErr}</p>}
 
-            {/* 무료 사진·일러스트 (Pixabay) */}
-            <div className="mt-3 border-t border-line pt-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <input value={stockQ} onChange={(e) => setStockQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchStock()} placeholder="📷 사진·일러스트 검색 (예: 새벽, 들판, 기도)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
-                <button onClick={searchStock} disabled={stockBusy} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{stockBusy ? "…" : "검색"}</button>
+            {/* ✨ AI 만들기 */}
+            {bgTab === "ai" && (
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input value={bgPrompt} onChange={(e) => setBgPrompt(e.target.value)} placeholder="장면·키워드 (비우면 제목·말씀에 맞게 자동)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
+                  <button onClick={genBg} disabled={genning} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{genning ? "그리는 중…" : "만들기"}</button>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {["자연", "들판", "하늘", "바다", "산", "도시", "새벽", "노을", "빛", "길", "꽃", "숲", "강", "구름"].map((w) => (
+                    <button key={w} onClick={() => setBgPrompt((p) => (p.trim() ? p.trim() + " " + w : w))} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-ink-soft hover:border-primary hover:text-primary">{w}</button>
+                  ))}
+                  {bgPrompt && <button onClick={() => setBgPrompt("")} className="rounded-full px-2 py-0.5 text-[11px] text-muted hover:text-unpaid">✕</button>}
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-ink-soft">엔진</span>
+                  {([["cloudflare", "무료"], ["recraft", "Recraft(유료)"]] as const).map(([v, l]) => (
+                    <button key={v} onClick={() => setAiProvider(v)} className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${aiProvider === v ? "bg-primary text-white" : "border border-line text-ink-soft"}`}>{l}</button>
+                  ))}
+                  {aiProvider === "recraft" && (
+                    <select value={rcStyle} onChange={(e) => setRcStyle(e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
+                      <option value="realistic_image">실사</option>
+                      <option value="digital_illustration">일러스트</option>
+                      <option value="vector_illustration">벡터/플랫</option>
+                    </select>
+                  )}
+                  <span className="ml-1 text-[11px] font-bold text-ink-soft">톤</span>
+                  <select value={tone} onChange={(e) => setTone(e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
+                    <option value="">자동</option>
+                    <option value="warm">따뜻한</option>
+                    <option value="calm">차분한</option>
+                    <option value="bright">밝은</option>
+                    <option value="majestic">장엄한</option>
+                    <option value="minimal">미니멀</option>
+                    <option value="vintage">빈티지</option>
+                  </select>
+                  <select value={count} onChange={(e) => setCount(+e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
+                    <option value={1}>1장</option>
+                    <option value={2}>2장</option>
+                  </select>
+                </div>
+                {candidates.length > 0 && (
+                  <div className="mt-2 rounded-lg border border-primary/40 bg-primary/5 p-2">
+                    <div className="mb-1.5 text-[12px] font-bold text-primary">마음에 드는 배경을 클릭하세요</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {candidates.map((im, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={i} src={im} alt="" onClick={() => { setBgImage(im); setCandidates([]); }} className="aspect-[3/4] w-full cursor-pointer rounded-md object-cover transition hover:opacity-80 hover:ring-2 hover:ring-primary" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {genErr && <p className="mt-1 text-[12px] text-unpaid">{genErr}</p>}
+                <p className="mt-1 text-[11px] text-muted">글자 없는 배경만 생성 · 적용 후 위 💾 저장(보관함) · 무료=Flux, 유료=Recraft</p>
               </div>
-              <div className="mt-1.5 flex gap-1">
-                {(([["all", "전체"], ["photo", "사진"], ["illustration", "일러스트"]]) as const).map(([v, l]) => (
-                  <button key={v} onClick={() => setStockType(v)} className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${stockType === v ? "bg-primary text-white" : "border border-line text-ink-soft"}`}>{l}</button>
+            )}
+
+            {/* 🎨 단색 테마 */}
+            {bgTab === "theme" && (
+              <div className="flex flex-wrap gap-1.5">
+                {THEMES.map((t, i) => (
+                  <button key={t.key} onClick={() => { setTheme(i); setBgImage(""); }} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${theme === i && !bgImage ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{t.label}</button>
                 ))}
               </div>
-              {stockErr && <p className="mt-1 text-[12px] text-unpaid">{stockErr}</p>}
-              {stock.length > 0 && (
-                <div className="mt-2 grid max-h-[200px] grid-cols-4 gap-1.5 overflow-y-auto">
-                  {stock.map((im, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img key={i} src={im.thumb} alt="" onClick={() => pickStock(im.full)} className="aspect-square w-full cursor-pointer rounded object-cover transition hover:opacity-75 hover:ring-2 hover:ring-primary" />
-                  ))}
-                </div>
-              )}
-              <p className="mt-1 text-[11px] text-muted">이미지 출처: Pixabay (무료·상업적 사용 가능)</p>
-            </div>
+            )}
+
+            {/* 공통: 어둠막 */}
+            {bgImage && <label className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-soft"><input type="checkbox" checked={scrim} onChange={(e) => setScrim(e.target.checked)} className="accent-primary" /> 글자 잘 보이게 어둠막</label>}
           </div>
 
           {/* 선택 요소 편집 */}
