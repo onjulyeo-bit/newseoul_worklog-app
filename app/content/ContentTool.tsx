@@ -1,9 +1,9 @@
 "use client";
 
 // 주간 콘텐츠 도구 — 회차 선택 → 카톡 공지글·순서지·포스터(PNG) 자동 생성.
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { toPng } from "html-to-image";
+import PosterEditor, { type Seed } from "./PosterEditor";
 
 export type MeetingOpt = { id: string; date: string; session_no: number | null; mode: string; title: string | null; speaker: string | null };
 
@@ -73,16 +73,6 @@ function CopyBox({ label, text }: { label: string; text: string }) {
 const inp = "min-h-[42px] w-full rounded-md border border-line bg-card px-3 text-[16px] text-ink outline-none placeholder:text-muted focus:border-primary-focus";
 const lab = "mb-1 block text-[13px] font-bold text-ink-soft";
 
-// 포스터 디자인 테마 — 글자는 그대로, 배경·강조색만 다양하게.
-type Theme = { key: string; label: string; bg: string; fg: string; kicker: string; muted: string; accent: string; verse: string };
-const THEMES: Theme[] = [
-  { key: "navy",   label: "남색",   bg: "bg-gradient-to-br from-navy via-deep to-deep2",                fg: "text-white", kicker: "text-primary-on-dark", muted: "text-on-dark-muted", accent: "text-primary-on-dark", verse: "border-l-2 border-primary-on-dark bg-white/10" },
-  { key: "dawn",   label: "새벽",   bg: "bg-gradient-to-br from-[#16203c] via-[#46406b] to-[#c98a5e]",  fg: "text-white", kicker: "text-[#ffd9a8]",       muted: "text-white/75",      accent: "text-[#ffd9a8]",       verse: "border-l-2 border-[#ffd9a8] bg-white/10" },
-  { key: "forest", label: "숲",     bg: "bg-gradient-to-br from-[#0f2a22] via-[#163d2f] to-[#21684a]",  fg: "text-white", kicker: "text-[#ecd29a]",       muted: "text-white/75",      accent: "text-[#ecd29a]",       verse: "border-l-2 border-[#ecd29a] bg-white/10" },
-  { key: "sunset", label: "노을",   bg: "bg-gradient-to-br from-[#2a1a3e] via-[#7b3b6e] to-[#e2895a]",  fg: "text-white", kicker: "text-[#ffe3b3]",       muted: "text-white/80",      accent: "text-[#ffe3b3]",       verse: "border-l-2 border-[#ffe3b3] bg-white/10" },
-  { key: "light",  label: "화이트", bg: "bg-gradient-to-br from-white to-[#e9eef7]",                    fg: "text-navy",  kicker: "text-primary",         muted: "text-ink-soft",      accent: "text-primary",         verse: "border-l-2 border-primary bg-primary/5" },
-];
-
 export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   const [f, setF] = useState<Form>({
     session: "", mode: "online", date: "", title: "", verse: "", speaker: "",
@@ -97,47 +87,18 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
     setF((s) => ({ ...s, session: m.session_no != null ? String(m.session_no) : "", mode: (m.mode === "online" ? "online" : "offline"), date: m.date, title: m.title ?? s.title, speaker: m.speaker ?? s.speaker }));
   };
 
-  const posterRef = useRef<HTMLDivElement>(null);
-  const [saving, setSaving] = useState(false);
-  const [theme, setTheme] = useState(0);
-
-  // AI 배경 이미지 (Cloudflare 무료)
-  const [bgPrompt, setBgPrompt] = useState("");
-  const [bgImage, setBgImage] = useState("");
-  const [genning, setGenning] = useState(false);
-  const [genErr, setGenErr] = useState("");
-  async function genBg() {
-    const p = bgPrompt.trim() || (f.title ? `${f.title} 분위기` : "잔잔한 새벽 하늘과 따뜻한 햇살");
-    setGenning(true); setGenErr("");
-    try {
-      const res = await fetch("/api/poster-bg", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: p }) });
-      const data = await res.json();
-      if (!res.ok || !data.image) setGenErr(data.error || "생성에 실패했어요. 잠시 후 다시 시도해 주세요.");
-      else setBgImage(data.image);
-    } catch { setGenErr("네트워크 오류가 났어요. 다시 시도해 주세요."); }
-    finally { setGenning(false); }
-  }
-
-  async function savePoster() {
-    if (!posterRef.current) return;
-    setSaving(true);
-    try {
-      const url = await toPng(posterRef.current, { pixelRatio: 3, cacheBust: true, skipFonts: true });
-      const a = document.createElement("a"); a.href = url; a.download = `포스터_${f.session || f.date || "새서울CBMC"}회.png`; a.click();
-    } catch { alert("이미지 저장 실패"); } finally { setSaving(false); }
-  }
-
-  // 포스터 색: AI 배경이 있으면 흰 글자+어둠막, 없으면 선택한 테마 색
-  const tm = THEMES[theme];
-  const onImg = !!bgImage;
-  const cFg = onImg ? "text-white" : tm.fg;
-  const cKicker = onImg ? "text-white/90" : tm.kicker;
-  const cMuted = onImg ? "text-white/80" : tm.muted;
-  const cAccent = onImg ? "text-white" : tm.accent;
-  const cVerse = onImg ? "border-l-2 border-white/70 bg-black/30" : tm.verse;
+  // 포스터 편집기에 넘길 초기 글자(양식에서 자동)
+  const seed: Seed = {
+    org: "새서울 CBMC 아름다운 만남",
+    meta: [f.session ? `${f.session}회` : "", f.date ? fmtDate(f.date) : "", modeL(f.mode)].filter(Boolean).join(" · "),
+    title: f.title || "주제",
+    speaker: f.speaker ? `발제 ${f.speaker}` : "",
+    verse: f.verse || "",
+  };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="flex flex-col gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* 입력 */}
         <div className="rounded-lg border border-line bg-card p-6">
           {/* 회차 선택 */}
@@ -188,58 +149,15 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
           </div>
         </div>
 
-        {/* 결과 */}
+        {/* 카톡 글 */}
         <div className="flex flex-col gap-6">
-          <div className="rounded-lg border border-line bg-card p-6">
-            <h2 className="mb-3 text-[21px] font-bold text-ink">포스터</h2>
-            <div ref={posterRef} className={`relative mx-auto aspect-[3/4] w-full max-w-[320px] overflow-hidden rounded-[14px] ${tm.bg} ${cFg}`}>
-              {onImg && (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={bgImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-black/25" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/45 to-transparent" />
-                </>
-              )}
-              <div className={`relative z-10 flex h-full flex-col p-6 ${onImg ? "[text-shadow:0_1px_8px_rgba(0,0,0,.5)]" : ""}`}>
-                <div className={`text-[11px] font-bold uppercase tracking-[3px] ${cKicker}`}>NEW SEOUL CBMC</div>
-                <div className="mt-1 text-[18px] font-bold">새서울 CBMC 아름다운 만남</div>
-                <div className="mt-auto">
-                  <div className={`text-[13px] ${cMuted}`}>{(f.session ? f.session + "회 · " : "") + (f.date ? fmtDate(f.date) : "날짜") + ` · ${modeL(f.mode)}`}</div>
-                  <div className="mt-2 text-[21px] font-bold leading-snug">{f.title || "주제"}</div>
-                  {f.speaker && <div className={`mt-2 text-[14px] font-bold ${cAccent}`}>발제 {f.speaker}</div>}
-                  {f.verse && <div className={`mt-3 px-3 py-2 text-[13px] italic ${cVerse}`}>{f.verse}</div>}
-                </div>
-              </div>
-            </div>
-
-            {/* 디자인 테마 선택 */}
-            <div className="mt-3">
-              <div className="mb-1.5 text-[13px] font-bold text-ink-soft">🎨 디자인 선택 {onImg && <span className="font-normal text-muted">(AI 배경 켜짐 — 배경 지우면 테마 적용)</span>}</div>
-              <div className="flex flex-wrap gap-2">
-                {THEMES.map((t, i) => (
-                  <button key={t.key} onClick={() => setTheme(i)} className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${theme === i ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary hover:text-primary"}`}>{t.label}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* AI 배경 (Cloudflare 무료) */}
-            <div className="mt-3 rounded-lg border border-line bg-surface-soft p-3">
-              <label className={lab}>✨ AI 배경 (비우면 주제로 자동)</label>
-              <textarea value={bgPrompt} onChange={(e) => setBgPrompt(e.target.value)} placeholder="예: 잔잔한 새벽 하늘, 따뜻한 햇살, 추상 그라데이션" className={`${inp} min-h-[44px] py-2`} />
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button onClick={genBg} disabled={genning} className="rounded-full bg-primary px-4 py-2 text-[14px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{genning ? "그리는 중… (10초쯤)" : "✨ AI 배경 생성"}</button>
-                {bgImage && <button onClick={() => setBgImage("")} className="rounded-full border border-line px-4 py-2 text-[14px] font-semibold text-ink-soft hover:border-primary hover:text-primary">배경 지우기</button>}
-              </div>
-              {genErr && <p className="mt-2 text-[13px] text-unpaid">{genErr}</p>}
-            </div>
-
-            <button onClick={savePoster} disabled={saving} className="mt-3 rounded-full bg-primary px-4 py-2 text-[15px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{saving ? "만드는 중…" : "🖼 이미지로 저장 (PNG)"}</button>
-          </div>
-
           <div className="rounded-lg border border-line bg-card p-6"><CopyBox label="📣 카톡 공지글" text={buildNotice(f)} /></div>
           <div className="rounded-lg border border-line bg-card p-6"><CopyBox label={`📋 진행 순서지 (${modeL(f.mode)})`} text={buildOrder(f)} /></div>
         </div>
       </div>
+
+      {/* 포스터 편집기 (전체 폭) */}
+      <PosterEditor seed={seed} />
+    </div>
   );
 }
