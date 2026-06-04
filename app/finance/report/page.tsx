@@ -82,18 +82,19 @@ export default function ReportPage() {
 
   return (
     <div className="mx-auto max-w-[900px]">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 print:hidden">
         <Link href="/finance" className="text-[13px] font-semibold text-primary hover:underline">← 회계</Link>
         <Link href="/finance/transactions" className="text-[13px] font-semibold text-primary hover:underline">거래 내역</Link>
         <button onClick={() => window.print()} className="ml-auto rounded-full border border-line px-4 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">🖨 인쇄 · PDF 저장</button>
       </div>
-      <h1 className="mt-1 text-[22px] font-bold text-ink">회계 보고서</h1>
+      <div className="mt-1 text-[13px] font-bold text-primary">새서울 CBMC 아름다운 만남</div>
+      <h1 className="text-[22px] font-bold text-ink">회계 보고서</h1>
       {!loading && rows.length > 0 && (
         <p className="mt-0.5 text-[14px] text-ink-soft">정산 기간: <b className="text-ink">{periodLabel}</b> <span className="text-muted">({range})</span></p>
       )}
 
-      {/* 기간 선택 */}
-      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card px-3 py-2">
+      {/* 기간 선택 — 인쇄 시 숨김(정산 기간은 위에 표시됨) */}
+      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card px-3 py-2 print:hidden">
         {(([["month", "월별"], ["quarter", "분기별"], ["year", "연별"], ["all", "전체"]]) as const).map(([v, l]) => (
           <button key={v} onClick={() => setPtype(v)} className={`rounded-full px-3 py-1 text-[13px] font-semibold ${ptype === v ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{l}</button>
         ))}

@@ -12,8 +12,8 @@ export default function SiteNav() {
 
   return (
     <>
-      {/* 상단 헤더 밴드 — 로고·제목 클릭 시 홈(회원 목록)으로 */}
-      <header className="border-b border-line bg-card">
+      {/* 상단 헤더 밴드 — 로고·제목 클릭 시 홈(회원 목록)으로. 인쇄 시 숨김 */}
+      <header className="border-b border-line bg-card print:hidden">
         <Link href="/" className="mx-auto flex max-w-[1320px] flex-col items-start gap-2 px-5 py-6 transition hover:opacity-80">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/cbmc-logo.png" alt="CBMC" className="h-10 w-auto" />
@@ -21,8 +21,8 @@ export default function SiteNav() {
         </Link>
       </header>
 
-      {/* 관리자 메뉴 */}
-      <nav className="border-b border-line bg-card">
+      {/* 관리자 메뉴 — 인쇄 시 숨김 */}
+      <nav className="border-b border-line bg-card print:hidden">
         <div className="mx-auto flex max-w-[1320px] gap-1 px-5 py-2 text-[15px] font-semibold">
           <a href="/" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">회원 관리</a>
           <a href="/schedule" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">연간 일정</a>
