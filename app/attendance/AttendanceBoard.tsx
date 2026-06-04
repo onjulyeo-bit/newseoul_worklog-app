@@ -36,7 +36,8 @@ export default function AttendanceBoard({
 }) {
   const router = useRouter();
   const meeting = meetings.find((m) => m.id === selectedId) ?? null;
-  const fee = meeting?.fee ?? 0;
+  const isOnline = meeting?.mode === "online";
+  const fee = isOnline ? 0 : (meeting?.fee ?? 0);
 
   const init: Record<string, { present: boolean; paid: boolean }> = {};
   attendance.forEach((a) => { init[a.member_id] = { present: a.present, paid: a.paid }; });
@@ -162,11 +163,17 @@ export default function AttendanceBoard({
                 )}
               </section>
 
-              <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <section className={`grid gap-3 ${isOnline ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"}`}>
                 {stat(present.length, "출석 인원", "text-present")}
-                {stat(paid.length, "식대 납부", "text-success")}
-                {stat(unpaid.length, "미납 인원", "text-unpaid")}
-                {stat(totalAmount.toLocaleString("ko-KR"), "수금 합계(원)", "text-deep")}
+                {isOnline ? (
+                  <div className="flex items-center rounded-lg border border-line bg-surface-soft px-4 py-3 text-[13px] font-bold text-ink-soft">💻 온라인 모임 — 식대 없음</div>
+                ) : (
+                  <>
+                    {stat(paid.length, "식대 납부", "text-success")}
+                    {stat(unpaid.length, "미납 인원", "text-unpaid")}
+                    {stat(totalAmount.toLocaleString("ko-KR"), "수금 합계(원)", "text-deep")}
+                  </>
+                )}
               </section>
 
               <section className="overflow-hidden rounded-lg border border-line bg-card">
@@ -175,8 +182,8 @@ export default function AttendanceBoard({
                     <tr className="border-b-[1.5px] border-line text-left">
                       <th className="px-3 py-2.5 text-[12px] font-bold text-ink-soft">출석</th>
                       <th className="px-3 py-2.5 text-[12px] font-bold text-ink-soft">이름</th>
-                      <th className="px-3 py-2.5 text-[12px] font-bold text-ink-soft">입금</th>
-                      <th className="px-3 py-2.5 text-[12px] font-bold text-ink-soft">식대</th>
+                      {!isOnline && <th className="px-3 py-2.5 text-[12px] font-bold text-ink-soft">입금</th>}
+                      {!isOnline && <th className="px-3 py-2.5 text-[12px] font-bold text-ink-soft">식대</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -186,8 +193,8 @@ export default function AttendanceBoard({
                         <tr key={m.id} className={`border-b border-line last:border-b-0 ${s.present && s.paid ? "bg-[rgba(46,125,82,.05)]" : ""}`}>
                           <td className="px-3 py-2"><input type="checkbox" checked={s.present} onChange={() => toggle(m.id, "present")} className="h-[18px] w-[18px] accent-primary" /></td>
                           <td className="px-3 py-2 font-bold text-ink">{m.name}</td>
-                          <td className="px-3 py-2">{s.present && <input type="checkbox" checked={s.paid} onChange={() => toggle(m.id, "paid")} className="h-[18px] w-[18px] accent-success" />}</td>
-                          <td className="px-3 py-2 text-ink-soft">{s.present ? (fee ? fee.toLocaleString("ko-KR") + "원" : "-") : "—"}</td>
+                          {!isOnline && <td className="px-3 py-2">{s.present && <input type="checkbox" checked={s.paid} onChange={() => toggle(m.id, "paid")} className="h-[18px] w-[18px] accent-success" />}</td>}
+                          {!isOnline && <td className="px-3 py-2 text-ink-soft">{s.present ? (fee ? fee.toLocaleString("ko-KR") + "원" : "-") : "—"}</td>}
                         </tr>
                       );
                     })}
@@ -195,13 +202,15 @@ export default function AttendanceBoard({
                 </table>
               </section>
 
-              <section className="rounded-lg border border-line bg-card p-5">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-[15px] font-bold text-ink">🔔 미납 독촉 문구</span>
-                  <button onClick={copy} className="rounded-full bg-primary px-4 py-1.5 text-[13px] font-semibold text-white hover:bg-primary-pressed">{copied ? "✓ 복사됨" : "📋 복사"}</button>
-                </div>
-                <pre className="whitespace-pre-wrap rounded-lg border border-[#2c3654] bg-navy p-4 font-sans text-[14px] leading-relaxed text-on-dark">{reminderText}</pre>
-              </section>
+              {!isOnline && (
+                <section className="rounded-lg border border-line bg-card p-5">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[15px] font-bold text-ink">🔔 미납 독촉 문구</span>
+                    <button onClick={copy} className="rounded-full bg-primary px-4 py-1.5 text-[13px] font-semibold text-white hover:bg-primary-pressed">{copied ? "✓ 복사됨" : "📋 복사"}</button>
+                  </div>
+                  <pre className="whitespace-pre-wrap rounded-lg border border-[#2c3654] bg-navy p-4 font-sans text-[14px] leading-relaxed text-on-dark">{reminderText}</pre>
+                </section>
+              )}
             </>
           )}
         </>
