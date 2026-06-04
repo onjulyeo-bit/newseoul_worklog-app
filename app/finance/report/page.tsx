@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { A_INCOME, A_EXPENSE } from "@/lib/classifyTxn";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
+// 이름 정규화: "공성덕 _신입"·"조성오- 신입" → "공성덕"·"조성오"
+const coreName = (s: string) => (s || "").split(/[(_\-]/)[0].replace(/\s/g, "").trim();
 type Row = { txn_date: string; direction: "입금" | "출금"; amount: number; balance: number | null; category: string; track: "A" | "B"; counterparty: string };
 
 export default function ReportPage() {
@@ -52,19 +54,21 @@ export default function ReportPage() {
     return { income, expense, totalIn, totalOut, net: totalIn - totalOut, sIn, sOut, sDiff, sCount: b.filter((r) => r.direction === "입금").length, sOutCount: b.filter((r) => r.direction === "출금").length };
   }, [tx]);
 
-  // 연회비 현황
+  // 연회비 현황 — 사람(이름) 기준. 부부=정회원1+부부회원1. 준회원은 정회원/부부에 없는 이름만.
   const dues = useMemo(() => {
     const y = tx.filter((r) => r.track === "A" && r.category === "연회비" && r.direction === "입금");
-    const g = { 정회원: [] as string[], 부부: [] as string[], 준회원: [] as string[], 기타: [] as string[] };
+    const jung = new Set<string>(), bubu = new Set<string>(), junCand = new Set<string>();
     let sum = 0;
     y.forEach((r) => {
       sum += r.amount;
-      if (r.amount >= 800000) g.부부.push(r.counterparty || "?");
-      else if (r.amount >= 600000) g.정회원.push(r.counterparty || "?");
-      else if (r.amount >= 50000 && r.amount < 100000) g.준회원.push(r.counterparty || "?");
-      else g.기타.push(`${r.counterparty}(${won(r.amount)})`);
+      const names = (r.counterparty || "").split(/[,，]/).map(coreName).filter(Boolean);
+      const n0 = names[0] || (r.counterparty || "?");
+      if (r.amount >= 800000) { jung.add(n0); (names.slice(1).length ? names.slice(1) : [n0 + " 배우자"]).forEach((n) => bubu.add(n)); }
+      else if (r.amount >= 600000) jung.add(n0);
+      else if (r.amount >= 50000 && r.amount < 100000) names.forEach((n) => junCand.add(n));
     });
-    return { g, sum, people: g.정회원.length + g.부부.length * 2 + g.준회원.length };
+    const jun = [...junCand].filter((n) => !jung.has(n) && !bubu.has(n));
+    return { jung: [...jung], bubu: [...bubu], jun, sum };
   }, [tx]);
 
   const balance = tx.length ? tx[tx.length - 1].balance : null;
@@ -133,14 +137,19 @@ export default function ReportPage() {
           <section className={sec}>
             <h2 className="text-[16px] font-bold text-ink">2. 연회비 현황</h2>
             <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-              {[["정회원", dues.g.정회원.length + "명"], ["부부정회원", dues.g.부부.length + "쌍"], ["준회원", dues.g.준회원.length + "명"]].map(([l, v]) => (
+              {([["정회원", dues.jung.length], ["부부회원", dues.bubu.length], ["준회원", dues.jun.length]] as const).map(([l, v]) => (
                 <div key={l} className="rounded-lg border border-line px-3 py-2">
-                  <div className="text-[20px] font-black text-deep">{v}</div>
+                  <div className="text-[20px] font-black text-deep">{v}명</div>
                   <div className="text-[12px] font-bold text-ink-soft">{l}</div>
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-[13px] text-ink-soft">납부 합계 <b className="text-ink">{won(dues.sum)}원</b> · 정회원 명단: {dues.g.정회원.join(", ") || "—"} · 부부: {dues.g.부부.join(", ") || "—"} · 준회원: {dues.g.준회원.join(", ") || "—"}{dues.g.기타.length ? ` · 기타: ${dues.g.기타.join(", ")}` : ""}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
+              납부 합계 <b className="text-ink">{won(dues.sum)}원</b> · 총 <b className="text-ink">{dues.jung.length + dues.bubu.length + dues.jun.length}명</b><br />
+              정회원: {dues.jung.join(", ") || "—"}<br />
+              부부회원: {dues.bubu.join(", ") || "—"}<br />
+              준회원: {dues.jun.join(", ") || "—"}
+            </p>
           </section>
 
           {/* 3. 식대 정산 */}
