@@ -27,6 +27,7 @@ export default function SiteNav() {
           <a href="/" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">회원 관리</a>
           <a href="/schedule" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">연간 일정</a>
           <a href="/attendance" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">출석·식대</a>
+          <a href="/finance" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">회계</a>
           <a href="/content" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">콘텐츠 생성</a>
           <a href="/archive" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">아카이브</a>
         </div>
