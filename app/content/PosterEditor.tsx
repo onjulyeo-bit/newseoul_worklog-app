@@ -195,40 +195,58 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
     } catch { setStockErr("네트워크 오류"); } finally { setStockBusy(false); }
   }
 
-  // 배경 보관함 (저장 → 불러쓰기)
+  // 배경 보관함 — Supabase Storage('backgrounds' 버킷). 대시보드에서 여러 장 미리 올려둘 수 있음.
   const [supabase] = useState(() => createClient());
-  const [lib, setLib] = useState<{ id: string; image: string }[]>([]);
+  const [lib, setLib] = useState<{ name: string; url: string }[]>([]);
   const [libOpen, setLibOpen] = useState(false);
   const [libBusy, setLibBusy] = useState(false);
   async function loadLib() {
     setLibBusy(true);
-    const { data } = await supabase.from("poster_backgrounds").select("id, image").eq("chapter_id", "새서울").order("created_at", { ascending: false }).limit(60);
-    setLib(data ?? []); setLibBusy(false);
+    const { data } = await supabase.storage.from("backgrounds").list("", { limit: 200, sortBy: { column: "created_at", order: "desc" } });
+    const items = (data ?? [])
+      .filter((f) => f.name && !f.name.startsWith(".") && f.id)
+      .map((f) => ({ name: f.name, url: supabase.storage.from("backgrounds").getPublicUrl(f.name).data.publicUrl }));
+    setLib(items); setLibBusy(false);
   }
   async function openLib() {
     const willOpen = !libOpen;
     setLibOpen(willOpen);
-    if (willOpen && lib.length === 0) await loadLib();
+    if (willOpen) await loadLib();
   }
-  async function saveToLib() {
-    if (!bgImage) return;
+  // 공개 URL → dataURL(내보내기 안전)로 적용
+  async function applyLib(url: string) {
     setLibBusy(true);
-    await supabase.from("poster_backgrounds").insert({ image: bgImage });
-    setLibOpen(true);
-    await loadLib();
+    try {
+      const blob = await (await fetch(url)).blob();
+      const dataUrl: string = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(blob); });
+      setBgImage(dataUrl);
+    } catch { setBgImage(url); } finally { setLibBusy(false); }
   }
   async function uploadBg(file: File) {
     setLibBusy(true);
     try {
-      const dataUrl: string = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file); });
-      setBgImage(dataUrl);
-      await supabase.from("poster_backgrounds").insert({ image: dataUrl });
-      await loadLib();
+      const name = `${crypto.randomUUID()}_${file.name.replace(/[^\w.]+/g, "_")}`.slice(0, 90);
+      const { error } = await supabase.storage.from("backgrounds").upload(name, file, { contentType: file.type || "image/jpeg" });
+      if (error) { alert("업로드 실패: " + error.message); return; }
+      const url = supabase.storage.from("backgrounds").getPublicUrl(name).data.publicUrl;
+      await applyLib(url);
+      setLibOpen(true); await loadLib();
     } finally { setLibBusy(false); }
   }
-  async function delLib(id: string) {
-    await supabase.from("poster_backgrounds").delete().eq("id", id);
-    setLib((l) => l.filter((x) => x.id !== id));
+  async function saveToLib() {
+    if (!bgImage) return;
+    setLibBusy(true);
+    try {
+      const blob = await (await fetch(bgImage)).blob();
+      const name = `${crypto.randomUUID()}.jpg`;
+      const { error } = await supabase.storage.from("backgrounds").upload(name, blob, { contentType: blob.type || "image/jpeg" });
+      if (error) { alert("저장 실패: " + error.message); return; }
+      setLibOpen(true); await loadLib();
+    } finally { setLibBusy(false); }
+  }
+  async function delLib(name: string) {
+    await supabase.storage.from("backgrounds").remove([name]);
+    setLib((l) => l.filter((x) => x.name !== name));
   }
 
   const [saving, setSaving] = useState(false);
@@ -329,10 +347,10 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
                 {lib.length > 0 && (
                   <div className="grid max-h-[220px] grid-cols-4 gap-1.5 overflow-y-auto">
                     {lib.map((b) => (
-                      <div key={b.id} className="relative">
+                      <div key={b.name} className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={b.image} alt="" onClick={() => setBgImage(b.image)} className="aspect-[3/4] w-full cursor-pointer rounded object-cover transition hover:opacity-80 hover:ring-2 hover:ring-primary" />
-                        <button onClick={() => delLib(b.id)} className="absolute right-0.5 top-0.5 rounded-full bg-black/55 px-1.5 text-[11px] leading-tight text-white hover:bg-unpaid">✕</button>
+                        <img src={b.url} alt="" onClick={() => applyLib(b.url)} className="aspect-[3/4] w-full cursor-pointer rounded object-cover transition hover:opacity-80 hover:ring-2 hover:ring-primary" />
+                        <button onClick={() => delLib(b.name)} className="absolute right-0.5 top-0.5 rounded-full bg-black/55 px-1.5 text-[11px] leading-tight text-white hover:bg-unpaid">✕</button>
                       </div>
                     ))}
                   </div>
