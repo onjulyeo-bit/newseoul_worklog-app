@@ -443,10 +443,15 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
 
             {/* 🎨 단색 테마 */}
             {bgTab === "theme" && (
-              <div className="flex flex-wrap gap-1.5">
-                {THEMES.map((t, i) => (
-                  <button key={t.key} onClick={() => { setTheme(i); setBgImage(""); }} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${theme === i && !bgImage ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{t.label}</button>
-                ))}
+              <div>
+                {bgImage && <p className="mb-1.5 text-[11px] text-muted">단색을 고르면 지금 배경 이미지는 사라지고 단색이 적용돼요.</p>}
+                <div className="flex flex-wrap gap-1.5">
+                  {THEMES.map((t, i) => (
+                    <button key={t.key} onClick={() => { setTheme(i); setBgImage(""); }} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${theme === i && !bgImage ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary hover:text-primary"}`}>
+                      <span className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ background: t.bg }} />{t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
