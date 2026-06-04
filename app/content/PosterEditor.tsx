@@ -280,6 +280,12 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
               <button onClick={genBg} disabled={genning} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{genning ? "그리는 중…" : "AI 배경"}</button>
               {bgImage && <button onClick={() => setBgImage("")} className="rounded-full border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-soft hover:border-primary">배경 지우기</button>}
             </div>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {["자연", "들판", "하늘", "바다", "산", "도시", "새벽", "노을", "빛", "길", "꽃", "숲", "강", "구름"].map((w) => (
+                <button key={w} onClick={() => setBgPrompt((p) => (p.trim() ? p.trim() + " " + w : w))} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-ink-soft hover:border-primary hover:text-primary">{w}</button>
+              ))}
+              {bgPrompt && <button onClick={() => setBgPrompt("")} className="rounded-full px-2 py-0.5 text-[11px] text-muted hover:text-unpaid">✕ 지우기</button>}
+            </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               <span className="text-[11px] font-bold text-ink-soft">엔진</span>
               {([["cloudflare", "무료(Flux)"], ["recraft", "Recraft(유료)"]] as const).map(([v, l]) => (
