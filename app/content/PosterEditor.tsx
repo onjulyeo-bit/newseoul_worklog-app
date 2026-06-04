@@ -155,14 +155,17 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
   const [aiProvider, setAiProvider] = useState<"cloudflare" | "recraft">("cloudflare");
   const [rcStyle, setRcStyle] = useState("realistic_image");
   const [rcSize, setRcSize] = useState("1024x1365");
+  const [tone, setTone] = useState("");
+  const [count, setCount] = useState(2);
+  const [candidates, setCandidates] = useState<string[]>([]);
   async function genBg() {
-    const p = bgPrompt.trim() || (seed.title ? `${seed.title} 분위기` : "잔잔한 새벽 하늘과 따뜻한 햇살");
-    setGenning(true); setGenErr("");
+    setGenning(true); setGenErr(""); setCandidates([]);
     try {
-      const res = await fetch("/api/poster-bg", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: p, provider: aiProvider, style: rcStyle, size: rcSize }) });
+      const res = await fetch("/api/poster-bg", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: bgPrompt.trim(), provider: aiProvider, style: rcStyle, size: rcSize, tone, count, title: seed.title, verse: seed.verse }) });
       const data = await res.json();
-      if (!res.ok || !data.image) setGenErr(data.error || "생성에 실패했어요. 잠시 후 다시 시도해 주세요.");
-      else setBgImage(data.image);
+      if (!res.ok || !data.images || !data.images.length) setGenErr(data.error || "생성에 실패했어요. 잠시 후 다시 시도해 주세요.");
+      else if (data.images.length === 1) setBgImage(data.images[0]);
+      else setCandidates(data.images);
     } catch { setGenErr("네트워크 오류가 났어요."); } finally { setGenning(false); }
   }
 
@@ -273,7 +276,7 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
               ))}
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <input value={bgPrompt} onChange={(e) => setBgPrompt(e.target.value)} placeholder="✨ AI 배경 설명 (비우면 주제로)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
+              <input value={bgPrompt} onChange={(e) => setBgPrompt(e.target.value)} placeholder="✨ 장면·키워드 (비우면 제목·말씀에 맞게 자동)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
               <button onClick={genBg} disabled={genning} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{genning ? "그리는 중…" : "AI 배경"}</button>
               {bgImage && <button onClick={() => setBgImage("")} className="rounded-full border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-soft hover:border-primary">배경 지우기</button>}
             </div>
@@ -296,7 +299,35 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
                   </select>
                 </>
               )}
+              <span className="ml-1 text-[11px] font-bold text-ink-soft">톤</span>
+              <select value={tone} onChange={(e) => setTone(e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
+                <option value="">자동</option>
+                <option value="warm">따뜻한</option>
+                <option value="calm">차분한</option>
+                <option value="bright">밝은</option>
+                <option value="majestic">장엄한</option>
+                <option value="minimal">미니멀</option>
+                <option value="vintage">빈티지</option>
+              </select>
+              <select value={count} onChange={(e) => setCount(+e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
+                <option value={1}>1장</option>
+                <option value={2}>2장 중 선택</option>
+              </select>
             </div>
+
+            {/* 생성된 후보 (2장 중 선택) */}
+            {candidates.length > 0 && (
+              <div className="mt-2 rounded-lg border border-primary/40 bg-primary/5 p-2">
+                <div className="mb-1.5 text-[12px] font-bold text-primary">마음에 드는 배경을 클릭하세요</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {candidates.map((im, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={i} src={im} alt="" onClick={() => { setBgImage(im); setCandidates([]); }} className="aspect-[3/4] w-full cursor-pointer rounded-md object-cover transition hover:opacity-80 hover:ring-2 hover:ring-primary" />
+                  ))}
+                </div>
+              </div>
+            )}
+            <p className="mt-1 text-[11px] text-muted">AI 배경엔 글자가 들어가지 않게 만듭니다. 제목·말씀은 ‘장면’으로 바꿔 그려요.</p>
             {bgImage && <label className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-soft"><input type="checkbox" checked={scrim} onChange={(e) => setScrim(e.target.checked)} className="accent-primary" /> 글자 잘 보이게 어둠막</label>}
             {genErr && <p className="mt-1 text-[12px] text-unpaid">{genErr}</p>}
 
