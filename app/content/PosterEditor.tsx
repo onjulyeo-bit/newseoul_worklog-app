@@ -92,6 +92,8 @@ function seedEls(s: Seed, layout: string): El[] {
 }
 
 const SWATCHES = ["#ffffff", "#1a2238", "#9db8e8", "#2e7d52", "#ffd9a8", "#ecd29a", "#ffe3b3", "#c0392b", "#000000"];
+// 단색 배경용 팔레트
+const SOLIDS = ["#1a2238", "#243763", "#0f2a22", "#21684a", "#2a1a3e", "#7b3b6e", "#c98a5e", "#ecd29a", "#f5f0e6", "#ffffff", "#2e3440", "#b03a2e"];
 
 export default function PosterEditor({ seed }: { seed: Seed }) {
   const [layout, setLayout] = useState("center");
@@ -101,6 +103,14 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
   const [bgImage, setBgImage] = useState("");
   const [scrim, setScrim] = useState(true);
   const [bgTab, setBgTab] = useState<"lib" | "stock" | "ai" | "theme">("lib");
+  const [bgColor, setBgColor] = useState(""); // 직접 고른 단색 (있으면 테마 그라데이션 대신 사용)
+  const [hasEyeDropper, setHasEyeDropper] = useState(false);
+  useEffect(() => { setHasEyeDropper(typeof window !== "undefined" && "EyeDropper" in window); }, []);
+  async function pickEyedropper() {
+    const ED = (window as unknown as { EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> } }).EyeDropper;
+    if (!ED) return;
+    try { const r = await new ED().open(); setBgColor(r.sRGBHex); setBgImage(""); } catch {}
+  }
 
   const posterRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
@@ -282,7 +292,7 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
             onPointerUp={onUp}
             onPointerDown={() => setSel(null)}
             className="relative mx-auto aspect-[3/4] w-full max-w-[320px] select-none overflow-hidden rounded-[14px]"
-            style={{ background: THEMES[theme].bg, touchAction: "none" }}
+            style={{ background: bgColor || THEMES[theme].bg, touchAction: "none" }}
           >
             {bgImage && (
               <>
@@ -441,17 +451,32 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
               </div>
             )}
 
-            {/* 🎨 단색 테마 */}
+            {/* 🎨 단색/그라데이션 */}
             {bgTab === "theme" && (
               <div>
-                {bgImage && <p className="mb-1.5 text-[11px] text-muted">단색을 고르면 지금 배경 이미지는 사라지고 단색이 적용돼요.</p>}
-                <div className="flex flex-wrap gap-1.5">
+                {bgImage && <p className="mb-1.5 text-[11px] text-muted">색을 고르면 지금 배경 이미지는 사라지고 색이 적용돼요.</p>}
+
+                <div className="text-[11px] font-bold text-ink-soft">그라데이션</div>
+                <div className="mt-1 flex flex-wrap gap-1.5">
                   {THEMES.map((t, i) => (
-                    <button key={t.key} onClick={() => { setTheme(i); setBgImage(""); }} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${theme === i && !bgImage ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary hover:text-primary"}`}>
+                    <button key={t.key} onClick={() => { setTheme(i); setBgColor(""); setBgImage(""); }} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${theme === i && !bgImage && !bgColor ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary hover:text-primary"}`}>
                       <span className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ background: t.bg }} />{t.label}
                     </button>
                   ))}
                 </div>
+
+                <div className="mt-2.5 text-[11px] font-bold text-ink-soft">단색 (직접 선택)</div>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <label className="flex cursor-pointer items-center gap-1 rounded-md border border-line bg-card px-1.5 py-1 text-[11px] font-semibold text-ink-soft">
+                    🎨 색선택
+                    <input type="color" value={bgColor || "#1a2238"} onChange={(e) => { setBgColor(e.target.value); setBgImage(""); }} className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0" />
+                  </label>
+                  {hasEyeDropper && <button onClick={pickEyedropper} className="rounded-md border border-line px-2 py-1 text-[11px] font-semibold text-ink-soft hover:border-primary hover:text-primary">🎯 스포이드</button>}
+                  {SOLIDS.map((c) => (
+                    <button key={c} onClick={() => { setBgColor(c); setBgImage(""); }} className={`h-7 w-7 rounded-full border ${bgColor.toLowerCase() === c.toLowerCase() ? "border-primary ring-2 ring-primary" : "border-line"}`} style={{ background: c }} />
+                  ))}
+                </div>
+                {bgColor && <p className="mt-1 text-[11px] text-muted">선택한 색: <b className="text-ink">{bgColor}</b></p>}
               </div>
             )}
 
