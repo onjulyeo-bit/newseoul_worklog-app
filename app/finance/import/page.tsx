@@ -15,6 +15,9 @@ export default function FinanceImportPage() {
   const [fileName, setFileName] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
+  const [fDir, setFDir] = useState<"all" | "입금" | "출금">("all");
+  const [fTrack, setFTrack] = useState<"all" | "A" | "B">("all");
+  const [fReview, setFReview] = useState(false);
 
   async function onFile(file: File) {
     setSaved(null); setFileName(file.name);
@@ -49,6 +52,12 @@ export default function FinanceImportPage() {
     const review = rows.filter((r) => !r.confident || r.category === "미분류").length;
     return { aIn, aOut, bIn, bOut, review };
   }, [rows]);
+
+  const shown = useMemo(() => rows.map((r, i) => ({ r, i })).filter(({ r }) =>
+    (fDir === "all" || r.direction === fDir) &&
+    (fTrack === "all" || r.track === fTrack) &&
+    (!fReview || !r.confident || r.category === "미분류")
+  ), [rows, fDir, fTrack, fReview]);
 
   async function save() {
     if (!rows.length) return;
@@ -103,7 +112,21 @@ export default function FinanceImportPage() {
             {stat.review > 0 && <span className="text-[13px] text-warning">노란 줄 {stat.review}건은 항목을 확인하세요</span>}
           </div>
 
-          <section className="mt-3 overflow-x-auto rounded-lg border border-line bg-card">
+          {/* 필터 */}
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card px-3 py-2">
+            <span className="text-[12px] font-bold text-ink-soft">구분</span>
+            {(([["all", "전체"], ["입금", "입금"], ["출금", "출금"]]) as const).map(([v, l]) => (
+              <button key={v} onClick={() => setFDir(v)} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${fDir === v ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{l}</button>
+            ))}
+            <span className="ml-2 text-[12px] font-bold text-ink-soft">트랙</span>
+            {(([["all", "전체"], ["A", "회계"], ["B", "식대"]]) as const).map(([v, l]) => (
+              <button key={v} onClick={() => setFTrack(v)} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${fTrack === v ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{l}</button>
+            ))}
+            <button onClick={() => setFReview((v) => !v)} className={`ml-2 rounded-full px-3 py-1 text-[12px] font-semibold ${fReview ? "bg-warning text-white" : "border border-line text-ink-soft hover:border-primary"}`}>⚠ 확인 필요만</button>
+            <span className="ml-auto text-[12px] text-ink-soft">표시 {shown.length}건</span>
+          </div>
+
+          <section className="mt-2 overflow-x-auto rounded-lg border border-line bg-card">
             <table className="w-full min-w-[860px] border-collapse text-[13.5px]">
               <thead>
                 <tr className="border-b-[1.5px] border-line text-left text-[12px] text-ink-soft">
@@ -113,7 +136,7 @@ export default function FinanceImportPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => {
+                {shown.map(({ r, i }) => {
                   const warn = !r.confident || r.category === "미분류";
                   const cats = r.track === "B" ? B_CATEGORIES : A_CATEGORIES;
                   const judge = r.category === "연회비" ? memberJudge(r.amount, r.counterparty) : null;
