@@ -12,10 +12,9 @@ const FLOW = [
 
 const FEATURES = [
   { icon: "📥", title: "거래 업로드·자동분류", desc: "카뱅 엑셀 업로드 → 키워드로 자동 분류(메인회계 A · 식대정산 B). 모호한 건만 사람이 확정.", href: "/finance/import" },
-  { icon: "📊", title: "월간 보고서", desc: "수입·지출 요약 + 식대 정산표(인원수만) + 잔액 대조. PDF·링크로 감사 공유." },
-  { icon: "👥", title: "연회비 납부 현황", desc: "입금액·비고란으로 정회원/부부/준회원 자동 판정 → 회원별 납부 현황 자동 채움." },
-  { icon: "🍽", title: "식대 정산표", desc: "회차별 입금·결재·차액. 월 누계 차액 한 줄만 메인회계에 반영. 출석 모듈과 연동." },
-  { icon: "📅", title: "연간 결산서", desc: "12개월 누적 → 결산서 항목 체계(수입 4·지출 11)로 자동 완성." },
+  { icon: "📒", title: "거래 내역·수정", desc: "저장된 거래를 보고 항목·내용을 고치거나 삭제. 월·구분·트랙 필터.", href: "/finance/transactions" },
+  { icon: "📊", title: "보고서 (월별·분기별)", desc: "수입·지출 요약 + 연회비 현황 + 식대 정산 + 잔액을 한 보고서로. 인쇄·PDF 저장.", href: "/finance/report" },
+  { icon: "📅", title: "연간 결산서", desc: "보고서에서 ‘연별·전체’로 보면 연간 누적이 자동 집계돼요. (전용 결산 양식은 추후)" },
 ];
 
 export default function FinancePage() {
@@ -27,6 +26,7 @@ export default function FinancePage() {
       <div className="mt-3 flex flex-wrap gap-2">
         <Link href="/finance/import" className="rounded-full bg-primary px-4 py-2 text-[14px] font-semibold text-white hover:bg-primary-pressed">📥 거래 업로드</Link>
         <Link href="/finance/transactions" className="rounded-full border border-line px-4 py-2 text-[14px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📒 거래 내역·수정</Link>
+        <Link href="/finance/report" className="rounded-full border border-line px-4 py-2 text-[14px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📊 보고서</Link>
       </div>
 
       {/* 매월 흐름 */}
