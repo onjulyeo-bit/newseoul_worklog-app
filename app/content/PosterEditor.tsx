@@ -152,11 +152,14 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
   const [bgPrompt, setBgPrompt] = useState("");
   const [genning, setGenning] = useState(false);
   const [genErr, setGenErr] = useState("");
+  const [aiProvider, setAiProvider] = useState<"cloudflare" | "recraft">("cloudflare");
+  const [rcStyle, setRcStyle] = useState("realistic_image");
+  const [rcSize, setRcSize] = useState("1024x1365");
   async function genBg() {
     const p = bgPrompt.trim() || (seed.title ? `${seed.title} 분위기` : "잔잔한 새벽 하늘과 따뜻한 햇살");
     setGenning(true); setGenErr("");
     try {
-      const res = await fetch("/api/poster-bg", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: p }) });
+      const res = await fetch("/api/poster-bg", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: p, provider: aiProvider, style: rcStyle, size: rcSize }) });
       const data = await res.json();
       if (!res.ok || !data.image) setGenErr(data.error || "생성에 실패했어요. 잠시 후 다시 시도해 주세요.");
       else setBgImage(data.image);
@@ -273,6 +276,26 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
               <input value={bgPrompt} onChange={(e) => setBgPrompt(e.target.value)} placeholder="✨ AI 배경 설명 (비우면 주제로)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
               <button onClick={genBg} disabled={genning} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{genning ? "그리는 중…" : "AI 배경"}</button>
               {bgImage && <button onClick={() => setBgImage("")} className="rounded-full border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-soft hover:border-primary">배경 지우기</button>}
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold text-ink-soft">엔진</span>
+              {([["cloudflare", "무료(Flux)"], ["recraft", "Recraft(유료)"]] as const).map(([v, l]) => (
+                <button key={v} onClick={() => setAiProvider(v)} className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${aiProvider === v ? "bg-primary text-white" : "border border-line text-ink-soft"}`}>{l}</button>
+              ))}
+              {aiProvider === "recraft" && (
+                <>
+                  <select value={rcStyle} onChange={(e) => setRcStyle(e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
+                    <option value="realistic_image">실사</option>
+                    <option value="digital_illustration">일러스트</option>
+                    <option value="vector_illustration">벡터/플랫</option>
+                  </select>
+                  <select value={rcSize} onChange={(e) => setRcSize(e.target.value)} className="min-h-[28px] rounded-md border border-line bg-card px-1.5 text-[12px] text-ink outline-none">
+                    <option value="1024x1365">세로(3:4)</option>
+                    <option value="1024x1024">정사각</option>
+                    <option value="1365x1024">가로</option>
+                  </select>
+                </>
+              )}
             </div>
             {bgImage && <label className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-soft"><input type="checkbox" checked={scrim} onChange={(e) => setScrim(e.target.checked)} className="accent-primary" /> 글자 잘 보이게 어둠막</label>}
             {genErr && <p className="mt-1 text-[12px] text-unpaid">{genErr}</p>}
