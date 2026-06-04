@@ -145,8 +145,11 @@ export default function FinanceImportPage() {
                       <td className="whitespace-nowrap px-2.5 py-1.5 text-ink-soft">{r.txn_date.slice(2, 10).replace(/-/g, ".")}</td>
                       <td className="px-2.5 py-1.5">{r.direction}</td>
                       <td className={`px-2.5 py-1.5 text-right font-semibold ${r.direction === "출금" ? "text-unpaid" : "text-ink"}`}>{won(r.amount)}</td>
-                      <td className="px-2.5 py-1.5 text-ink-soft">{r.memo || <span className="text-muted">(빈칸)</span>}</td>
-                      <td className="px-2.5 py-1.5">{r.counterparty}{judge && <span className="ml-1 rounded bg-surface-soft px-1 text-[11px] text-ink-soft">{judge}</span>}</td>
+                      <td className="px-2.5 py-1.5"><input value={r.memo} placeholder="(빈칸)" onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, memo: e.target.value } : x))} className="w-full min-w-[110px] rounded border border-transparent bg-transparent px-1 py-0.5 text-ink-soft hover:border-line focus:border-primary-focus" /></td>
+                      <td className="px-2.5 py-1.5">
+                        <input value={r.counterparty} onChange={(e) => setRows((p) => p.map((x, idx) => idx === i ? { ...x, counterparty: e.target.value } : x))} className="w-full min-w-[90px] rounded border border-transparent bg-transparent px-1 py-0.5 hover:border-line focus:border-primary-focus" />
+                        {judge && <span className="rounded bg-surface-soft px-1 text-[11px] text-ink-soft">{judge}</span>}
+                      </td>
                       <td className="px-2.5 py-1.5">
                         <select value={r.track} onChange={(e) => { const t = e.target.value as "A" | "B"; upd(i, { track: t, category: (t === "B" ? B_CATEGORIES : A_CATEGORIES)[0] }); }} className="rounded border border-line bg-card px-1 py-0.5 text-[12px]">
                           <option value="A">A 회계</option><option value="B">B 식대</option>
