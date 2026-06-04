@@ -130,6 +130,31 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
     } catch { setGenErr("네트워크 오류가 났어요."); } finally { setGenning(false); }
   }
 
+  // 무료 사진·일러스트 (Pixabay)
+  const [stockQ, setStockQ] = useState("");
+  const [stockType, setStockType] = useState<"all" | "photo" | "illustration">("all");
+  const [stock, setStock] = useState<{ thumb: string; full: string }[]>([]);
+  const [stockBusy, setStockBusy] = useState(false);
+  const [stockErr, setStockErr] = useState("");
+  async function searchStock() {
+    if (!stockQ.trim()) return;
+    setStockBusy(true); setStockErr("");
+    try {
+      const r = await fetch(`/api/stock?q=${encodeURIComponent(stockQ.trim())}&type=${stockType}`);
+      const d = await r.json();
+      if (!r.ok) { setStockErr(d.error || "검색 실패"); setStock([]); }
+      else { setStock(d.images || []); if (!(d.images || []).length) setStockErr("결과가 없어요. 다른 단어(영어도)로 검색해 보세요."); }
+    } catch { setStockErr("네트워크 오류"); } finally { setStockBusy(false); }
+  }
+  async function pickStock(full: string) {
+    setStockBusy(true); setStockErr("");
+    try {
+      const r = await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: full }) });
+      const d = await r.json();
+      if (r.ok && d.image) setBgImage(d.image); else setStockErr(d.error || "이미지 적용 실패");
+    } catch { setStockErr("네트워크 오류"); } finally { setStockBusy(false); }
+  }
+
   const [saving, setSaving] = useState(false);
   async function savePoster() {
     if (!posterRef.current) return;
@@ -218,6 +243,29 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
             </div>
             {bgImage && <label className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-soft"><input type="checkbox" checked={scrim} onChange={(e) => setScrim(e.target.checked)} className="accent-primary" /> 글자 잘 보이게 어둠막</label>}
             {genErr && <p className="mt-1 text-[12px] text-unpaid">{genErr}</p>}
+
+            {/* 무료 사진·일러스트 (Pixabay) */}
+            <div className="mt-3 border-t border-line pt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <input value={stockQ} onChange={(e) => setStockQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchStock()} placeholder="📷 사진·일러스트 검색 (예: 새벽, 들판, 기도)" className="min-h-[36px] flex-1 rounded-md border border-line bg-card px-2.5 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
+                <button onClick={searchStock} disabled={stockBusy} className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{stockBusy ? "…" : "검색"}</button>
+              </div>
+              <div className="mt-1.5 flex gap-1">
+                {(([["all", "전체"], ["photo", "사진"], ["illustration", "일러스트"]]) as const).map(([v, l]) => (
+                  <button key={v} onClick={() => setStockType(v)} className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${stockType === v ? "bg-primary text-white" : "border border-line text-ink-soft"}`}>{l}</button>
+                ))}
+              </div>
+              {stockErr && <p className="mt-1 text-[12px] text-unpaid">{stockErr}</p>}
+              {stock.length > 0 && (
+                <div className="mt-2 grid max-h-[200px] grid-cols-4 gap-1.5 overflow-y-auto">
+                  {stock.map((im, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={i} src={im.thumb} alt="" onClick={() => pickStock(im.full)} className="aspect-square w-full cursor-pointer rounded object-cover transition hover:opacity-75 hover:ring-2 hover:ring-primary" />
+                  ))}
+                </div>
+              )}
+              <p className="mt-1 text-[11px] text-muted">이미지 출처: Pixabay (무료·상업적 사용 가능)</p>
+            </div>
           </div>
 
           {/* 선택 요소 편집 */}
