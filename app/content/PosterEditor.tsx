@@ -2,7 +2,7 @@
 
 // 포스터 편집기 — 글자·로고 블록을 드래그로 옮기고, 크기·행간·자간·폰트·색·정렬을 조절.
 // 레이아웃(틀) 선택 + CBMC 로고(항상 포함) + 배경(테마/AI). 글자는 항상 정확히 렌더(한글 안 깨짐).
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 
 export type Seed = {
@@ -11,8 +11,9 @@ export type Seed = {
 };
 
 type Kind = "text" | "logo";
+type Role = "headline" | "category" | "title" | "verse" | "speaker" | "dateLine" | "modeLabel";
 type El = {
-  id: string; kind: Kind; text: string; invert?: boolean;
+  id: string; kind: Kind; text: string; invert?: boolean; role?: Role;
   x: number; y: number; width: number;
   fontSize: number; font: string; weight: number;
   color: string; align: "left" | "center" | "right";
@@ -50,30 +51,42 @@ function logoEl(o: Partial<El>): El {
   return { id: nid(), kind: "logo", text: "", invert: true, x: 39, y: 90, width: 22, fontSize: 16, font: "pretendard", weight: 700, color: "#fff", align: "center", lineHeight: 1, letterSpacing: 0, ...o };
 }
 
+const ROLE_ORDER: Role[] = ["headline", "category", "title", "verse", "speaker", "dateLine", "modeLabel"];
+
+// 레이아웃(틀)별 각 역할의 기본 위치·스타일
+const SPECS: Record<string, Record<Role, Partial<El>>> = {
+  center: {
+    headline: { y: 4, x: 5, width: 90, align: "center", fontSize: 17, weight: 700 },
+    category: { y: 21, x: 5, width: 90, align: "center", fontSize: 18, weight: 700, color: "#eef3ff" },
+    title: { y: 31, x: 5, width: 90, align: "center", fontSize: 30, weight: 800, lineHeight: 1.15, font: "dohyeon" },
+    verse: { y: 55, x: 5, width: 90, align: "center", fontSize: 17, weight: 700 },
+    speaker: { y: 65, x: 5, width: 90, align: "center", fontSize: 19, weight: 800 },
+    dateLine: { y: 74, x: 5, width: 90, align: "center", fontSize: 20, weight: 800 },
+    modeLabel: { y: 82, x: 5, width: 90, align: "center", fontSize: 18, weight: 700 },
+  },
+  left: {
+    headline: { x: 8, y: 8, width: 84, align: "left", fontSize: 17, weight: 700 },
+    category: { x: 8, y: 14, width: 84, align: "left", fontSize: 12, weight: 700, color: "#9db8e8", letterSpacing: 1 },
+    title: { x: 8, y: 54, width: 84, align: "left", fontSize: 26, weight: 800, lineHeight: 1.2 },
+    verse: { x: 8, y: 72, width: 84, align: "left", fontSize: 14, font: "myeongjo", color: "#dbe3f2" },
+    speaker: { x: 8, y: 79, width: 84, align: "left", fontSize: 15, weight: 700, color: "#9db8e8" },
+    dateLine: { x: 8, y: 86, width: 84, align: "left", fontSize: 15, weight: 700 },
+    modeLabel: { x: 8, y: 92, width: 84, align: "left", fontSize: 14, weight: 500, color: "#c9d4ea" },
+  },
+};
+
+function makeEl(role: Role, layout: string, text: string): El {
+  const spec = (SPECS[layout] || SPECS.center)[role];
+  return { id: nid(), kind: "text", role, text, x: 5, y: 8, width: 90, fontSize: 16, font: "pretendard", weight: 700, color: "#ffffff", align: "center", lineHeight: 1.25, letterSpacing: 0, ...spec };
+}
+
 function seedEls(s: Seed, layout: string): El[] {
   const out: El[] = [];
-  const add = (text: string, o: Partial<El>) => { if (text && text.trim()) out.push({ id: nid(), kind: "text", text, x: 5, y: 8, width: 90, fontSize: 16, font: "pretendard", weight: 700, color: "#ffffff", align: "center", lineHeight: 1.25, letterSpacing: 0, ...o }); };
-
-  if (layout === "left") {
-    add("NEW SEOUL CBMC", { x: 8, y: 7, width: 84, align: "left", fontSize: 11, color: "#9db8e8", letterSpacing: 3 });
-    add(s.headline, { x: 8, y: 12, width: 84, align: "left", fontSize: 18 });
-    add(s.title, { x: 8, y: 60, width: 84, align: "left", fontSize: 24, weight: 800, lineHeight: 1.2 });
-    add(s.speaker, { x: 8, y: 78, width: 84, align: "left", fontSize: 14, color: "#9db8e8" });
-    add(s.verse, { x: 8, y: 84, width: 84, align: "left", fontSize: 13, font: "myeongjo", color: "#dbe3f2" });
-    add([s.dateLine, s.modeLabel].filter(Boolean).join("  ·  "), { x: 8, y: 90, width: 84, align: "left", fontSize: 13, weight: 500, color: "#c9d4ea" });
-    out.push(logoEl({ x: 73, y: 7, width: 20 }));
-    return out;
+  for (const role of ROLE_ORDER) {
+    const v = s[role];
+    if (v && v.trim()) out.push(makeEl(role, layout, v));
   }
-
-  // center (기본) — 업로드한 포스터 구조
-  add(s.headline, { y: 4, fontSize: 17, weight: 700 });
-  add(s.category, { y: 21, fontSize: 18, weight: 700, color: "#eef3ff" });
-  add(s.title, { y: 31, fontSize: 30, weight: 800, lineHeight: 1.15, font: "dohyeon" });
-  add(s.verse, { y: 55, fontSize: 17, weight: 700 });
-  add(s.speaker, { y: 65, fontSize: 19, weight: 800 });
-  add(s.dateLine, { y: 74, fontSize: 20, weight: 800 });
-  add(s.modeLabel, { y: 82, fontSize: 18, weight: 700 });
-  out.push(logoEl({ x: 42, y: 90, width: 16 }));
+  out.push(layout === "left" ? logoEl({ x: 73, y: 7, width: 20 }) : logoEl({ x: 42, y: 90, width: 16 }));
   return out;
 }
 
@@ -92,6 +105,26 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
 
   const cur = els.find((e) => e.id === sel) ?? null;
   const upd = (id: string, patch: Partial<El>) => setEls((p) => p.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+
+  // 양식(콘텐츠 생성 폼)이 바뀌면 해당 역할 글자만 자동 반영. 드래그·폰트 등 수동 편집은 유지.
+  const prevSeed = useRef(seed);
+  useEffect(() => {
+    const ps = prevSeed.current;
+    prevSeed.current = seed;
+    setEls((list) => {
+      let next = list;
+      for (const role of ROLE_ORDER) {
+        const nv = (seed[role] ?? "").trim();
+        const ov = (ps[role] ?? "").trim();
+        if (nv === ov) continue;
+        const exists = next.some((e) => e.role === role);
+        if (nv) next = exists ? next.map((e) => (e.role === role ? { ...e, text: seed[role] } : e)) : [...next, makeEl(role, layout, seed[role])];
+        else if (exists) next = next.filter((e) => e.role !== role);
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed.headline, seed.category, seed.title, seed.verse, seed.speaker, seed.dateLine, seed.modeLabel, layout]);
 
   function onDown(e: React.PointerEvent, el: El) {
     e.stopPropagation(); setSel(el.id);
