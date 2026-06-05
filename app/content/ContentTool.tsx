@@ -167,7 +167,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
       </div>
 
       {/* 포스터 편집기 (전체 폭) */}
-      <PosterEditor seed={seed} />
+      <PosterEditor seed={seed} publish={{ title: `${f.session ? f.session + "회 " : ""}새서울 CBMC 모임${f.date ? " · " + fmtDate(f.date) : ""}`, body: buildNotice(f) }} />
     </div>
   );
 }

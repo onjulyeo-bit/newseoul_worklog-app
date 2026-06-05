@@ -95,7 +95,7 @@ const SWATCHES = ["#ffffff", "#1a2238", "#9db8e8", "#2e7d52", "#ffd9a8", "#ecd29
 // 단색 배경용 팔레트
 const SOLIDS = ["#1a2238", "#243763", "#0f2a22", "#21684a", "#2a1a3e", "#7b3b6e", "#c98a5e", "#ecd29a", "#f5f0e6", "#ffffff", "#2e3440", "#b03a2e"];
 
-export default function PosterEditor({ seed }: { seed: Seed }) {
+export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: { title: string; body: string } }) {
   const [layout, setLayout] = useState("center");
   const [els, setEls] = useState<El[]>(() => seedEls(seed, "center"));
   const [sel, setSel] = useState<string | null>(null);
@@ -260,6 +260,30 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
     } catch { alert("이미지 저장 실패"); } finally { setSaving(false); }
   }
 
+  // 회원 공지에 게시 (포스터 PNG + 안내글)
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState(false);
+  async function publishNotice() {
+    if (!publish) return;
+    if (!confirm("이 포스터와 안내글을 회원 공지에 게시할까요?")) return;
+    setPublishing(true);
+    try {
+      let imageUrl: string | null = null;
+      if (posterRef.current) {
+        setSel(null);
+        await new Promise((r) => setTimeout(r, 80));
+        const dataUrl = await toPng(posterRef.current, { pixelRatio: 2, cacheBust: true, skipFonts: true });
+        const blob = await (await fetch(dataUrl)).blob();
+        const fname = `poster_${crypto.randomUUID()}.png`;
+        const { error: upErr } = await supabase.storage.from("posters").upload(fname, blob, { contentType: "image/png" });
+        if (!upErr) imageUrl = supabase.storage.from("posters").getPublicUrl(fname).data.publicUrl;
+      }
+      const { error } = await supabase.from("announcements").insert({ category: "주간모임", title: publish.title, body: publish.body, image_url: imageUrl });
+      if (error) { alert("게시 실패: " + error.message); return; }
+      setPublished(true); setTimeout(() => setPublished(false), 2500);
+    } catch { alert("게시 중 문제가 생겼어요."); } finally { setPublishing(false); }
+  }
+
   const rng = "w-full accent-primary";
   const miniLab = "mb-1 block text-[12px] font-bold text-ink-soft";
 
@@ -318,6 +342,9 @@ export default function PosterEditor({ seed }: { seed: Seed }) {
             <button onClick={savePoster} disabled={saving} className="flex-1 rounded-full bg-primary px-3 py-2 text-[13px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{saving ? "저장 중…" : "🖼 PNG"}</button>
           </div>
           <p className="mt-1.5 text-center text-[12px] text-muted">요소를 눌러 선택 → 드래그로 이동 · 오른쪽에서 편집</p>
+          {publish && (
+            <button onClick={publishNotice} disabled={publishing} className="mt-2 w-full rounded-full bg-success px-3 py-2.5 text-[14px] font-semibold text-white hover:opacity-90 disabled:opacity-50">{publishing ? "게시 중…" : published ? "✓ 공지에 게시됨!" : "📢 포스터+안내글 회원 공지에 게시"}</button>
+          )}
         </div>
 
         {/* 편집 패널 */}

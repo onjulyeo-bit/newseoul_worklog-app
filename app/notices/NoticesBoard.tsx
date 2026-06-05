@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export type Announcement = { id: string; category: string; title: string; body: string; created_at: string };
+export type Announcement = { id: string; category: string; title: string; body: string; created_at: string; image_url?: string | null };
 const CATS = ["주간모임", "경조사", "일반"] as const;
 const catColor: Record<string, string> = { 주간모임: "bg-primary/10 text-primary", 경조사: "bg-[rgba(196,125,26,.12)] text-warning", 일반: "bg-surface-soft text-ink-soft" };
 const fmt = (d: string) => { const t = new Date(d); return `${t.getFullYear()}.${t.getMonth() + 1}.${t.getDate()}`; };
@@ -21,7 +21,7 @@ export default function NoticesBoard({ isAdmin, initial }: { isAdmin: boolean; i
   async function publish() {
     if (!title.trim() || !body.trim()) { alert("제목과 내용을 입력해 주세요."); return; }
     setBusy(true);
-    const { data, error } = await supabase.from("announcements").insert({ category: cat, title: title.trim(), body: body.trim() }).select("id, category, title, body, created_at").single();
+    const { data, error } = await supabase.from("announcements").insert({ category: cat, title: title.trim(), body: body.trim() }).select("id, category, title, body, created_at, image_url").single();
     setBusy(false);
     if (error) { alert("게시 실패: " + error.message); return; }
     setList((l) => [data as Announcement, ...l]);
@@ -64,6 +64,10 @@ export default function NoticesBoard({ isAdmin, initial }: { isAdmin: boolean; i
               {isAdmin && <button onClick={() => del(a.id)} className="ml-auto text-[12px] font-semibold text-unpaid hover:underline">삭제</button>}
             </div>
             <h2 className="mt-1.5 text-[17px] font-bold text-ink">{a.title}</h2>
+            {a.image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={a.image_url} alt="포스터" className="mt-2 w-full max-w-[280px] rounded-lg border border-line" />
+            )}
             <p className="mt-1.5 whitespace-pre-wrap text-[14.5px] leading-relaxed text-ink-soft">{a.body}</p>
           </article>
         ))}

@@ -2,6 +2,7 @@
 
 // 경조사·안내 공지 생성 — 부고·결혼·개업·심방 등. 몇 칸 입력 → 따뜻한 카톡 공지글 자동 생성(복사).
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type TypeV = "부고" | "결혼" | "개업" | "심방" | "기타";
 const TYPES: { v: TypeV; label: string }[] = [
@@ -95,6 +96,16 @@ export default function OccasionTool() {
   const text = build(type, f);
   const ph = PLACEHOLDERS[type];
 
+  const [supabase] = useState(() => createClient());
+  const [pub, setPub] = useState(false);
+  async function publish() {
+    if (!confirm("이 경조사·안내 공지를 회원 공지에 게시할까요?")) return;
+    const title = text.split("\n")[0].replace(/^[^\w가-힣]+/, "").trim() || `${type} 안내`;
+    const { error } = await supabase.from("announcements").insert({ category: "경조사", title, body: text });
+    if (error) { alert("게시 실패: " + error.message); return; }
+    setPub(true); setTimeout(() => setPub(false), 2500);
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="rounded-lg border border-line bg-card p-6">
@@ -124,6 +135,7 @@ export default function OccasionTool() {
           <button onClick={async () => { try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {} }} className="rounded-full bg-primary px-4 py-1.5 text-[13px] font-semibold text-white hover:bg-primary-pressed">{copied ? "✓ 복사됨" : "📋 복사"}</button>
         </div>
         <pre className="whitespace-pre-wrap rounded-lg border border-[#2c3654] bg-navy p-4 font-sans text-[14px] leading-relaxed text-on-dark">{text}</pre>
+        <button onClick={publish} className="mt-2 w-full rounded-full bg-success px-4 py-2.5 text-[14px] font-semibold text-white hover:opacity-90">{pub ? "✓ 공지에 게시됨!" : "📢 회원 공지에 게시"}</button>
         <p className="mt-2 text-[13px] text-ink-soft">※ 부고는 위로의 마음을 담았습니다. 필요하면 ‘추가 내용’에 한 줄 더 적으세요.</p>
       </div>
     </div>
