@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
+import { createClient } from "@/lib/supabase/client";
 import { saveAttendance } from "./actions";
 
 export type Meeting = {
@@ -58,6 +59,27 @@ export default function AttendanceBoard({
       QRCode.toDataURL(checkinLink, { width: 280, margin: 1 }).then(setQr).catch(() => setQr(""));
     }
   }, [showQr, checkinLink]);
+
+  // 식대 입금 설정 (지회 단위)
+  const [supabase] = useState(() => createClient());
+  const [mealOpen, setMealOpen] = useState(false);
+  const [mealFee, setMealFee] = useState("");
+  const [mealAccount, setMealAccount] = useState("");
+  const [mealLink, setMealLink] = useState("");
+  const [mealSaved, setMealSaved] = useState(false);
+  useEffect(() => {
+    supabase.rpc("get_meal_settings").then(({ data }: { data: { meal_fee: number | null; meal_account: string | null; pay_link: string | null }[] | null }) => {
+      const s = data?.[0]; if (!s) return;
+      setMealFee(s.meal_fee != null ? String(s.meal_fee) : "");
+      setMealAccount(s.meal_account ?? "");
+      setMealLink(s.pay_link ?? "");
+    });
+  }, [supabase]);
+  async function saveMeal() {
+    await supabase.rpc("set_meal_settings", { p_fee: mealFee ? Number(mealFee) : null, p_account: mealAccount || null, p_link: mealLink || null });
+    setMealSaved(true); setTimeout(() => setMealSaved(false), 1800);
+  }
+  const mInp = "min-h-[40px] w-full rounded-md border border-line bg-card px-3 text-[15px] text-ink outline-none focus:border-primary-focus";
 
   function toggle(memberId: string, field: "present" | "paid") {
     if (!selectedId) return;
@@ -124,6 +146,28 @@ export default function AttendanceBoard({
             </select>
             <Link href="/schedule" className="text-[13px] font-semibold text-primary hover:underline">일정 관리 →</Link>
           </div>
+
+          {/* 식대 입금 설정 (오프라인 QR 출석 후 회원에게 안내됨) */}
+          <section className="rounded-lg border border-line bg-card p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] font-bold text-ink">💳 식대 입금 설정</span>
+              <button onClick={() => setMealOpen((v) => !v)} className="rounded-full border border-line px-4 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">{mealOpen ? "닫기" : "열기"}</button>
+            </div>
+            {mealOpen && (
+              <>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <div><label className="mb-1 block text-[12px] font-bold text-ink-soft">식대 금액(원)</label><input value={mealFee} onChange={(e) => setMealFee(e.target.value.replace(/[^0-9]/g, ""))} placeholder="13000" className={mInp} /></div>
+                  <div><label className="mb-1 block text-[12px] font-bold text-ink-soft">입금 계좌 (모임 통장)</label><input value={mealAccount} onChange={(e) => setMealAccount(e.target.value)} placeholder="카카오뱅크 3333-00-000000 새서울CBMC" className={mInp} /></div>
+                  <div><label className="mb-1 block text-[12px] font-bold text-ink-soft">송금 링크 (선택)</label><input value={mealLink} onChange={(e) => setMealLink(e.target.value)} placeholder="토스/카카오 송금링크 (나중에)" className={mInp} /></div>
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <button onClick={saveMeal} className="rounded-full bg-primary px-5 py-2 text-[14px] font-semibold text-white hover:bg-primary-pressed">저장</button>
+                  {mealSaved && <span className="text-[13px] font-semibold text-success">✓ 저장됨</span>}
+                  <span className="text-[12px] text-muted">회원이 오프라인 QR로 출석하면 이 정보로 식대 안내가 떠요</span>
+                </div>
+              </>
+            )}
+          </section>
 
           {meeting && (
             <>

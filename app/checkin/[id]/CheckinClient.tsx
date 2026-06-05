@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Row = { member_id: string; name: string; present: boolean };
+type Meal = { mode: string; fee: number | null; account: string | null; pay_link: string | null };
 
 export default function CheckinClient({ meetingId, token }: { meetingId: string; token: string }) {
   const supabase = createClient();
@@ -14,6 +15,9 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [justDone, setJustDone] = useState<string | null>(null);
+  const [meal, setMeal] = useState<Meal | null>(null);
+  const [guideName, setGuideName] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -22,10 +26,17 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
       if (!alive) return;
       if (error || !data) { setErr(true); return; }
       setRows(data as Row[]);
+      const info = await supabase.rpc("checkin_info", { p_meeting: meetingId, p_token: token });
+      if (alive && info.data) setMeal((info.data[0] as Meal) ?? null);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function copyAcct() {
+    if (!meal?.account) return;
+    try { await navigator.clipboard.writeText(meal.account); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
+  }
 
   async function checkIn(r: Row) {
     if (r.present || busy) return;
@@ -36,6 +47,7 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
     setRows((prev) => prev?.map((x) => (x.member_id === r.member_id ? { ...x, present: true } : x)) ?? null);
     setJustDone(r.member_id);
     setTimeout(() => setJustDone((v) => (v === r.member_id ? null : v)), 2500);
+    if (meal?.mode === "offline" && meal.fee) setGuideName(r.name);
   }
 
   const filtered = useMemo(() => {
@@ -51,6 +63,19 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
       <div className="rounded-2xl border border-line bg-card p-5 shadow-sm">
         <h1 className="text-center text-[24px] font-extrabold text-ink">출석 체크인</h1>
         <p className="mt-1 text-center text-[15px] text-ink-soft">아래에서 <b className="text-primary">본인 이름</b>을 한 번 눌러 주세요.</p>
+
+        {guideName && meal?.fee != null && (
+          <div className="mt-4 rounded-xl border-2 border-primary bg-primary/5 p-4 text-center">
+            <div className="text-[17px] font-bold text-ink">{guideName}님, 출석 완료! 🎉</div>
+            <div className="mt-2 text-[15px] text-ink-soft">식대 <b className="text-[20px] text-primary">{meal.fee.toLocaleString("ko-KR")}원</b> 입금 부탁드려요</div>
+            {meal.account && <div className="mt-2 break-all rounded-lg border border-line bg-card px-3 py-2 text-[15px] font-semibold text-ink">{meal.account}</div>}
+            <div className="mt-3 flex flex-col gap-2">
+              {meal.account && <button onClick={copyAcct} className="min-h-[48px] rounded-full bg-primary px-4 text-[16px] font-semibold text-white hover:bg-primary-pressed">{copied ? "✓ 계좌 복사됨" : "📋 계좌번호 복사"}</button>}
+              {meal.pay_link && <a href={meal.pay_link} target="_blank" rel="noreferrer" className="flex min-h-[48px] items-center justify-center rounded-full bg-[#0064FF] px-4 text-[16px] font-semibold text-white">💸 간편 송금</a>}
+            </div>
+            <button onClick={() => setGuideName(null)} className="mt-2 text-[13px] text-ink-soft underline">닫기</button>
+          </div>
+        )}
 
         {err ? (
           <p className="mt-8 rounded-xl border border-line bg-surface-soft px-4 py-10 text-center text-[16px] text-ink-soft">
