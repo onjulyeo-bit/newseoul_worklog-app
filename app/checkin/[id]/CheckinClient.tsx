@@ -38,6 +38,17 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
     try { await navigator.clipboard.writeText(meal.account); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
   }
 
+  async function undo(r: Row) {
+    if (busy) return;
+    if (!confirm(`${r.name}님 출석을 취소할까요?`)) return;
+    setBusy(r.member_id);
+    const { error } = await supabase.rpc("check_out", { p_meeting: meetingId, p_member: r.member_id, p_token: token });
+    setBusy(null);
+    if (error) { alert("취소 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요."); return; }
+    setRows((prev) => prev?.map((x) => (x.member_id === r.member_id ? { ...x, present: false } : x)) ?? null);
+    if (guideName === r.name) setGuideName(null);
+  }
+
   async function checkIn(r: Row) {
     if (r.present || busy) return;
     setBusy(r.member_id);
@@ -97,21 +108,19 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
               {filtered.map((r) => {
                 const done = r.present;
                 return (
-                  <button
-                    key={r.member_id}
-                    onClick={() => checkIn(r)}
-                    disabled={done || busy === r.member_id}
-                    className={`flex min-h-[60px] items-center justify-between rounded-xl border px-5 text-left text-[19px] font-bold transition ${
-                      done
-                        ? "border-success bg-[rgba(46,125,82,.08)] text-success"
-                        : "border-line bg-card text-ink hover:border-primary active:scale-[.99]"
-                    }`}
-                  >
-                    <span>{r.name}</span>
-                    <span className="text-[15px] font-semibold">
-                      {busy === r.member_id ? "처리 중…" : done ? (justDone === r.member_id ? "✓ 출석 완료!" : "✓ 출석") : "눌러서 출석 →"}
-                    </span>
-                  </button>
+                  <div key={r.member_id} className={`flex min-h-[60px] items-center gap-1 rounded-xl border pr-2 transition ${done ? "border-success bg-[rgba(46,125,82,.08)]" : "border-line bg-card"}`}>
+                    <button
+                      onClick={() => (done ? (meal?.mode === "offline" && meal.fee && setGuideName(r.name)) : checkIn(r))}
+                      disabled={busy === r.member_id}
+                      className={`flex flex-1 items-center justify-between px-4 py-3 text-left text-[19px] font-bold ${done ? "text-success" : "text-ink active:scale-[.99]"}`}
+                    >
+                      <span>{r.name}</span>
+                      <span className="text-[14px] font-semibold">
+                        {busy === r.member_id ? "처리 중…" : done ? (justDone === r.member_id ? "✓ 출석 완료!" : "✓ 출석") : "눌러서 출석 →"}
+                      </span>
+                    </button>
+                    {done && <button onClick={() => undo(r)} disabled={busy === r.member_id} className="shrink-0 rounded-lg border border-line px-2.5 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-unpaid hover:text-unpaid">취소</button>}
+                  </div>
                 );
               })}
               {filtered.length === 0 && (
