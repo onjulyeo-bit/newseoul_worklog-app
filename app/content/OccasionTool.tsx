@@ -106,6 +106,22 @@ export default function OccasionTool() {
     setPub(true); setTimeout(() => setPub(false), 2500);
   }
 
+  // 모바일 안내장 이미지 → AI가 읽어 자동 채우기
+  const [extracting, setExtracting] = useState(false);
+  const [extractErr, setExtractErr] = useState("");
+  async function uploadInvite(file: File) {
+    setExtracting(true); setExtractErr("");
+    try {
+      const dataUrl: string = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file); });
+      const res = await fetch("/api/occasion-extract", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: dataUrl }) });
+      const d = await res.json();
+      if (!res.ok || !d.fields) { setExtractErr(d.error || "추출에 실패했어요."); return; }
+      const fl = d.fields as Partial<Record<keyof Form | "type", string>>;
+      if (fl.type && ["부고", "결혼", "개업", "심방", "기타"].includes(fl.type)) setType(fl.type as TypeV);
+      setF({ who: fl.who || "", when: fl.when || "", where: fl.where || "", link: fl.link || "", extra: fl.extra || "" });
+    } catch { setExtractErr("네트워크 오류가 났어요."); } finally { setExtracting(false); }
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="rounded-lg border border-line bg-card p-6">
@@ -116,6 +132,16 @@ export default function OccasionTool() {
           {TYPES.map((t) => (
             <button key={t.v} onClick={() => setType(t.v)} className={`rounded-full px-3.5 py-1.5 text-[14px] font-semibold ${type === t.v ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary hover:text-primary"}`}>{t.label}</button>
           ))}
+        </div>
+
+        {/* 모바일 안내장 업로드 → 자동 채우기 */}
+        <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-primary/5 p-3 text-center">
+          <label className={`inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[14px] font-semibold text-white hover:bg-primary-pressed ${extracting ? "opacity-60" : ""}`}>
+            {extracting ? "AI가 읽는 중… (5초쯤)" : "📤 모바일 안내장 올려서 자동 채우기"}
+            <input type="file" accept="image/*" className="hidden" disabled={extracting} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadInvite(f); e.currentTarget.value = ""; }} />
+          </label>
+          <p className="mt-1.5 text-[12px] text-ink-soft">청첩장·부고장 캡처를 올리면 AI가 읽어 아래 칸을 채워줘요</p>
+          {extractErr && <p className="mt-1 text-[12px] text-unpaid">{extractErr}</p>}
         </div>
 
         <div className="mt-4 flex flex-col gap-3">
