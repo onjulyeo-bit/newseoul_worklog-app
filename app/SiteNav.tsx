@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const ADMIN_LINKS: [string, string][] = [["/", "회원 관리"], ["/schedule", "연간 일정"], ["/attendance", "출석·식대"], ["/finance", "회계"], ["/content", "콘텐츠 생성"], ["/archive", "아카이브"], ["/notices", "공지"]];
+const ADMIN_LINKS: [string, string][] = [["/dashboard", "대시보드"], ["/", "회원 관리"], ["/schedule", "연간 일정"], ["/attendance", "출석·식대"], ["/finance", "회계"], ["/content", "콘텐츠 생성"], ["/archive", "아카이브"], ["/notices", "공지"]];
 const MEMBER_LINKS: [string, string][] = [["/", "공지"]];
 
 export default function SiteNav({ role }: { role: string | null }) {
