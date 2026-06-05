@@ -106,20 +106,24 @@ export default function OccasionTool() {
     setPub(true); setTimeout(() => setPub(false), 2500);
   }
 
-  // 모바일 안내장 이미지 → AI가 읽어 자동 채우기
+  // 모바일 안내장(이미지 또는 링크) → AI가 읽어 자동 채우기
   const [extracting, setExtracting] = useState(false);
   const [extractErr, setExtractErr] = useState("");
-  async function uploadInvite(file: File) {
+  const [inviteUrl, setInviteUrl] = useState("");
+  async function runExtract(body: { image?: string; url?: string }) {
     setExtracting(true); setExtractErr("");
     try {
-      const dataUrl: string = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file); });
-      const res = await fetch("/api/occasion-extract", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: dataUrl }) });
+      const res = await fetch("/api/occasion-extract", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const d = await res.json();
       if (!res.ok || !d.fields) { setExtractErr(d.error || "추출에 실패했어요."); return; }
       const fl = d.fields as Partial<Record<keyof Form | "type", string>>;
       if (fl.type && ["부고", "결혼", "개업", "심방", "기타"].includes(fl.type)) setType(fl.type as TypeV);
       setF({ who: fl.who || "", when: fl.when || "", where: fl.where || "", link: fl.link || "", extra: fl.extra || "" });
     } catch { setExtractErr("네트워크 오류가 났어요."); } finally { setExtracting(false); }
+  }
+  async function uploadInvite(file: File) {
+    const dataUrl: string = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file); });
+    await runExtract({ image: dataUrl });
   }
 
   return (
@@ -134,14 +138,21 @@ export default function OccasionTool() {
           ))}
         </div>
 
-        {/* 모바일 안내장 업로드 → 자동 채우기 */}
-        <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-primary/5 p-3 text-center">
-          <label className={`inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[14px] font-semibold text-white hover:bg-primary-pressed ${extracting ? "opacity-60" : ""}`}>
-            {extracting ? "AI가 읽는 중… (5초쯤)" : "📤 모바일 안내장 올려서 자동 채우기"}
-            <input type="file" accept="image/*" className="hidden" disabled={extracting} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadInvite(f); e.currentTarget.value = ""; }} />
-          </label>
-          <p className="mt-1.5 text-[12px] text-ink-soft">청첩장·부고장 캡처를 올리면 AI가 읽어 아래 칸을 채워줘요</p>
-          {extractErr && <p className="mt-1 text-[12px] text-unpaid">{extractErr}</p>}
+        {/* 모바일 안내장 → 자동 채우기 (링크 또는 이미지) */}
+        <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-primary/5 p-3">
+          <div className="text-center text-[13px] font-bold text-primary">📋 모바일 안내장 자동 채우기</div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input value={inviteUrl} onChange={(e) => setInviteUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && inviteUrl.trim() && runExtract({ url: inviteUrl.trim() })} placeholder="청첩장·부고장 링크 붙여넣기 (https://…)" className="min-h-[40px] flex-1 rounded-md border border-line bg-card px-3 text-[14px] text-ink outline-none placeholder:text-muted focus:border-primary-focus" />
+            <button onClick={() => inviteUrl.trim() && runExtract({ url: inviteUrl.trim() })} disabled={extracting || !inviteUrl.trim()} className="rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{extracting ? "읽는 중…" : "링크에서 가져오기"}</button>
+          </div>
+          <div className="mt-2 text-center">
+            <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary ${extracting ? "opacity-60" : ""}`}>
+              📤 또는 캡처 이미지 업로드
+              <input type="file" accept="image/*" className="hidden" disabled={extracting} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadInvite(f); e.currentTarget.value = ""; }} />
+            </label>
+          </div>
+          <p className="mt-1.5 text-center text-[12px] text-ink-soft">링크가 안 읽히면 캡처를 올려보세요</p>
+          {extractErr && <p className="mt-1 text-center text-[12px] text-unpaid">{extractErr}</p>}
         </div>
 
         <div className="mt-4 flex flex-col gap-3">
