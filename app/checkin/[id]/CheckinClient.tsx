@@ -75,6 +75,12 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
         <h1 className="text-center text-[24px] font-extrabold text-ink">출석 체크인</h1>
         <p className="mt-1 text-center text-[15px] text-ink-soft">아래에서 <b className="text-primary">본인 이름</b>을 한 번 눌러 주세요.</p>
 
+        {rows !== null && meal !== null && (
+          meal.mode === "offline" && meal.fee != null
+            ? <p className="mt-1 text-center text-[12px] font-semibold text-primary">🍽 이 모임 식대 {meal.fee.toLocaleString("ko-KR")}원 · 출석하면 입금 안내가 떠요</p>
+            : <p className="mt-1 text-center text-[12px] text-muted">{meal.mode === "online" ? "💻 온라인 모임 — 식대 없음" : "ⓘ 식대 정보 미설정 (관리자: 출석·식대 → 식대 입금 설정에서 금액·계좌 저장)"}</p>
+        )}
+
         {guideName && meal?.fee != null && (
           <div className="mt-4 rounded-xl border-2 border-primary bg-primary/5 p-4 text-center">
             <div className="text-[17px] font-bold text-ink">{guideName}님, 출석 완료! 🎉</div>

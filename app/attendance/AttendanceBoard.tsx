@@ -76,7 +76,8 @@ export default function AttendanceBoard({
     });
   }, [supabase]);
   async function saveMeal() {
-    await supabase.rpc("set_meal_settings", { p_fee: mealFee ? Number(mealFee) : null, p_account: mealAccount || null, p_link: mealLink || null });
+    const { error } = await supabase.rpc("set_meal_settings", { p_fee: mealFee ? Number(mealFee) : null, p_account: mealAccount || null, p_link: mealLink || null });
+    if (error) { alert("저장 실패: " + error.message); return; }
     setMealSaved(true); setTimeout(() => setMealSaved(false), 1800);
   }
   const mInp = "min-h-[40px] w-full rounded-md border border-line bg-card px-3 text-[15px] text-ink outline-none focus:border-primary-focus";
