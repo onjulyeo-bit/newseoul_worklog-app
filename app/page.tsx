@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import MembersTable, { type Member } from "./members/MembersTable";
+import NoticesBoard, { type Announcement } from "./notices/NoticesBoard";
 
 export default async function MemberListPage() {
   const supabase = await createClient();
@@ -25,6 +26,24 @@ export default async function MemberListPage() {
     member: "회원",
     guest: "관심회원",
   };
+
+  // 회원(비관리자) 로그인 → 회원 전용 홈(공지)
+  if (user && role !== "admin") {
+    const { data: anns } = await supabase
+      .from("announcements")
+      .select("id, category, title, body, created_at")
+      .eq("chapter_id", "새서울")
+      .order("created_at", { ascending: false });
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-card px-4 py-3">
+          <span className="text-[15px] text-ink-soft">반가워요 · <b className="text-ink">{user.email}</b></span>
+          <form action="/auth/signout" method="post"><button className="rounded-full border border-line px-4 py-2 text-[14px] font-bold text-primary hover:border-primary">로그아웃</button></form>
+        </div>
+        <NoticesBoard isAdmin={false} initial={(anns as Announcement[]) ?? []} />
+      </div>
+    );
+  }
 
   // 회원 전체 (RLS: 임원만 조회 가능). 표에서 정렬·필터·검색은 화면에서 처리.
   const { data: membersData } = await supabase

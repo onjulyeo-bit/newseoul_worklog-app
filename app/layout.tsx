@@ -1,17 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SiteNav from "./SiteNav";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "새서울 CBMC 아름다운 만남",
   description: "새서울 CBMC 조찬모임 운영 — 회원관리",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  let role: string | null = null;
+  if (user) {
+    const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    role = data?.role ?? "guest";
+  }
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
@@ -29,8 +37,8 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {/* 헤더 + 관리자 메뉴 (회원용 /checkin 에선 자동 숨김) */}
-        <SiteNav />
+        {/* 헤더 + 메뉴 (역할별 · 회원용 /checkin 에선 자동 숨김) */}
+        <SiteNav role={role} />
 
         <main className="mx-auto max-w-[1320px] px-5 pb-20 pt-6">
           {children}

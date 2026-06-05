@@ -4,11 +4,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function SiteNav() {
+const ADMIN_LINKS: [string, string][] = [["/", "회원 관리"], ["/schedule", "연간 일정"], ["/attendance", "출석·식대"], ["/finance", "회계"], ["/content", "콘텐츠 생성"], ["/archive", "아카이브"], ["/notices", "공지"]];
+const MEMBER_LINKS: [string, string][] = [["/", "공지"]];
+
+export default function SiteNav({ role }: { role: string | null }) {
   const pathname = usePathname();
 
   // 회원이 QR로 들어오는 체크인 페이지에선 관리자 메뉴/헤더를 보이지 않게.
   if (pathname?.startsWith("/checkin")) return null;
+
+  const links = role === "admin" ? ADMIN_LINKS : role ? MEMBER_LINKS : [];
 
   return (
     <>
@@ -21,17 +26,16 @@ export default function SiteNav() {
         </Link>
       </header>
 
-      {/* 관리자 메뉴 — 인쇄 시 숨김 */}
-      <nav className="border-b border-line bg-card print:hidden">
-        <div className="mx-auto flex max-w-[1320px] gap-1 px-5 py-2 text-[15px] font-semibold">
-          <a href="/" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">회원 관리</a>
-          <a href="/schedule" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">연간 일정</a>
-          <a href="/attendance" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">출석·식대</a>
-          <a href="/finance" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">회계</a>
-          <a href="/content" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">콘텐츠 생성</a>
-          <a href="/archive" className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">아카이브</a>
-        </div>
-      </nav>
+      {/* 메뉴 (역할별) — 인쇄 시 숨김 */}
+      {links.length > 0 && (
+        <nav className="border-b border-line bg-card print:hidden">
+          <div className="mx-auto flex max-w-[1320px] flex-wrap gap-1 px-5 py-2 text-[15px] font-semibold">
+            {links.map(([href, label]) => (
+              <a key={href} href={href} className="rounded-md px-3 py-1.5 text-ink-soft hover:bg-surface-soft hover:text-primary">{label}</a>
+            ))}
+          </div>
+        </nav>
+      )}
     </>
   );
 }
