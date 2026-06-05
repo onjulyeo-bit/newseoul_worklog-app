@@ -81,18 +81,6 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
             : <p className="mt-1 text-center text-[12px] text-muted">{meal.mode === "online" ? "💻 온라인 모임 — 식대 없음" : "ⓘ 식대 정보 미설정 (관리자: 출석·식대 → 식대 입금 설정에서 금액·계좌 저장)"}</p>
         )}
 
-        {guideName && meal?.fee != null && (
-          <div className="mt-4 rounded-xl border-2 border-primary bg-primary/5 p-4 text-center">
-            <div className="text-[17px] font-bold text-ink">{guideName}님, 출석 완료! 🎉</div>
-            <div className="mt-2 text-[15px] text-ink-soft">식대 <b className="text-[20px] text-primary">{meal.fee.toLocaleString("ko-KR")}원</b> 입금 부탁드려요</div>
-            {meal.account && <div className="mt-2 break-all rounded-lg border border-line bg-card px-3 py-2 text-[15px] font-semibold text-ink">{meal.account}</div>}
-            <div className="mt-3 flex flex-col gap-2">
-              {meal.account && <button onClick={copyAcct} className="min-h-[48px] rounded-full bg-primary px-4 text-[16px] font-semibold text-white hover:bg-primary-pressed">{copied ? "✓ 계좌 복사됨" : "📋 계좌번호 복사"}</button>}
-              {meal.pay_link && <a href={meal.pay_link} target="_blank" rel="noreferrer" className="flex min-h-[48px] items-center justify-center rounded-full bg-[#0064FF] px-4 text-[16px] font-semibold text-white">💸 간편 송금</a>}
-            </div>
-            <button onClick={() => setGuideName(null)} className="mt-2 text-[13px] text-ink-soft underline">닫기</button>
-          </div>
-        )}
 
         {err ? (
           <p className="mt-8 rounded-xl border border-line bg-surface-soft px-4 py-10 text-center text-[16px] text-ink-soft">
@@ -137,6 +125,22 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
         )}
       </div>
       <p className="mt-4 text-center text-[12px] text-muted">새서울 CBMC · 출석 체크인</p>
+
+      {/* 식대 입금 안내 — 화면 정중앙 팝업 (스크롤 위치 무관) */}
+      {guideName && meal?.fee != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setGuideName(null)}>
+          <div className="w-full max-w-[360px] rounded-2xl bg-card p-6 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[20px] font-extrabold text-ink">{guideName}님, 출석 완료! 🎉</div>
+            <div className="mt-3 text-[15px] text-ink-soft">식대 <b className="text-[24px] text-primary">{meal.fee.toLocaleString("ko-KR")}원</b> 입금 부탁드려요</div>
+            {meal.account && <div className="mt-3 break-all rounded-lg border border-line bg-surface-soft px-3 py-2.5 text-[16px] font-bold text-ink">{meal.account}</div>}
+            <div className="mt-4 flex flex-col gap-2">
+              {meal.account && <button onClick={copyAcct} className="min-h-[52px] rounded-full bg-primary px-4 text-[17px] font-semibold text-white hover:bg-primary-pressed">{copied ? "✓ 계좌 복사됨" : "📋 계좌번호 복사"}</button>}
+              {meal.pay_link && <a href={meal.pay_link} target="_blank" rel="noreferrer" className="flex min-h-[52px] items-center justify-center rounded-full bg-[#0064FF] px-4 text-[17px] font-semibold text-white">💸 간편 송금</a>}
+            </div>
+            <button onClick={() => setGuideName(null)} className="mt-3 text-[14px] text-ink-soft underline">닫기</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
