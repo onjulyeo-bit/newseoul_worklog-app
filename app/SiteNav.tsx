@@ -10,8 +10,8 @@ const MEMBER_LINKS: [string, string][] = [["/", "공지"]];
 export default function SiteNav({ role }: { role: string | null }) {
   const pathname = usePathname();
 
-  // 회원이 QR로 들어오는 체크인 페이지에선 관리자 메뉴/헤더를 보이지 않게.
-  if (pathname?.startsWith("/checkin")) return null;
+  // 체크인·랜딩 미리보기에선 헤더/메뉴 숨김.
+  if (pathname?.startsWith("/checkin") || pathname?.startsWith("/preview-landing")) return null;
 
   const links = role === "admin" ? ADMIN_LINKS : role ? MEMBER_LINKS : [];
 
