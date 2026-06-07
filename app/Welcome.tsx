@@ -27,7 +27,7 @@ export default function Welcome() {
     });
     if (error) { setStatus("error"); setErrMsg(error.message); } else { setStatus("sent"); }
   }
-  function onSubmit(e: React.FormEvent) { e.preventDefault(); if (valid) send(); }
+  function onSubmit(e: React.FormEvent) { e.preventDefault(); if (!valid) { setStatus("error"); setErrMsg("올바른 이메일 주소를 입력해 주세요."); return; } send(); }
   async function resend() { await send(); setResent(true); setTimeout(() => setResent(false), 2600); }
 
   return (
@@ -36,7 +36,8 @@ export default function Welcome() {
       <div className="page">
         <div className="shell">
           <div className="topbar">
-            <span className="brand-badge">CBMC</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <span className="brand-badge"><img src="/cbmc-logo.png" alt="CBMC" /></span>
             <div className="brand-text">
               <span className="brand-name">CBMC</span>
               <span className="brand-kicker">Connecting Business &amp; Marketplace to Christ</span>
@@ -61,7 +62,7 @@ export default function Welcome() {
                     value={email} onChange={(e) => { setEmail(e.target.value); if (status === "error") setStatus("idle"); }}
                     placeholder="등록된 이메일을 입력하세요" autoFocus />
                 </div>
-                <button type="submit" className="btn btn-primary btn-submit" disabled={status === "sending" || !valid} style={{ opacity: valid ? 1 : 0.55 }}>
+                <button type="submit" className="btn btn-primary btn-submit" disabled={status === "sending"}>
                   <Send size={19} /> {status === "sending" ? "보내는 중…" : "로그인 링크 받기"}
                 </button>
                 {status === "error" && <p className="login-err">⚠️ {errMsg}</p>}
@@ -123,7 +124,8 @@ const WELCOME_CSS = `
 .moim-welcome .page::before{ content:""; position:absolute; inset:-240px 0 auto 0; height:680px; z-index:0; pointer-events:none; background:radial-gradient(620px 380px at 50% -6%, var(--brand-soft) 0%, rgba(232,241,252,0) 72%); }
 .moim-welcome .shell{ position:relative; z-index:1; width:100%; max-width:460px; margin:0 auto; padding:0 22px; flex:1; display:flex; flex-direction:column; }
 .moim-welcome .topbar{ display:flex; align-items:center; gap:11px; padding:22px 2px 6px; }
-.moim-welcome .brand-badge{ width:48px; height:48px; border-radius:14px; display:grid; place-items:center; background:var(--brand); color:#fff; font-size:14px; font-weight:800; letter-spacing:0.02em; box-shadow:0 5px 14px rgba(0,102,204,.30); flex-shrink:0; }
+.moim-welcome .brand-badge{ width:48px; height:48px; border-radius:14px; display:grid; place-items:center; background:#fff; border:1px solid var(--line); padding:7px; box-shadow:var(--shadow-sm); flex-shrink:0; }
+.moim-welcome .brand-badge img{ width:100%; height:100%; object-fit:contain; }
 .moim-welcome .brand-text{ display:flex; flex-direction:column; line-height:1.18; }
 .moim-welcome .brand-name{ font-weight:800; font-size:17px; letter-spacing:-0.03em; }
 .moim-welcome .brand-kicker{ font-size:11px; color:var(--ink-3); font-weight:600; }
