@@ -1,7 +1,7 @@
 // 홈 — 익명:랜딩 / 회원:공지 / 임원:회원 목록(새 디자인).
 import { createClient } from "@/lib/supabase/server";
 import NoticesBoard, { type Announcement, type MemberHero } from "./notices/NoticesBoard";
-import Landing from "./Landing";
+import Welcome from "./Welcome";
 import MembersList, { type RawMember } from "./members/MembersList";
 
 export default async function MemberListPage() {
@@ -12,8 +12,8 @@ export default async function MemberListPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 비로그인(익명) 방문자 → 서비스 소개 랜딩
-  if (!user) return <Landing />;
+  // 비로그인(익명) 방문자 → 새서울 CBMC 환영 + 로그인 (현관)
+  if (!user) return <Welcome />;
 
   let role: string | null = null;
   if (user) {
