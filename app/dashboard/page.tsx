@@ -118,7 +118,7 @@ export default async function DashboardPage() {
       <section>
         <h2 className="mb-2 text-[15px] font-bold text-ink">바로가기</h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {[["/", "👥 회원"], ["/schedule", "📅 일정"], ["/attendance", "🍽 출석·식대"], ["/finance", "💰 회계"], ["/content", "🎨 콘텐츠"], ["/archive", "📷 아카이브"], ["/notices", "📢 공지"]].map(([href, label]) => (
+          {[["/", "👥 회원"], ["/schedule", "📅 일정"], ["/attendance", "🍽 출석·식대"], ["/attendance/stats", "📊 출석 통계"], ["/finance", "💰 회계"], ["/content", "🎨 콘텐츠"], ["/archive", "📷 아카이브"], ["/notices", "📢 공지"]].map(([href, label]) => (
             <Link key={href} href={href} className="rounded-lg border border-line bg-card px-3 py-3 text-center text-[14px] font-semibold text-ink-soft transition hover:border-primary hover:text-primary">{label}</Link>
           ))}
         </div>
