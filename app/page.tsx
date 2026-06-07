@@ -1,6 +1,6 @@
 // 홈 — 익명:랜딩 / 회원:공지 / 임원:회원 목록(새 디자인).
 import { createClient } from "@/lib/supabase/server";
-import NoticesBoard, { type Announcement } from "./notices/NoticesBoard";
+import NoticesBoard, { type Announcement, type MemberHero } from "./notices/NoticesBoard";
 import Landing from "./Landing";
 import MembersList, { type RawMember } from "./members/MembersList";
 
@@ -25,22 +25,25 @@ export default async function MemberListPage() {
     role = profile?.role ?? null;
   }
 
-  // 회원(비관리자) 로그인 → 회원 전용 홈(공지)
+  // 회원(비관리자) 로그인 → 회원 전용 홈(인사 + 이번 주 모임 + 공지 피드)
   if (user && role !== "admin") {
-    const { data: anns } = await supabase
-      .from("announcements")
-      .select("id, category, title, body, created_at, image_url")
-      .eq("chapter_id", "새서울")
-      .order("created_at", { ascending: false });
-    return (
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-card px-4 py-3">
-          <span className="text-[15px] text-ink-soft">반가워요 · <b className="text-ink">{user.email}</b></span>
-          <form action="/auth/signout" method="post"><button className="rounded-full border border-line px-4 py-2 text-[14px] font-bold text-primary hover:border-primary">로그아웃</button></form>
-        </div>
-        <NoticesBoard isAdmin={false} initial={(anns as Announcement[]) ?? []} />
-      </div>
-    );
+    const today = new Date().toISOString().slice(0, 10);
+    const [annR, mtR, chapR] = await Promise.all([
+      supabase.from("announcements").select("id, category, title, body, created_at, image_url").eq("chapter_id", "새서울").order("created_at", { ascending: false }),
+      supabase.from("meetings").select("id, date, program, title, checkin_token").eq("chapter_id", "새서울").in("mode", ["online", "offline"]).gte("date", today).order("date", { ascending: true }).limit(1),
+      supabase.from("chapters").select("meeting_place, meeting_time").eq("chapter_id", "새서울").maybeSingle(),
+    ]);
+    const nx = mtR.data?.[0];
+    const chap = chapR.data as { meeting_place?: string; meeting_time?: string } | null;
+    const memberHero: MemberHero = {
+      name: (user.email ?? "").split("@")[0] || "회원",
+      meeting: nx ? {
+        date: nx.date, program: nx.program, title: nx.title,
+        place: chap?.meeting_place ?? null, time: chap?.meeting_time ?? null,
+        checkinHref: nx.checkin_token ? `/checkin/${nx.id}?t=${nx.checkin_token}` : null,
+      } : null,
+    };
+    return <NoticesBoard isAdmin={false} initial={(annR.data as Announcement[]) ?? []} memberHero={memberHero} />;
   }
 
   // 회원 전체 (RLS: 임원만 조회 가능). 표에서 정렬·필터·검색은 화면에서 처리.
