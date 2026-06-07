@@ -37,10 +37,10 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        {/* 헤더 + 메뉴 (역할별 · 회원용 /checkin 에선 자동 숨김) */}
-        <SiteNav role={role} />
+        {/* 앱 셸: 헤더 + 가로 메뉴 (역할별 · /checkin·랜딩·익명에선 자동 숨김) */}
+        <SiteNav role={role} email={user?.email} />
 
-        <main className="mx-auto max-w-[1320px] px-5 pb-20 pt-6">
+        <main className="mx-auto max-w-[1120px] px-[18px] pb-20 pt-6 md:px-6">
           {children}
         </main>
       </body>
