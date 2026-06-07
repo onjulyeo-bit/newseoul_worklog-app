@@ -48,7 +48,7 @@ export function parseScheduleXlsx(buf: ArrayBuffer): Row[] {
     const session = sRaw ? parseInt(String(sRaw).replace(/[^0-9]/g, ""), 10) || null : null;
     const modeRaw = clean(cell(iMode));
     const mode: Mode = (modeRaw && MODE_MAP[modeRaw]) || "pending";
-    out.push({ date, nth, mode, session, title: clean(cell(iTitle)) ?? "", speaker: clean(cell(iSpeaker)) ?? "", note: "" });
+    out.push({ date, nth, mode, session, title: clean(cell(iTitle)) ?? "", speaker: clean(cell(iSpeaker)) ?? "", note: "", program: "" });
   }
   out.sort((a, b) => a.date.localeCompare(b.date));
   return out;

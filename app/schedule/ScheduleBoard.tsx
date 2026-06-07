@@ -9,10 +9,11 @@ import { parseScheduleXlsx } from "@/lib/parseScheduleXlsx";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
 import { saveSchedule, createEvent, deleteEvent } from "./actions";
 
-export type ExistingRow = { date: string; session: number | null; mode: string; title: string; speaker: string; note: string };
+export type ExistingRow = { date: string; session: number | null; mode: string; title: string; speaker: string; note: string; program: string };
 export type EventRow = { id: string; title: string; date: string; end_date: string | null; type: string | null; location: string | null; link: string | null };
 
 const EVENT_TYPES = ["한국대회", "송년회", "봄소풍", "수련회", "총회", "기타"];
+const PROGRAMS = ["", "예배", "포럼", "회만시", "특강", "기타행사"];
 
 const MODES: { v: Mode; label: string }[] = [
   { v: "online", label: "온라인" }, { v: "offline", label: "오프라인" },
@@ -31,7 +32,7 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
   const [feeV, setFeeV] = useState(fee != null ? String(fee) : "");
   const [accountV, setAccountV] = useState(account ?? "");
   const [rows, setRows] = useState<Row[]>(
-    existing.map((e) => ({ date: e.date, nth: nthOf(e.date), mode: e.mode as Mode, session: e.session, title: e.title, speaker: e.speaker, note: e.note })),
+    existing.map((e) => ({ date: e.date, nth: nthOf(e.date), mode: e.mode as Mode, session: e.session, title: e.title, speaker: e.speaker, note: e.note, program: e.program })),
   );
   const [genOpen, setGenOpen] = useState(existing.length === 0);
   const [result, setResult] = useState("");
@@ -61,11 +62,11 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
     setGenOpen(false);
   };
   const setMode = (date: string, mode: Mode) => setRows((prev) => renumber(prev.map((r) => (r.date === date ? { ...r, mode } : r)), anchorDate, anchorSession));
-  const setField = (date: string, k: "title" | "speaker", v: string) => setRows((prev) => prev.map((r) => (r.date === date ? { ...r, [k]: v } : r)));
+  const setField = (date: string, k: "title" | "speaker" | "program", v: string) => setRows((prev) => prev.map((r) => (r.date === date ? { ...r, [k]: v } : r)));
   const recompute = () => setRows((prev) => renumber([...prev], anchorDate, anchorSession));
 
   const onSave = () => startTransition(async () => {
-    const res = await saveSchedule(rows.map((r) => ({ date: r.date, mode: r.mode, session: r.session, title: r.title, speaker: r.speaker, note: r.note })), feeV ? Number(feeV) : null, accountV || null);
+    const res = await saveSchedule(rows.map((r) => ({ date: r.date, mode: r.mode, session: r.session, title: r.title, speaker: r.speaker, note: r.note, program: r.program })), feeV ? Number(feeV) : null, accountV || null);
     setResult(res.error ? "❌ " + res.error : `✅ 저장 완료 — ${res.count}개 일정`);
   });
 
@@ -159,7 +160,7 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
           <table className="w-full border-collapse text-[14px]">
             <thead>
               <tr className="border-b-[1.5px] border-line text-left">
-                {["회차", "날짜", "N째", "모드", "주제", "강사·발제", "비고"].map((h) => (
+                {["회차", "날짜", "N째", "모드", "프로그램", "주제", "강사·발제", "비고"].map((h) => (
                   <th key={h} className="whitespace-nowrap px-3 py-2.5 text-[12px] font-bold text-ink-soft">{h}</th>
                 ))}
               </tr>
@@ -201,6 +202,11 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
                       <td className="px-3 py-1.5">
                         <select value={r.mode} onChange={(e) => setMode(r.date, e.target.value as Mode)} className="min-h-[34px] rounded-md border border-line bg-card px-2 text-[13px] font-semibold outline-none focus:border-primary-focus">
                           {MODES.map((mm) => <option key={mm.v} value={mm.v}>{mm.label}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-3 py-1.5">
+                        <select value={r.program} onChange={(e) => setField(r.date, "program", e.target.value)} className="min-h-[34px] rounded-md border border-line bg-card px-2 text-[13px] outline-none focus:border-primary-focus">
+                          {PROGRAMS.map((p) => <option key={p} value={p}>{p || "—"}</option>)}
                         </select>
                       </td>
                       <td className="px-3 py-1.5"><input value={r.title} onChange={(e) => setField(r.date, "title", e.target.value)} placeholder="주제/북토크" className="min-h-[34px] w-[170px] rounded-md border border-line bg-card px-2 text-[13px] outline-none focus:border-primary-focus" /></td>

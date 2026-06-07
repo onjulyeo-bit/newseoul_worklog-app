@@ -11,6 +11,7 @@ type SaveRow = {
   title: string;
   speaker: string;
   note: string;
+  program: string;
 };
 
 export async function saveSchedule(
@@ -26,6 +27,7 @@ export async function saveSchedule(
     mode: r.mode,
     title: r.title || null,
     speaker: r.speaker || null,
+    program: r.program || null,
     fee,
     account_info: account,
     note: r.note || null,

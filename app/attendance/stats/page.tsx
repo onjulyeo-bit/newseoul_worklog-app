@@ -16,7 +16,7 @@ export default async function AttendanceStatsPage({ searchParams }: { searchPara
 
   const today = new Date().toISOString().slice(0, 10);
   const [mtR, attR, memR] = await Promise.all([
-    supabase.from("meetings").select("id, session_no, date, mode, title").eq("chapter_id", "새서울").in("mode", ["online", "offline"]).order("date", { ascending: true }),
+    supabase.from("meetings").select("id, session_no, date, mode, title, program").eq("chapter_id", "새서울").in("mode", ["online", "offline"]).order("date", { ascending: true }),
     supabase.from("attendance").select("meeting_id, member_id, present").eq("present", true),
     supabase.from("members").select("id, name").eq("chapter_id", "새서울"),
   ]);
@@ -46,6 +46,16 @@ export default async function AttendanceStatsPage({ searchParams }: { searchPara
 
   const avgRate = past.length ? Math.round(past.reduce((s, m) => s + pct(byMeeting.get(m.id) ?? 0, totalMembers), 0) / past.length) : 0;
   const award = memberRows.filter((r) => pct(r.n, denom) >= 90 && r.n > 0);
+
+  // 프로그램별 (예배/포럼/회만시/특강/기타행사)
+  const progAgg = new Map<string, { meetings: number; attend: number }>();
+  past.forEach((m) => {
+    const p = ((m as { program?: string }).program || "미지정");
+    const e = progAgg.get(p) ?? { meetings: 0, attend: 0 };
+    e.meetings++; e.attend += byMeeting.get(m.id) ?? 0;
+    progAgg.set(p, e);
+  });
+  const progRows = [...progAgg.entries()].map(([p, e]) => ({ p, meetings: e.meetings, avg: Math.round(e.attend / e.meetings), rate: pct(e.attend, e.meetings * totalMembers) })).sort((a, b) => b.rate - a.rate);
 
   const sec = "rounded-lg border border-line bg-card p-5";
   const th = "px-3 py-2 text-left text-[12px] font-bold text-ink-soft";
@@ -77,9 +87,34 @@ export default async function AttendanceStatsPage({ searchParams }: { searchPara
             <div className={sec}><div className="text-[24px] font-black text-success">{award.length}</div><div className="text-[12px] font-bold text-ink-soft">출석상 후보(90%+)</div></div>
           </section>
 
+          {/* 프로그램별 */}
+          <section className={sec}>
+            <h2 className="mb-2 text-[16px] font-bold text-ink">프로그램별 출석률</h2>
+            {progRows.length === 0 ? (
+              <p className="text-[13px] text-ink-soft">연간 일정에서 회차마다 <b>프로그램</b>(예배·포럼·회만시·특강·기타행사)을 지정하면 여기서 비교돼요.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[440px] text-[14px]">
+                  <thead><tr className="border-b-[1.5px] border-line"><th className={th}>프로그램</th><th className={th + " text-right"}>모임수</th><th className={th + " text-right"}>평균 출석</th><th className={th + " w-[130px]"}>출석률</th></tr></thead>
+                  <tbody>
+                    {progRows.map((p) => (
+                      <tr key={p.p} className="border-b border-line last:border-0">
+                        <td className="px-3 py-2 font-bold text-ink">{p.p}</td>
+                        <td className="px-3 py-2 text-right text-ink-soft">{p.meetings}회</td>
+                        <td className="px-3 py-2 text-right font-semibold">{p.avg}명</td>
+                        <td className="px-3 py-2"><div className="flex items-center gap-2">{bar(p.rate)}<span className="w-9 text-right text-[12px] font-bold text-ink">{p.rate}%</span></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="mt-1 text-[12px] text-muted">※ 출석률 높은 프로그램이 호응 좋음 → 프로그램 기획 근거</p>
+          </section>
+
           {/* 회차별 */}
           <section className={sec}>
-            <h2 className="mb-2 text-[16px] font-bold text-ink">회차별(프로그램별) 출석률</h2>
+            <h2 className="mb-2 text-[16px] font-bold text-ink">회차별 출석률</h2>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] text-[14px]">
                 <thead><tr className="border-b-[1.5px] border-line"><th className={th}>회차</th><th className={th}>날짜</th><th className={th}>주제</th><th className={th + " text-right"}>출석</th><th className={th + " w-[120px]"}>출석률</th></tr></thead>

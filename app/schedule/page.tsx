@@ -6,7 +6,7 @@ export default async function SchedulePage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("meetings")
-    .select("date, session_no, mode, title, speaker, note, fee, account_info")
+    .select("date, session_no, mode, title, speaker, note, fee, account_info, program")
     .eq("chapter_id", "새서울")
     .order("date", { ascending: true });
 
@@ -24,6 +24,7 @@ export default async function SchedulePage() {
     title: m.title ?? "",
     speaker: m.speaker ?? "",
     note: m.note ?? "",
+    program: m.program ?? "",
   }));
   const fee = data?.find((m) => m.fee != null)?.fee ?? null;
   const account = data?.find((m) => m.account_info)?.account_info ?? null;
