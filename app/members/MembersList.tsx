@@ -24,6 +24,7 @@ const STATUSES = ["활동", "휴면", "비활동", "OB"];
 const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: "blue", 부부회원: "green", 준회원: "warm", 신입회원: "gray", 유보회원: "gray" };
 const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm", 비활동: "gray", OB: "brand" };
 const AV_COLORS = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
+const PRESET_TAGS = ["증경회장", "지회장", "총무", "간사", "감사", "부총무", "고문", "운영위원", "찬양팀", "봉사팀", "창립멤버", "새가족", "청년부"];
 
 const COLUMNS: { key: string; label: string; field: keyof RawMember }[] = [
   { key: "gender", label: "성별", field: "gender" },
@@ -296,8 +297,11 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
   const [pending, start] = useTransition();
   useEffect(() => { setM(member); setEdit(false); }, [member]);
 
+  const [newTag, setNewTag] = useState("");
   const set = (k: keyof RawMember, v: string | boolean) => setM((p) => ({ ...p, [k]: v }));
   const setPhoto = (url: string | null) => { setM((p) => ({ ...p, photo_url: url })); onSaved({ ...m, photo_url: url }); };
+  const toggleTag = (t: string) => setM((p) => { const cur = p.tags ?? []; return { ...p, tags: cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t] }; });
+  const addTag = () => { const t = newTag.trim(); if (!t) return; setM((p) => ((p.tags ?? []).includes(t) ? p : { ...p, tags: [...(p.tags ?? []), t] })); setNewTag(""); };
 
   const save = () => {
     start(async () => {
@@ -306,6 +310,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
         industry: m.industry, company: m.company, position: m.position,
         vision_school: m.vision_school, leadership_school: m.leadership_school,
         car_model: m.car_model, car_number: m.car_number, parking_registered: m.parking_registered,
+        tags: m.tags ?? [],
       };
       const r = await saveMember(m.id, data);
       if (r.error) { alert("저장 실패: " + r.error); return; }
@@ -374,6 +379,20 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
                 <label className="fld-edit toggle-row"><span className="fld-label">주차등록</span>
                   <button className={`switch ${m.parking_registered ? "on" : ""}`} onClick={() => set("parking_registered", !m.parking_registered)} type="button"><span className="switch-knob" /></button>
                 </label></section>
+              <section className="dm-sec"><h3 className="dm-sec-t">태그 (직책·이력)</h3>
+                <div className="tag-presets">
+                  {PRESET_TAGS.map((t) => <button key={t} type="button" className={`tag-chip ${(m.tags ?? []).includes(t) ? "on" : ""}`} onClick={() => toggleTag(t)}>{t}</button>)}
+                </div>
+                {(m.tags ?? []).length > 0 && (
+                  <div className="tag-selected">
+                    {(m.tags ?? []).map((t) => <span key={t} className="tag-on">{t}<button type="button" onClick={() => toggleTag(t)} aria-label="제거"><X size={12} /></button></span>)}
+                  </div>
+                )}
+                <div className="tag-add">
+                  <input className="inp" value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }} placeholder="직접 추가 (예: 청년부)" />
+                  <button type="button" className="ui-btn ui-soft ui-sm" onClick={addTag}>추가</button>
+                </div>
+              </section>
             </div>
           )}
         </div>
@@ -520,6 +539,15 @@ const MEM_CSS = `
 .moim-mem .switch.on{ background:var(--brand); }
 .moim-mem .switch-knob{ position:absolute; top:3px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:transform .18s; }
 .moim-mem .switch.on .switch-knob{ transform:translateX(19px); }
+.moim-mem .tag-presets{ display:flex; flex-wrap:wrap; gap:6px; }
+.moim-mem .tag-chip{ font-size:12.5px; font-weight:600; color:var(--ink-2); background:#fff; border:1px solid var(--line); border-radius:999px; padding:6px 12px; cursor:pointer; transition:all .12s; }
+.moim-mem .tag-chip:hover{ border-color:#bcd6f5; }
+.moim-mem .tag-chip.on{ background:var(--brand); color:#fff; border-color:var(--brand); }
+.moim-mem .tag-selected{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.moim-mem .tag-on{ display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; color:var(--brand-strong); background:var(--brand-soft); border-radius:999px; padding:5px 6px 5px 11px; }
+.moim-mem .tag-on button{ display:grid; place-items:center; width:16px; height:16px; border-radius:50%; background:rgba(0,82,168,.18); color:var(--brand-strong); border:0; cursor:pointer; }
+.moim-mem .tag-add{ display:flex; gap:8px; margin-top:10px; }
+.moim-mem .tag-add .inp{ flex:1; }
 
 .moim-mem .toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:80; background:var(--ink); color:#fff; font-size:13.5px; font-weight:600; padding:12px 20px; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
 
