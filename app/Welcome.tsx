@@ -37,7 +37,7 @@ export default function Welcome() {
         <div className="shell">
           <div className="topbar">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <span className="brand-badge"><img src="/cbmc-logo.png" alt="CBMC" /></span>
+            <span className="brand-badge"><img src="/cbmc-symbol.webp" alt="CBMC" /></span>
             <div className="brand-text">
               <span className="brand-name">CBMC</span>
               <span className="brand-kicker">Connecting Business &amp; Marketplace to Christ</span>
@@ -124,7 +124,7 @@ const WELCOME_CSS = `
 .moim-welcome .page::before{ content:""; position:absolute; inset:-240px 0 auto 0; height:680px; z-index:0; pointer-events:none; background:radial-gradient(620px 380px at 50% -6%, var(--brand-soft) 0%, rgba(232,241,252,0) 72%); }
 .moim-welcome .shell{ position:relative; z-index:1; width:100%; max-width:460px; margin:0 auto; padding:0 22px; flex:1; display:flex; flex-direction:column; }
 .moim-welcome .topbar{ display:flex; align-items:center; gap:11px; padding:22px 2px 6px; }
-.moim-welcome .brand-badge{ width:48px; height:48px; border-radius:14px; display:grid; place-items:center; background:#fff; border:1px solid var(--line); padding:5px; box-shadow:var(--shadow-sm); flex-shrink:0; overflow:hidden; }
+.moim-welcome .brand-badge{ width:48px; height:48px; border-radius:14px; display:grid; place-items:center; background:#fff; border:1px solid var(--line); padding:6px; box-shadow:var(--shadow-sm); flex-shrink:0; overflow:hidden; }
 .moim-welcome .brand-badge img{ width:100%; height:100%; object-fit:contain; display:block; }
 .moim-welcome .brand-text{ display:flex; flex-direction:column; line-height:1.18; }
 .moim-welcome .brand-name{ font-weight:800; font-size:17px; letter-spacing:-0.03em; }
