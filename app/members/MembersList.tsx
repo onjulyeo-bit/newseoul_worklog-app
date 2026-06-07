@@ -202,7 +202,11 @@ export default function MembersList({ members: initial }: { members: RawMember[]
                     <Avatar name={m.name} size={30} photo={m.photo_url} /><span className="td-nm">{m.name}</span>
                     {m.registration === "비등록" && <span className="reg-dot" title="비등록" />}
                   </td>
-                  {visibleCols.map((c) => <td key={c.key}>{cellValue(m, c.key)}</td>)}
+                  {visibleCols.map((c) => {
+                    const f = c.field; const raw = f ? (m[f] as unknown) : null;
+                    const clip = ["company", "position", "industry", "vision", "leadership"].includes(c.key);
+                    return <td key={c.key} className={clip ? "cell-clip" : ""} title={clip && typeof raw === "string" ? raw : undefined}>{cellValue(m, c.key)}</td>;
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -457,6 +461,7 @@ const MEM_CSS = `
 .moim-mem .mtable{ width:100%; border-collapse:collapse; font-size:13.5px; }
 .moim-mem .mtable th{ text-align:left; font-weight:700; color:var(--ink-3); font-size:12.5px; padding:13px 14px; border-bottom:1px solid var(--line); white-space:nowrap; background:var(--bg-warm); position:sticky; top:0; }
 .moim-mem .mtable td{ padding:11px 14px; border-bottom:1px solid var(--line); color:var(--ink-2); white-space:nowrap; vertical-align:middle; }
+.moim-mem .mtable td.cell-clip{ max-width:200px; overflow:hidden; text-overflow:ellipsis; }
 .moim-mem .mtable tbody tr{ cursor:pointer; transition:background .12s; }
 .moim-mem .mtable tbody tr:hover{ background:var(--brand-softer); }
 .moim-mem .mtable tbody tr:last-child td{ border-bottom:0; }
