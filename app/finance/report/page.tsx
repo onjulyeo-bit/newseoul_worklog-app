@@ -1,13 +1,14 @@
 "use client";
 
-// 통합 보고서 — 월별/분기별/연/전체. 수입·지출 요약 + 연회비 현황 + 식대 정산 + 잔액.
+// 회계 보고서 ⑪ — 클로드디자인 시안 이식. 수입지출·연회비현황·식대정산·잔액 (실 계산 로직 보존).
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { A_INCOME, A_EXPENSE } from "@/lib/classifyTxn";
+import { Printer } from "lucide-react";
+import FinanceTabs from "../FinanceTabs";
+import { FIN_CSS } from "../finCss";
 
-const won = (n: number) => n.toLocaleString("ko-KR");
-// 이름 정규화: "공성덕 _신입"·"조성오- 신입" → "공성덕"·"조성오"
+const won = (n: number) => (n || 0).toLocaleString("ko-KR");
 const coreName = (s: string) => (s || "").split(/[(_\-]/)[0].replace(/\s/g, "").trim();
 type Row = { txn_date: string; direction: "입금" | "출금"; amount: number; balance: number | null; category: string; track: "A" | "B"; counterparty: string };
 type Meeting = { session_no: number | null; date: string };
@@ -26,24 +27,16 @@ export default function ReportPage() {
         supabase.from("transactions").select("txn_date, direction, amount, balance, category, track, counterparty").eq("chapter_id", "새서울").order("txn_date", { ascending: true }),
         supabase.from("meetings").select("session_no, date").eq("chapter_id", "새서울").eq("mode", "offline").order("date", { ascending: true }),
       ]);
-      setRows((txR.data as Row[]) ?? []);
-      setMeetings((mtR.data as Meeting[]) ?? []);
-      setLoading(false);
+      setRows((txR.data as Row[]) ?? []); setMeetings((mtR.data as Meeting[]) ?? []); setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const keyOf = (d: string) => ptype === "month" ? d.slice(0, 7) : ptype === "year" ? d.slice(0, 4) : `${d.slice(0, 4)}-Q${Math.floor((+d.slice(5, 7) - 1) / 3) + 1}`;
-  const periods = useMemo(() => {
-    if (ptype === "all") return [];
-    return Array.from(new Set(rows.map((r) => keyOf(r.txn_date)))).sort().reverse();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, ptype]);
+  const periods = useMemo(() => ptype === "all" ? [] : Array.from(new Set(rows.map((r) => keyOf(r.txn_date)))).sort().reverse(), [rows, ptype]); // eslint-disable-line react-hooks/exhaustive-deps
   const period = ptype === "all" ? "all" : (pkey && periods.includes(pkey) ? pkey : periods[0]) ?? "";
-
   const tx = useMemo(() => rows.filter((r) => ptype === "all" || keyOf(r.txn_date) === period), [rows, ptype, period]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 수입·지출 요약 (A)
   const summary = useMemo(() => {
     const a = tx.filter((r) => r.track === "A");
     const net: Record<string, number> = {};
@@ -54,14 +47,11 @@ export default function ReportPage() {
     const sIn = b.filter((r) => r.direction === "입금").reduce((s, r) => s + r.amount, 0);
     const sOut = b.filter((r) => r.direction === "출금").reduce((s, r) => s + Math.abs(r.amount), 0);
     const sDiff = sIn - sOut;
-    if (sDiff < 0) expense.push({ c: "식대정산 차액", v: -sDiff });
-    else if (sDiff > 0) income.push({ c: "식대정산 차액", v: sDiff });
-    const totalIn = income.reduce((s, x) => s + x.v, 0);
-    const totalOut = expense.reduce((s, x) => s + x.v, 0);
-    return { income, expense, totalIn, totalOut, net: totalIn - totalOut, sIn, sOut, sDiff, sCount: b.filter((r) => r.direction === "입금").length, sOutCount: b.filter((r) => r.direction === "출금").length };
+    if (sDiff < 0) expense.push({ c: "식대정산 차액", v: -sDiff }); else if (sDiff > 0) income.push({ c: "식대정산 차액", v: sDiff });
+    const totalIn = income.reduce((s, x) => s + x.v, 0); const totalOut = expense.reduce((s, x) => s + x.v, 0);
+    return { income, expense, totalIn, totalOut, net: totalIn - totalOut, sIn, sOut, sDiff, sCount: b.filter((r) => r.direction === "입금").length };
   }, [tx]);
 
-  // 연회비 현황 — 사람(이름) 기준. 부부=정회원1+부부회원1. 준회원은 정회원/부부에 없는 이름만.
   const dues = useMemo(() => {
     const y = tx.filter((r) => r.track === "A" && r.category === "연회비" && r.direction === "입금");
     const jung = new Set<string>(), bubu = new Set<string>(), junCand = new Set<string>();
@@ -78,15 +68,11 @@ export default function ReportPage() {
     return { jung: [...jung], bubu: [...bubu], jun, sum };
   }, [tx]);
 
-  // 식대 회차 연동 — B거래를 가장 가까운 오프라인 회차(±10일)에 매칭
   const sikByMeeting = useMemo(() => {
     const b = tx.filter((r) => r.track === "B");
     const nearest = (d: string) => {
       let best: Meeting | null = null, bestDiff = Infinity;
-      for (const m of meetings) {
-        const diff = Math.abs(new Date(d).getTime() - new Date(m.date + "T00:00").getTime()) / 86400000;
-        if (diff < bestDiff) { bestDiff = diff; best = m; }
-      }
+      for (const m of meetings) { const diff = Math.abs(new Date(d).getTime() - new Date(m.date + "T00:00").getTime()) / 86400000; if (diff < bestDiff) { bestDiff = diff; best = m; } }
       return bestDiff <= 10 ? best : null;
     };
     const map = new Map<string, { session: number | null; date: string; inCount: number; inSum: number; out: number }>();
@@ -98,153 +84,154 @@ export default function ReportPage() {
       const e = map.get(m.date)!;
       if (r.direction === "입금") { e.inCount++; e.inSum += r.amount; } else e.out += Math.abs(r.amount);
     }
-    const list = [...map.values()].sort((a, c) => a.date.localeCompare(c.date));
-    return { list, etcInCount, etcIn, etcOut };
+    return { list: [...map.values()].sort((a, c) => a.date.localeCompare(c.date)), etcInCount, etcIn, etcOut };
   }, [tx, meetings]);
 
   const balance = tx.length ? tx[tx.length - 1].balance : null;
-
   const fmtD = (d: string) => d.slice(0, 10).replace(/-/g, ".");
-  const periodLabel = ptype === "all" ? "전체 기간" : ptype === "month" ? `${period.slice(0, 4)}년 ${+period.slice(5, 7)}월` : ptype === "year" ? `${period}년` : `${period.slice(0, 4)}년 ${period.slice(6)}분기`;
+  const periodLabel = ptype === "all" ? "전체 기간" : ptype === "month" ? `${period.slice(0, 4)}.${period.slice(5, 7)}` : ptype === "year" ? `${period}년` : `${period.slice(0, 4)} ${period.slice(6)}분기`;
   const range = tx.length ? `${fmtD(tx[0].txn_date)} ~ ${fmtD(tx[tx.length - 1].txn_date)}` : "—";
-
-  const sec = "rounded-lg border border-line bg-card p-5";
-  const th = "px-3 py-2 text-left text-[12px] font-bold text-ink-soft";
+  const duesTotal = dues.jung.length + dues.bubu.length + dues.jun.length;
 
   return (
-    <div className="mx-auto max-w-[900px]">
-      <div className="flex flex-wrap items-center gap-3 print:hidden">
-        <Link href="/finance" className="text-[13px] font-semibold text-primary hover:underline">← 회계</Link>
-        <Link href="/finance/transactions" className="text-[13px] font-semibold text-primary hover:underline">거래 내역</Link>
-        <button onClick={() => window.print()} className="ml-auto rounded-full border border-line px-4 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">🖨 인쇄 · PDF 저장</button>
-      </div>
-      <div className="mt-1 text-[13px] font-bold text-primary">새서울 CBMC 아름다운 만남</div>
-      <h1 className="text-[22px] font-bold text-ink">회계 보고서</h1>
-      {!loading && rows.length > 0 && (
-        <p className="mt-0.5 text-[14px] text-ink-soft">정산 기간: <b className="text-ink">{periodLabel}</b> <span className="text-muted">({range})</span></p>
-      )}
+    <div className="moim-fin"><style>{FIN_CSS + REP_CSS}</style>
+      <div className="page-head"><div><h1 className="page-title">회계</h1><p className="page-sub">정산 기간의 수입·지출·연회비·식대·잔액을 한 보고서로.</p></div></div>
+      <FinanceTabs />
 
-      {/* 기간 선택 — 인쇄 시 숨김(정산 기간은 위에 표시됨) */}
-      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card px-3 py-2 print:hidden">
-        {(([["month", "월별"], ["quarter", "분기별"], ["year", "연별"], ["all", "전체"]]) as const).map(([v, l]) => (
-          <button key={v} onClick={() => setPtype(v)} className={`rounded-full px-3 py-1 text-[13px] font-semibold ${ptype === v ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{l}</button>
-        ))}
-        {ptype !== "all" && (
-          <select value={period} onChange={(e) => setPkey(e.target.value)} className="ml-1 min-h-[34px] rounded-md border border-line bg-card px-2 text-[13px]">
-            {periods.map((p) => <option key={p} value={p}>{p.replace("-", ". ").replace("Q", "분기 ")}</option>)}
-          </select>
-        )}
-        <span className="ml-auto text-[12px] text-ink-soft">{tx.length}건</span>
+      <div className="rep-bar">
+        <div className="rep-period">
+          {(([["month", "월"], ["quarter", "분기"], ["year", "연간"], ["all", "전체"]]) as const).map(([v, l]) => (
+            <button key={v} className={`pchip ${ptype === v ? "on" : ""}`} onClick={() => setPtype(v)}>{l}</button>
+          ))}
+          {ptype !== "all" && periods.length > 0 && (
+            <select className="month-sel" value={period} onChange={(e) => setPkey(e.target.value)} style={{ marginLeft: 8 }}>
+              {periods.map((p) => <option key={p} value={p}>{p.replace("-", ". ").replace("Q", "분기 ")}</option>)}
+            </select>
+          )}
+        </div>
+        <button className="ui-btn ui-ghost ui-sm" onClick={() => window.print()}><Printer size={16} /> 인쇄 / PDF</button>
       </div>
 
       {loading ? (
-        <p className="mt-6 text-center text-[15px] text-ink-soft">불러오는 중…</p>
+        <div className="card empty">불러오는 중…</div>
       ) : rows.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-line bg-card px-4 py-10 text-center text-[15px] text-ink-soft">저장된 거래가 없어요. <Link href="/finance/import" className="font-semibold text-primary hover:underline">거래 업로드</Link>부터 해주세요.</p>
+        <div className="card empty">저장된 거래가 없어요. <b>거래 가져오기</b>부터 해주세요.</div>
       ) : (
-        <div className="mt-4 flex flex-col gap-4">
-          {/* 1. 수입·지출 요약 */}
-          <section className={sec}>
-            <h2 className="text-[16px] font-bold text-ink">1. 수입 · 지출 요약</h2>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              <div>
-                <div className="mb-1 text-[13px] font-bold text-success">수입</div>
-                <table className="w-full text-[14px]">
-                  <tbody>
-                    {summary.income.map((x) => <tr key={x.c} className="border-b border-line"><td className="py-1.5 text-ink">{x.c}</td><td className="py-1.5 text-right font-semibold text-ink">{won(x.v)}</td></tr>)}
-                    <tr><td className="py-1.5 font-bold text-ink">합계</td><td className="py-1.5 text-right font-bold text-success">{won(summary.totalIn)}</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div>
-                <div className="mb-1 text-[13px] font-bold text-unpaid">지출</div>
-                <table className="w-full text-[14px]">
-                  <tbody>
-                    {summary.expense.map((x) => <tr key={x.c} className="border-b border-line"><td className="py-1.5 text-ink">{x.c}</td><td className="py-1.5 text-right font-semibold text-ink">{won(x.v)}</td></tr>)}
-                    <tr><td className="py-1.5 font-bold text-ink">합계</td><td className="py-1.5 text-right font-bold text-unpaid">{won(summary.totalOut)}</td></tr>
-                  </tbody>
-                </table>
-              </div>
+        <div className="rep-doc">
+          <div className="rep-head">
+            <div className="rep-title-row">
+              <span className="rep-brand">새서울 CBMC <span className="rep-brand-sub">아름다운 만남</span></span>
+              <span className="rep-tag">회계 보고서</span>
             </div>
-            <div className="mt-3 flex items-center justify-between rounded-md bg-surface-soft px-4 py-2.5">
-              <span className="text-[14px] font-bold text-ink">수입 − 지출</span>
-              <span className={`text-[18px] font-black ${summary.net >= 0 ? "text-success" : "text-unpaid"}`}>{won(summary.net)}원</span>
-            </div>
+            <h2 className="rep-h2">정산 기간 · {periodLabel} <span className="rep-range">({range})</span></h2>
+          </div>
+
+          <div className="rep-sum">
+            <div className="rep-sc"><span className="rep-sc-l">총 수입</span><span className="rep-sc-v in mono">{won(summary.totalIn)}</span></div>
+            <div className="rep-sc"><span className="rep-sc-l">총 지출</span><span className="rep-sc-v out mono">{won(summary.totalOut)}</span></div>
+            <div className="rep-sc"><span className="rep-sc-l">당기 수지</span><span className="rep-sc-v mono">{won(summary.net)}</span></div>
+            <div className="rep-sc hl"><span className="rep-sc-l">기말 잔액 (통장)</span><span className="rep-sc-v mono">{balance != null ? won(balance) : "—"}</span></div>
+          </div>
+
+          <div className="rep-cols">
+            <section className="rep-block">
+              <h3 className="rep-bt">수입 내역</h3>
+              <table className="rep-table"><tbody>
+                {summary.income.map((x) => <tr key={x.c}><td>{x.c}</td><td className="mono num in">{won(x.v)}</td></tr>)}
+                <tr className="rep-trow"><td>수입 합계</td><td className="mono num">{won(summary.totalIn)}</td></tr>
+              </tbody></table>
+            </section>
+            <section className="rep-block">
+              <h3 className="rep-bt">지출 내역</h3>
+              <table className="rep-table"><tbody>
+                {summary.expense.map((x) => <tr key={x.c}><td>{x.c}</td><td className="mono num out">{won(x.v)}</td></tr>)}
+                <tr className="rep-trow"><td>지출 합계</td><td className="mono num">{won(summary.totalOut)}</td></tr>
+              </tbody></table>
+            </section>
+          </div>
+
+          <section className="rep-block">
+            <h3 className="rep-bt">연회비 납부 현황</h3>
+            <table className="rep-table">
+              <thead><tr><th>등급</th><th className="num">납부 인원</th></tr></thead>
+              <tbody>
+                <tr><td>정회원</td><td className="mono num">{dues.jung.length}명</td></tr>
+                <tr><td>부부회원</td><td className="mono num">{dues.bubu.length}명</td></tr>
+                <tr><td>준회원</td><td className="mono num">{dues.jun.length}명</td></tr>
+                <tr className="rep-trow"><td>합계 · {won(dues.sum)}원</td><td className="mono num">{duesTotal}명</td></tr>
+              </tbody>
+            </table>
+            <p className="rep-note" style={{ marginTop: 8 }}>정회원: {dues.jung.join(", ") || "—"} / 부부회원: {dues.bubu.join(", ") || "—"} / 준회원: {dues.jun.join(", ") || "—"}</p>
           </section>
 
-          {/* 2. 연회비 현황 */}
-          <section className={sec}>
-            <h2 className="text-[16px] font-bold text-ink">2. 연회비 현황</h2>
-            <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-              {([["정회원", dues.jung.length], ["부부회원", dues.bubu.length], ["준회원", dues.jun.length]] as const).map(([l, v]) => (
-                <div key={l} className="rounded-lg border border-line px-3 py-2">
-                  <div className="text-[20px] font-black text-deep">{v}명</div>
-                  <div className="text-[12px] font-bold text-ink-soft">{l}</div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
-              납부 합계 <b className="text-ink">{won(dues.sum)}원</b> · 총 <b className="text-ink">{dues.jung.length + dues.bubu.length + dues.jun.length}명</b><br />
-              정회원: {dues.jung.join(", ") || "—"}<br />
-              부부회원: {dues.bubu.join(", ") || "—"}<br />
-              준회원: {dues.jun.join(", ") || "—"}
-            </p>
+          <section className="rep-block">
+            <h3 className="rep-bt">식대 정산 (회차별)</h3>
+            <table className="rep-table">
+              <thead><tr><th>회차</th><th>날짜</th><th className="num">입금</th><th className="num">식대 수입</th><th className="num">식대 지출</th><th className="num">잔액</th></tr></thead>
+              <tbody>
+                {sikByMeeting.list.map((m) => { const diff = m.inSum - m.out; return (
+                  <tr key={m.date}><td className="mono">{m.session != null ? `${m.session}회` : "—"}</td><td>{m.date.slice(5).replace("-", "/")}</td>
+                    <td className="num">{m.inCount}명</td><td className="mono num in">{won(m.inSum)}</td><td className="mono num out">{m.out ? won(m.out) : "—"}</td><td className="mono num">{won(diff)}</td></tr>
+                ); })}
+                {(sikByMeeting.etcInCount > 0 || sikByMeeting.etcOut > 0) && (
+                  <tr><td colSpan={2}>기타(미매칭)</td><td className="num">{sikByMeeting.etcInCount}명</td><td className="mono num">{won(sikByMeeting.etcIn)}</td><td className="mono num">{sikByMeeting.etcOut ? won(sikByMeeting.etcOut) : "—"}</td><td className="mono num">{won(sikByMeeting.etcIn - sikByMeeting.etcOut)}</td></tr>
+                )}
+                <tr className="rep-trow"><td colSpan={2}>합계</td><td className="num">{summary.sCount}명</td><td className="mono num">{won(summary.sIn)}</td><td className="mono num">{summary.sOut ? won(summary.sOut) : "—"}</td><td className="mono num">{won(summary.sDiff)}</td></tr>
+              </tbody>
+            </table>
+            {sikByMeeting.list.length === 0 && <p className="rep-note" style={{ marginTop: 8 }}>이 기간 식대 거래가 없거나 매칭할 오프라인 회차가 없어요.</p>}
           </section>
 
-          {/* 3. 식대 정산 (회차별) */}
-          <section className={sec}>
-            <h2 className="text-[16px] font-bold text-ink">3. 식대 정산 (회차별)</h2>
-            <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[500px] text-[14px]">
-                <thead><tr className="border-b-[1.5px] border-line text-[12px] text-ink-soft">
-                  <th className={th}>회차</th><th className={th}>날짜</th>
-                  <th className={th + " text-right"}>입금 인원</th><th className={th + " text-right"}>입금</th>
-                  <th className={th + " text-right"}>결재</th><th className={th + " text-right"}>차액</th>
-                </tr></thead>
-                <tbody>
-                  {sikByMeeting.list.map((m) => {
-                    const diff = m.inSum - m.out;
-                    return (
-                      <tr key={m.date} className="border-b border-line">
-                        <td className="px-3 py-2 font-semibold text-ink">{m.session != null ? `${m.session}회` : "—"}</td>
-                        <td className="px-3 py-2 text-ink-soft">{m.date.slice(5).replace("-", "/")}</td>
-                        <td className="px-3 py-2 text-right">{m.inCount}명</td>
-                        <td className="px-3 py-2 text-right text-present">{won(m.inSum)}</td>
-                        <td className="px-3 py-2 text-right text-warning">{m.out ? "-" + won(m.out) : "-"}</td>
-                        <td className={`px-3 py-2 text-right font-semibold ${diff >= 0 ? "text-success" : "text-unpaid"}`}>{won(diff)}</td>
-                      </tr>
-                    );
-                  })}
-                  {(sikByMeeting.etcInCount > 0 || sikByMeeting.etcOut > 0) && (
-                    <tr className="border-b border-line text-ink-soft">
-                      <td className="px-3 py-2" colSpan={2}>기타(회차 미매칭)</td>
-                      <td className="px-3 py-2 text-right">{sikByMeeting.etcInCount}명</td>
-                      <td className="px-3 py-2 text-right">{won(sikByMeeting.etcIn)}</td>
-                      <td className="px-3 py-2 text-right">{sikByMeeting.etcOut ? "-" + won(sikByMeeting.etcOut) : "-"}</td>
-                      <td className="px-3 py-2 text-right">{won(sikByMeeting.etcIn - sikByMeeting.etcOut)}</td>
-                    </tr>
-                  )}
-                  <tr className="font-bold">
-                    <td className="px-3 py-2.5 text-ink" colSpan={2}>합계</td>
-                    <td className="px-3 py-2.5 text-right">{summary.sCount}명</td>
-                    <td className="px-3 py-2.5 text-right text-present">{won(summary.sIn)}</td>
-                    <td className="px-3 py-2.5 text-right text-warning">{summary.sOut ? "-" + won(summary.sOut) : "-"}</td>
-                    <td className={`px-3 py-2.5 text-right ${summary.sDiff >= 0 ? "text-success" : "text-unpaid"}`}>{won(summary.sDiff)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            {sikByMeeting.list.length === 0 && <p className="mt-2 text-center text-[13px] text-ink-soft">이 기간 식대 거래가 없거나 매칭할 오프라인 회차가 없어요.</p>}
-            <p className="mt-1 text-[12px] text-muted">※ 거래일 기준 가장 가까운 오프라인 회차(±10일)에 자동 매칭 · 인원수만 표시 · 차액은 회계에 ‘식대정산 차액’으로 반영</p>
-          </section>
-
-          {/* 4. 잔액 */}
-          <section className={sec}>
-            <h2 className="text-[16px] font-bold text-ink">4. 잔액</h2>
-            <p className="mt-2 text-[15px] text-ink">기간 마지막 거래 후 통장 잔액: <b className="text-[18px] text-deep">{balance != null ? won(balance) + "원" : "—"}</b></p>
-          </section>
+          <div className="rep-foot">
+            <div className="rep-foot-l">당기 수지 {won(summary.net)}원 · 식대 차액 {won(summary.sDiff)}원</div>
+            <div className="rep-closing"><span>기말 잔액</span><strong className="mono">{balance != null ? won(balance) : "—"}원</strong></div>
+          </div>
+          <p className="rep-note">※ 거래일 기준 가장 가까운 오프라인 회차(±10일)에 식대 자동 매칭 · 계좌번호 등 민감정보는 저장하지 않습니다 · 모임온 자동 생성 보고서</p>
         </div>
       )}
     </div>
   );
 }
+
+const REP_CSS = `
+.moim-fin .rep-bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.moim-fin .rep-period{ display:flex; align-items:center; gap:4px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:4px; }
+.moim-fin .pchip{ font-size:13px; font-weight:700; color:var(--ink-3); padding:7px 14px; border-radius:9px; border:0; background:none; cursor:pointer; }
+.moim-fin .pchip.on{ background:var(--brand); color:#fff; }
+.moim-fin .rep-doc{ background:#fff; border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow-sm); padding:28px; }
+.moim-fin .rep-head{ border-bottom:2px solid var(--ink); padding-bottom:16px; margin-bottom:22px; }
+.moim-fin .rep-title-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.moim-fin .rep-brand{ font-size:17px; font-weight:800; letter-spacing:-0.03em; color:var(--brand-strong); }
+.moim-fin .rep-brand-sub{ color:var(--ink-3); font-weight:600; font-size:14px; }
+.moim-fin .rep-tag{ font-size:13px; font-weight:700; color:var(--ink-3); }
+.moim-fin .rep-h2{ font-size:18px; font-weight:800; letter-spacing:-0.03em; margin-top:14px; }
+.moim-fin .rep-range{ font-size:13px; color:var(--ink-3); font-weight:500; }
+.moim-fin .rep-sum{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:24px; }
+.moim-fin .rep-sc{ border:1px solid var(--line); border-radius:14px; padding:15px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.moim-fin .rep-sc-l{ font-size:12.5px; color:var(--ink-3); font-weight:600; }
+.moim-fin .rep-sc-v{ font-size:18px; font-weight:800; letter-spacing:-0.03em; font-variant-numeric:tabular-nums; }
+.moim-fin .rep-sc-v.in{ color:#0b62c4; } .moim-fin .rep-sc-v.out{ color:#c8392c; }
+.moim-fin .rep-sc.hl{ background:var(--brand); border-color:var(--brand); }
+.moim-fin .rep-sc.hl .rep-sc-l{ color:rgba(255,255,255,.85); } .moim-fin .rep-sc.hl .rep-sc-v{ color:#fff; }
+.moim-fin .rep-cols{ display:grid; grid-template-columns:1fr; gap:0; }
+.moim-fin .rep-block{ margin-bottom:22px; }
+.moim-fin .rep-bt{ font-size:14px; font-weight:800; letter-spacing:-0.02em; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+.moim-fin .rep-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+.moim-fin .rep-table th{ text-align:left; font-size:12px; color:var(--ink-3); font-weight:700; padding:8px 10px; border-bottom:1px solid var(--line); }
+.moim-fin .rep-table th.num,.moim-fin .rep-table td.num{ text-align:right; }
+.moim-fin .rep-table td{ padding:9px 10px; border-bottom:1px solid var(--line); color:var(--ink-2); font-weight:500; }
+.moim-fin .rep-table td.num{ font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+.moim-fin .rep-table td.in{ color:#0b62c4; } .moim-fin .rep-table td.out{ color:#c8392c; }
+.moim-fin .rep-trow td{ border-top:2px solid var(--ink); border-bottom:0; font-weight:800; color:var(--ink); background:var(--bg-warm); }
+.moim-fin .rep-foot{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:8px; padding-top:18px; border-top:2px solid var(--ink); flex-wrap:wrap; }
+.moim-fin .rep-foot-l{ font-size:13px; color:var(--ink-3); font-weight:600; }
+.moim-fin .rep-closing{ display:flex; align-items:center; gap:10px; }
+.moim-fin .rep-closing span{ font-size:14px; font-weight:700; }
+.moim-fin .rep-closing strong{ font-size:22px; font-weight:800; color:var(--brand-strong); letter-spacing:-0.03em; }
+.moim-fin .rep-note{ font-size:11.5px; color:var(--ink-3); margin-top:4px; font-weight:500; line-height:1.6; }
+@media (min-width:680px){ .moim-fin .rep-sum{ grid-template-columns:repeat(4,1fr); } .moim-fin .rep-cols{ grid-template-columns:1fr 1fr; gap:28px; } }
+@media print {
+  .moim-fin .page-head, .moim-fin .fin-subtabs, .moim-fin .rep-bar{ display:none !important; }
+  .moim-fin .rep-doc{ border:0; box-shadow:none; border-radius:0; padding:0; }
+}
+`;
