@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import MembersTable, { type Member } from "./members/MembersTable";
 import NoticesBoard, { type Announcement } from "./notices/NoticesBoard";
+import Landing from "./Landing";
 
 export default async function MemberListPage() {
   const supabase = await createClient();
@@ -11,6 +12,9 @@ export default async function MemberListPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // 비로그인(익명) 방문자 → 서비스 소개 랜딩
+  if (!user) return <Landing />;
 
   let role: string | null = null;
   if (user) {

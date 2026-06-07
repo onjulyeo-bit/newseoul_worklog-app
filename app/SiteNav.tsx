@@ -13,7 +13,10 @@ export default function SiteNav({ role }: { role: string | null }) {
   // 체크인·랜딩 미리보기에선 헤더/메뉴 숨김.
   if (pathname?.startsWith("/checkin") || pathname?.startsWith("/preview-landing")) return null;
 
-  const links = role === "admin" ? ADMIN_LINKS : role ? MEMBER_LINKS : [];
+  // 익명(비로그인) 방문자는 랜딩 자체 헤더만 — 공용 헤더 숨김.
+  if (!role) return null;
+
+  const links = role === "admin" ? ADMIN_LINKS : MEMBER_LINKS;
 
   return (
     <>
