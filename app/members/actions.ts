@@ -5,6 +5,15 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+// 드로어용 저장 — redirect 없이 결과만 반환(화면 유지). RLS상 임원만 가능.
+export async function saveMember(id: string, data: Record<string, unknown>): Promise<{ ok?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("members").update(data).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/");
+  return { ok: true };
+}
+
 export async function updateMember(id: string, data: Record<string, unknown>) {
   const supabase = await createClient();
   const { error } = await supabase.from("members").update(data).eq("id", id);
