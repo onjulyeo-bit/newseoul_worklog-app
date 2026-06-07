@@ -50,7 +50,7 @@ export default async function MemberListPage() {
   const { data: membersData } = await supabase
     .from("members")
     .select(
-      "id, name, gender, phone, registration, grade, status, spouse_name, industry, company, position, vision_school, leadership_school, car_model, car_number, parking_registered, joined_on, tags",
+      "id, name, gender, phone, registration, grade, status, spouse_name, industry, company, position, vision_school, leadership_school, car_model, car_number, parking_registered, joined_on, tags, photo_url",
     )
     .eq("chapter_id", "새서울")
     .order("name", { ascending: true });

@@ -6,8 +6,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ChevronDown, Check, SlidersHorizontal, Search, X, Upload, UserPlus,
-  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone,
+  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { saveMember } from "./actions";
 
 export type RawMember = {
@@ -15,7 +16,7 @@ export type RawMember = {
   grade: string | null; status: string | null; spouse_name: string | null; industry: string | null;
   company: string | null; position: string | null; vision_school: string | null; leadership_school: string | null;
   car_model: string | null; car_number: string | null; parking_registered: boolean | null;
-  joined_on: string | null; tags: string[] | null;
+  joined_on: string | null; tags: string[] | null; photo_url: string | null;
 };
 
 const GRADES = ["명예회원", "정회원", "부부회원", "준회원", "신입회원", "유보회원"];
@@ -40,7 +41,11 @@ const COLUMNS: { key: string; label: string; field: keyof RawMember }[] = [
 ];
 const DEFAULT_COLS = ["gender", "phone", "grade", "status", "company", "position", "join", "tags"];
 
-function Avatar({ name, size = 38 }: { name: string; size?: number }) {
+function Avatar({ name, size = 38, photo }: { name: string; size?: number; photo?: string | null }) {
+  if (photo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <span className="avatar avatar-photo" style={{ width: size, height: size }}><img src={photo} alt={name} /></span>;
+  }
   const ch = name.trim().charAt(0) || "?";
   const color = AV_COLORS[(name.charCodeAt(0) || 0) % AV_COLORS.length];
   return <span className="avatar" style={{ width: size, height: size, background: color, fontSize: size * 0.42 }}>{ch}</span>;
@@ -194,7 +199,7 @@ export default function MembersList({ members: initial }: { members: RawMember[]
               {filtered.map((m) => (
                 <tr key={m.id} onClick={() => setSelected(m)}>
                   <td className="td-name">
-                    <Avatar name={m.name} size={30} /><span className="td-nm">{m.name}</span>
+                    <Avatar name={m.name} size={30} photo={m.photo_url} /><span className="td-nm">{m.name}</span>
                     {m.registration === "비등록" && <span className="reg-dot" title="비등록" />}
                   </td>
                   {visibleCols.map((c) => <td key={c.key}>{cellValue(m, c.key)}</td>)}
@@ -210,7 +215,7 @@ export default function MembersList({ members: initial }: { members: RawMember[]
       <div className="mcards">
         {filtered.map((m) => (
           <button key={m.id} className="mcard" onClick={() => setSelected(m)}>
-            <Avatar name={m.name} size={42} />
+            <Avatar name={m.name} size={42} photo={m.photo_url} />
             <div className="mcard-body">
               <div className="mcard-top"><span className="mcard-name">{m.name}</span>{m.grade && <Badge tone={GRADE_TONE[m.grade] || "gray"}>{m.grade}</Badge>}</div>
               <div className="mcard-meta"><span>{m.company || "—"}</span><span className="dotsep">·</span><span className="mono">{m.phone || "—"}</span></div>
@@ -243,6 +248,44 @@ function EditSelect({ label, value, options, onChange }: { label: string; value:
   );
 }
 
+function PhotoCircle({ member, onChange }: { member: RawMember; onChange: (url: string | null) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; e.target.value = "";
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { alert("5MB 이하 이미지만 올릴 수 있어요."); return; }
+    setBusy(true);
+    const supabase = createClient();
+    const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+    const path = `${member.id}-${Date.now()}.${ext}`;
+    const up = await supabase.storage.from("member-photos").upload(path, f, { upsert: true, contentType: f.type });
+    if (up.error) { setBusy(false); alert("업로드 실패: " + up.error.message); return; }
+    const { data } = supabase.storage.from("member-photos").getPublicUrl(path);
+    const r = await saveMember(member.id, { photo_url: data.publicUrl });
+    setBusy(false);
+    if (r.error) { alert("저장 실패: " + r.error); return; }
+    onChange(data.publicUrl);
+  };
+  const clear = async () => {
+    setBusy(true);
+    const r = await saveMember(member.id, { photo_url: null });
+    setBusy(false);
+    if (r.error) { alert("삭제 실패: " + r.error); return; }
+    onChange(null);
+  };
+  return (
+    <div className="photo-circle">
+      <button className="photo-btn" onClick={() => fileRef.current?.click()} title="사진 변경" type="button" disabled={busy}>
+        <Avatar name={member.name} size={64} photo={member.photo_url} />
+        <span className="photo-cam">{busy ? "…" : <Camera size={13} />}</span>
+      </button>
+      {member.photo_url && !busy && <button className="photo-clear" onClick={clear} title="사진 삭제" type="button"><X size={12} /></button>}
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={pick} />
+    </div>
+  );
+}
+
 function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose: () => void; onSaved: (m: RawMember) => void }) {
   const [edit, setEdit] = useState(false);
   const [m, setM] = useState(member);
@@ -250,6 +293,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
   useEffect(() => { setM(member); setEdit(false); }, [member]);
 
   const set = (k: keyof RawMember, v: string | boolean) => setM((p) => ({ ...p, [k]: v }));
+  const setPhoto = (url: string | null) => { setM((p) => ({ ...p, photo_url: url })); onSaved({ ...m, photo_url: url }); };
 
   const save = () => {
     start(async () => {
@@ -280,7 +324,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
 
         <div className="drawer-body">
           <div className="dm-top">
-            <Avatar name={m.name} size={64} />
+            <PhotoCircle member={m} onChange={setPhoto} />
             <div className="dm-id">
               <h2 className="dm-name">{m.name}</h2>
               <div className="dm-badges">
@@ -347,6 +391,13 @@ const MEM_CSS = `
 .moim-mem *{ box-sizing:border-box; }
 .moim-mem h1,.moim-mem h2,.moim-mem h3,.moim-mem p{ margin:0; }
 .moim-mem .avatar{ display:inline-grid; place-items:center; border-radius:50%; color:#fff; font-weight:700; flex-shrink:0; }
+.moim-mem .avatar-photo{ overflow:hidden; background:#eef0f3; }
+.moim-mem .avatar-photo img{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+.moim-mem .photo-circle{ position:relative; flex-shrink:0; }
+.moim-mem .photo-btn{ position:relative; display:block; padding:0; border:0; background:none; cursor:pointer; border-radius:50%; }
+.moim-mem .photo-btn:disabled{ opacity:.7; cursor:default; }
+.moim-mem .photo-cam{ position:absolute; right:-2px; bottom:-2px; width:24px; height:24px; border-radius:50%; background:var(--brand); color:#fff; display:grid; place-items:center; border:2px solid #fff; font-size:12px; }
+.moim-mem .photo-clear{ position:absolute; top:-4px; right:-4px; width:22px; height:22px; border-radius:50%; background:#16181d; color:#fff; display:grid; place-items:center; border:2px solid #fff; cursor:pointer; }
 .moim-mem .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; letter-spacing:-0.02em; padding:4px 10px; border-radius:999px; white-space:nowrap; }
 .moim-mem .badge-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
 .moim-mem .b-brand{ background:var(--brand-soft); color:var(--brand-strong); }
