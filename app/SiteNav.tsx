@@ -52,9 +52,10 @@ export default function SiteNav({ role, email }: { role: string | null; email?: 
       <style>{SHELL_CSS}</style>
       <header className="hdr">
         <div className="hdr-in">
-          <Link href={isExec ? "/dashboard" : "/"} className="brand" aria-label="모임온 홈">
-            <span className="brand-badge">ON</span>
-            <span className="brand-name">모임<span className="brand-on">온</span></span>
+          <Link href={isExec ? "/dashboard" : "/"} className="brand" aria-label="새서울 CBMC 홈">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <span className="brand-badge"><img src="/cbmc-symbol.webp" alt="CBMC" /></span>
+            <span className="brand-name">CBMC <span className="brand-on">새서울지회</span></span>
           </Link>
           <div className="hdr-right">
             <div className="who">
@@ -97,7 +98,8 @@ const SHELL_CSS = `
 .moim-shell .hdr{ position:sticky; top:0; z-index:40; background:rgba(255,255,255,.86); backdrop-filter:saturate(180%) blur(14px); -webkit-backdrop-filter:saturate(180%) blur(14px); border-bottom:1px solid var(--line); }
 .moim-shell .hdr-in{ max-width:var(--maxw); margin:0 auto; height:58px; padding:0 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .moim-shell .brand{ display:inline-flex; align-items:center; gap:9px; font-weight:800; font-size:19px; letter-spacing:-0.03em; color:var(--ink); text-decoration:none; }
-.moim-shell .brand-badge{ width:26px; height:26px; border-radius:9px; display:grid; place-items:center; background:var(--brand); color:#fff; font-size:12.5px; font-weight:800; box-shadow:0 3px 9px rgba(0,102,204,.32); }
+.moim-shell .brand-badge{ width:30px; height:30px; border-radius:8px; display:grid; place-items:center; background:#fff; border:1px solid var(--line); padding:3px; box-shadow:0 1px 3px rgba(20,24,34,.08); flex-shrink:0; overflow:hidden; }
+.moim-shell .brand-badge img{ width:100%; height:100%; object-fit:contain; display:block; }
 .moim-shell .brand-on{ color:var(--brand); }
 .moim-shell .hdr-right{ display:flex; align-items:center; gap:12px; }
 .moim-shell .who{ display:none; flex-direction:column; align-items:flex-end; line-height:1.25; }
