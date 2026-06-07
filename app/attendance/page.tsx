@@ -13,7 +13,7 @@ export default async function AttendancePage({
   // 실제 모임(온라인/오프라인)만 — 휴회·미정 제외
   const { data: meetingsData } = await supabase
     .from("meetings")
-    .select("id, date, session_no, mode, title, fee, account_info, checkin_token")
+    .select("id, date, session_no, mode, title, program, fee, account_info, checkin_token")
     .eq("chapter_id", "새서울")
     .in("mode", ["online", "offline"])
     .order("date", { ascending: false });
@@ -21,7 +21,7 @@ export default async function AttendancePage({
 
   const { data: membersData } = await supabase
     .from("members")
-    .select("id, name, grade, status")
+    .select("id, name, grade, status, phone")
     .eq("chapter_id", "새서울")
     .order("name", { ascending: true });
   const members: Member[] = membersData ?? [];
