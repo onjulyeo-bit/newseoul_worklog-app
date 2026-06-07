@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, CalendarDays, ClipboardCheck, ReceiptText,
-  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut,
+  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog,
 } from "lucide-react";
 
 type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }> };
@@ -21,6 +21,7 @@ const ADMIN: Item[] = [
   { href: "/notices", label: "공지", Icon: Megaphone },
   { href: "/attendance/stats", label: "출석통계", Icon: BarChart3 },
   { href: "/archive", label: "아카이브", Icon: Archive },
+  { href: "/roles", label: "역할관리", Icon: UserCog },
 ];
 const MEMBER: Item[] = [{ href: "/", label: "공지", Icon: Megaphone }];
 
