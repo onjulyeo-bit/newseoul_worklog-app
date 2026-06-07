@@ -10,18 +10,25 @@ const won = (n: number) => n.toLocaleString("ko-KR");
 // 이름 정규화: "공성덕 _신입"·"조성오- 신입" → "공성덕"·"조성오"
 const coreName = (s: string) => (s || "").split(/[(_\-]/)[0].replace(/\s/g, "").trim();
 type Row = { txn_date: string; direction: "입금" | "출금"; amount: number; balance: number | null; category: string; track: "A" | "B"; counterparty: string };
+type Meeting = { session_no: number | null; date: string };
 
 export default function ReportPage() {
   const [supabase] = useState(() => createClient());
   const [rows, setRows] = useState<Row[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [ptype, setPtype] = useState<"month" | "quarter" | "year" | "all">("month");
   const [pkey, setPkey] = useState("");
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("transactions").select("txn_date, direction, amount, balance, category, track, counterparty").eq("chapter_id", "새서울").order("txn_date", { ascending: true });
-      setRows((data as Row[]) ?? []); setLoading(false);
+      const [txR, mtR] = await Promise.all([
+        supabase.from("transactions").select("txn_date, direction, amount, balance, category, track, counterparty").eq("chapter_id", "새서울").order("txn_date", { ascending: true }),
+        supabase.from("meetings").select("session_no, date").eq("chapter_id", "새서울").eq("mode", "offline").order("date", { ascending: true }),
+      ]);
+      setRows((txR.data as Row[]) ?? []);
+      setMeetings((mtR.data as Meeting[]) ?? []);
+      setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -70,6 +77,30 @@ export default function ReportPage() {
     const jun = [...junCand].filter((n) => !jung.has(n) && !bubu.has(n));
     return { jung: [...jung], bubu: [...bubu], jun, sum };
   }, [tx]);
+
+  // 식대 회차 연동 — B거래를 가장 가까운 오프라인 회차(±10일)에 매칭
+  const sikByMeeting = useMemo(() => {
+    const b = tx.filter((r) => r.track === "B");
+    const nearest = (d: string) => {
+      let best: Meeting | null = null, bestDiff = Infinity;
+      for (const m of meetings) {
+        const diff = Math.abs(new Date(d).getTime() - new Date(m.date + "T00:00").getTime()) / 86400000;
+        if (diff < bestDiff) { bestDiff = diff; best = m; }
+      }
+      return bestDiff <= 10 ? best : null;
+    };
+    const map = new Map<string, { session: number | null; date: string; inCount: number; inSum: number; out: number }>();
+    let etcInCount = 0, etcIn = 0, etcOut = 0;
+    for (const r of b) {
+      const m = nearest(r.txn_date);
+      if (!m) { if (r.direction === "입금") { etcInCount++; etcIn += r.amount; } else etcOut += Math.abs(r.amount); continue; }
+      if (!map.has(m.date)) map.set(m.date, { session: m.session_no, date: m.date, inCount: 0, inSum: 0, out: 0 });
+      const e = map.get(m.date)!;
+      if (r.direction === "입금") { e.inCount++; e.inSum += r.amount; } else e.out += Math.abs(r.amount);
+    }
+    const list = [...map.values()].sort((a, c) => a.date.localeCompare(c.date));
+    return { list, etcInCount, etcIn, etcOut };
+  }, [tx, meetings]);
 
   const balance = tx.length ? tx[tx.length - 1].balance : null;
 
@@ -160,18 +191,51 @@ export default function ReportPage() {
             </p>
           </section>
 
-          {/* 3. 식대 정산 */}
+          {/* 3. 식대 정산 (회차별) */}
           <section className={sec}>
-            <h2 className="text-[16px] font-bold text-ink">3. 식대 정산</h2>
-            <table className="mt-3 w-full text-[14px]">
-              <thead><tr className="border-b-[1.5px] border-line"><th className={th}>항목</th><th className={th + " text-right"}>인원/건수</th><th className={th + " text-right"}>금액</th></tr></thead>
-              <tbody>
-                <tr className="border-b border-line"><td className="px-3 py-2 text-ink">식대 입금</td><td className="px-3 py-2 text-right">{summary.sCount}명</td><td className="px-3 py-2 text-right font-semibold text-present">{won(summary.sIn)}</td></tr>
-                <tr className="border-b border-line"><td className="px-3 py-2 text-ink">식대 결재</td><td className="px-3 py-2 text-right">{summary.sOutCount}건</td><td className="px-3 py-2 text-right font-semibold text-warning">-{won(summary.sOut)}</td></tr>
-                <tr><td className="px-3 py-2 font-bold text-ink">차액</td><td /><td className={`px-3 py-2 text-right font-bold ${summary.sDiff >= 0 ? "text-success" : "text-unpaid"}`}>{won(summary.sDiff)}</td></tr>
-              </tbody>
-            </table>
-            <p className="mt-1 text-[12px] text-muted">※ 보고서엔 인원수만 (개인정보 최소화) · 차액은 위 ‘식대정산 차액’으로 회계에 반영됨</p>
+            <h2 className="text-[16px] font-bold text-ink">3. 식대 정산 (회차별)</h2>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full min-w-[500px] text-[14px]">
+                <thead><tr className="border-b-[1.5px] border-line text-[12px] text-ink-soft">
+                  <th className={th}>회차</th><th className={th}>날짜</th>
+                  <th className={th + " text-right"}>입금 인원</th><th className={th + " text-right"}>입금</th>
+                  <th className={th + " text-right"}>결재</th><th className={th + " text-right"}>차액</th>
+                </tr></thead>
+                <tbody>
+                  {sikByMeeting.list.map((m) => {
+                    const diff = m.inSum - m.out;
+                    return (
+                      <tr key={m.date} className="border-b border-line">
+                        <td className="px-3 py-2 font-semibold text-ink">{m.session != null ? `${m.session}회` : "—"}</td>
+                        <td className="px-3 py-2 text-ink-soft">{m.date.slice(5).replace("-", "/")}</td>
+                        <td className="px-3 py-2 text-right">{m.inCount}명</td>
+                        <td className="px-3 py-2 text-right text-present">{won(m.inSum)}</td>
+                        <td className="px-3 py-2 text-right text-warning">{m.out ? "-" + won(m.out) : "-"}</td>
+                        <td className={`px-3 py-2 text-right font-semibold ${diff >= 0 ? "text-success" : "text-unpaid"}`}>{won(diff)}</td>
+                      </tr>
+                    );
+                  })}
+                  {(sikByMeeting.etcInCount > 0 || sikByMeeting.etcOut > 0) && (
+                    <tr className="border-b border-line text-ink-soft">
+                      <td className="px-3 py-2" colSpan={2}>기타(회차 미매칭)</td>
+                      <td className="px-3 py-2 text-right">{sikByMeeting.etcInCount}명</td>
+                      <td className="px-3 py-2 text-right">{won(sikByMeeting.etcIn)}</td>
+                      <td className="px-3 py-2 text-right">{sikByMeeting.etcOut ? "-" + won(sikByMeeting.etcOut) : "-"}</td>
+                      <td className="px-3 py-2 text-right">{won(sikByMeeting.etcIn - sikByMeeting.etcOut)}</td>
+                    </tr>
+                  )}
+                  <tr className="font-bold">
+                    <td className="px-3 py-2.5 text-ink" colSpan={2}>합계</td>
+                    <td className="px-3 py-2.5 text-right">{summary.sCount}명</td>
+                    <td className="px-3 py-2.5 text-right text-present">{won(summary.sIn)}</td>
+                    <td className="px-3 py-2.5 text-right text-warning">{summary.sOut ? "-" + won(summary.sOut) : "-"}</td>
+                    <td className={`px-3 py-2.5 text-right ${summary.sDiff >= 0 ? "text-success" : "text-unpaid"}`}>{won(summary.sDiff)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {sikByMeeting.list.length === 0 && <p className="mt-2 text-center text-[13px] text-ink-soft">이 기간 식대 거래가 없거나 매칭할 오프라인 회차가 없어요.</p>}
+            <p className="mt-1 text-[12px] text-muted">※ 거래일 기준 가장 가까운 오프라인 회차(±10일)에 자동 매칭 · 인원수만 표시 · 차액은 회계에 ‘식대정산 차액’으로 반영</p>
           </section>
 
           {/* 4. 잔액 */}
