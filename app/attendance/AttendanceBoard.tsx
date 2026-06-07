@@ -127,7 +127,10 @@ export default function AttendanceBoard({
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-[22px] font-bold text-ink">출석 · 식대 관리</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-[22px] font-bold text-ink">출석 · 식대 관리</h1>
+        <Link href="/attendance/stats" className="rounded-full border border-line px-4 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📊 출석 통계</Link>
+      </div>
 
       {meetings.length === 0 ? (
         <p className="rounded-lg border border-line bg-card px-4 py-10 text-center text-[15px] text-ink-soft">
