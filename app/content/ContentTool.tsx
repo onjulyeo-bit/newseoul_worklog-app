@@ -110,7 +110,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
     <div className="flex flex-col gap-6">
       <div className="grid gap-6 md:grid-cols-2">
         {/* 입력 */}
-        <div className="rounded-lg border border-line bg-card p-6">
+        <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
           {/* 회차 선택 */}
           <label className={lab}>회차 선택 (연간 일정에서 불러오기)</label>
           {meetings.length > 0 ? (
@@ -161,8 +161,8 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
 
         {/* 카톡 글 */}
         <div className="flex flex-col gap-6">
-          <div className="rounded-lg border border-line bg-card p-6"><CopyBox label="📣 카톡 공지글" text={buildNotice(f)} /></div>
-          <div className="rounded-lg border border-line bg-card p-6"><CopyBox label={`📋 진행 순서지 (${modeL(f.mode)})`} text={buildOrder(f)} /></div>
+          <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm"><CopyBox label="📣 카톡 공지글" text={buildNotice(f)} /></div>
+          <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm"><CopyBox label={`📋 진행 순서지 (${modeL(f.mode)})`} text={buildOrder(f)} /></div>
         </div>
       </div>
 

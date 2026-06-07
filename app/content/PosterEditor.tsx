@@ -288,9 +288,9 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
   const miniLab = "mb-1 block text-[12px] font-bold text-ink-soft";
 
   return (
-    <div className="rounded-lg border border-line bg-card p-5">
+    <div className="rounded-[18px] border border-line bg-card p-5 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-[21px] font-bold text-ink">포스터 편집기</h2>
+        <h2 className="text-[19px] font-extrabold tracking-tight text-ink">포스터 편집기</h2>
         <div className="flex items-center gap-2">
           <span className="text-[12px] font-bold text-ink-soft">틀</span>
           {LAYOUTS.map((l) => (
