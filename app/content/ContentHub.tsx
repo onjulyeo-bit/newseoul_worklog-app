@@ -2,21 +2,23 @@
 
 // 콘텐츠 생성 허브 ⑫ — 클로드디자인 모임온 톤(헤더·서브탭). 주간 포스터 / 경조사 전환.
 import { useState } from "react";
-import { Image as ImageIcon, CalendarHeart } from "lucide-react";
+import { Image as ImageIcon, CalendarHeart, Sparkles } from "lucide-react";
 import ContentTool, { type MeetingOpt } from "./ContentTool";
 import OccasionTool from "./OccasionTool";
+import SpecialEventTool from "./SpecialEventTool";
 
 export default function ContentHub({ meetings }: { meetings: MeetingOpt[] }) {
-  const [tab, setTab] = useState<"weekly" | "occasion">("weekly");
+  const [tab, setTab] = useState<"weekly" | "special" | "occasion">("weekly");
   return (
     <div className="moim-content">
       <style>{HUB_CSS}</style>
       <div className="page-head"><div><h1 className="page-title">콘텐츠 생성</h1><p className="page-sub">이번 주 포스터와 안내글을 몇 번의 클릭으로 만들어요.</p></div></div>
       <div className="fin-subtabs">
         <button className={`fin-subtab ${tab === "weekly" ? "active" : ""}`} onClick={() => setTab("weekly")}><ImageIcon size={16} /> 주간 포스터</button>
+        <button className={`fin-subtab ${tab === "special" ? "active" : ""}`} onClick={() => setTab("special")}><Sparkles size={16} /> 특별행사</button>
         <button className={`fin-subtab ${tab === "occasion" ? "active" : ""}`} onClick={() => setTab("occasion")}><CalendarHeart size={16} /> 경조사 안내</button>
       </div>
-      {tab === "weekly" ? <ContentTool meetings={meetings} /> : <OccasionTool />}
+      {tab === "weekly" ? <ContentTool meetings={meetings} /> : tab === "special" ? <SpecialEventTool /> : <OccasionTool />}
     </div>
   );
 }

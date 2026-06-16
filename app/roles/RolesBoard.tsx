@@ -1,10 +1,11 @@
 "use client";
 
-// 역할 관리 — 임원이 로그인한 사람들의 권한(임원/회원/관심)을 지정. profiles RLS상 임원만 수정 가능.
+// 역할 관리 — 메인 관리자(owner)가 사람들의 권한(임원/회원/관심)을 지정. RLS상 메인만 수정 가능.
+// 메인 관리자 본인 행은 잠금(강등 불가). 서브 임원은 이 화면 자체에 못 들어옴.
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export type Profile = { id: string; email: string | null; role: string; created_at: string };
+export type Profile = { id: string; email: string | null; role: string; is_owner?: boolean; created_at: string };
 const ROLES: { v: string; label: string }[] = [{ v: "admin", label: "임원" }, { v: "member", label: "회원" }, { v: "guest", label: "관심" }];
 const roleTone = (r: string) => (r === "admin" ? "b-brand" : r === "member" ? "b-green" : "b-gray");
 const roleLabel = (r: string) => ROLES.find((x) => x.v === r)?.label ?? r;
@@ -18,7 +19,7 @@ export default function RolesBoard({ initial, myId }: { initial: Profile[]; myId
 
   async function setRole(p: Profile, role: string) {
     if (p.role === role) return;
-    if (p.id === myId && role !== "admin" && !confirm("내 권한을 임원에서 내리면 이 화면에 더 못 들어와요. 계속할까요?")) return;
+    if (p.is_owner) { alert("메인 관리자의 권한은 바꿀 수 없어요."); return; }
     setList((l) => l.map((x) => (x.id === p.id ? { ...x, role } : x)));
     const { error } = await supabase.from("profiles").update({ role }).eq("id", p.id);
     if (error) { setList((l) => l.map((x) => (x.id === p.id ? { ...x, role: p.role } : x))); alert("변경 실패: " + error.message); return; }
@@ -33,10 +34,11 @@ export default function RolesBoard({ initial, myId }: { initial: Profile[]; myId
       <div className="page-head"><div><h1 className="page-title">역할 관리</h1><p className="page-sub">로그인한 사람의 권한을 지정해요 · 임원 {counts.admin} · 회원 {counts.member} · 관심 {counts.guest}</p></div></div>
 
       <div className="info-card">
-        <div className="info-row"><span className="badge b-brand">임원</span> 전체 운영(회원·출석·회계·콘텐츠…) 가능</div>
-        <div className="info-row"><span className="badge b-green">회원</span> 공지·콘텐츠만 보기 (개인정보·회계 차단)</div>
+        <div className="info-row"><span className="badge b-owner">메인</span> 최고 관리자 · 영구 보호(여기서만 서브 임원 지정 가능)</div>
+        <div className="info-row"><span className="badge b-brand">임원</span> 전체 운영(회원·출석·회계·콘텐츠…) 가능 · 역할변경은 불가</div>
+        <div className="info-row"><span className="badge b-green">회원</span> 공지·콘텐츠·명단·아카이브 보기 (회계·개인정보 차단)</div>
         <div className="info-row"><span className="badge b-gray">관심</span> 처음 로그인 기본값 · 공지만 보기</div>
-        <p className="info-note">※ 권한은 로그인한 사람이 새로고침하면 바로 반영돼요. 회원이 한 번도 로그인 안 했으면 목록에 안 떠요(로그인해야 생성).</p>
+        <p className="info-note">※ 권한은 로그인한 사람이 새로고침하면 바로 반영돼요. 회원이 한 번도 로그인 안 했으면 목록에 안 떠요(로그인해야 생성). 메인 관리자는 잠겨 있어 바꿀 수 없어요.</p>
       </div>
 
       <div className="card list-card">
@@ -50,11 +52,15 @@ export default function RolesBoard({ initial, myId }: { initial: Profile[]; myId
               <span className="r-av" style={{ background: color }}>{name}</span>
               <div className="r-who">
                 <span className="r-email">{p.email ?? "(이메일 없음)"}{p.id === myId && <span className="r-me">나</span>}</span>
-                <span className="r-cur">현재: <span className={`badge ${roleTone(p.role)}`}>{roleLabel(p.role)}</span></span>
+                <span className="r-cur">현재: <span className={`badge ${p.is_owner ? "b-owner" : roleTone(p.role)}`}>{p.is_owner ? "메인" : roleLabel(p.role)}</span></span>
               </div>
-              <div className="seg">
-                {ROLES.map((r) => <button key={r.v} className={`seg-btn ${p.role === r.v ? "on" : ""}`} onClick={() => setRole(p, r.v)}>{r.label}</button>)}
-              </div>
+              {p.is_owner ? (
+                <span className="r-lock">🔒 메인 관리자 (보호됨)</span>
+              ) : (
+                <div className="seg">
+                  {ROLES.map((r) => <button key={r.v} className={`seg-btn ${p.role === r.v ? "on" : ""}`} onClick={() => setRole(p, r.v)}>{r.label}</button>)}
+                </div>
+              )}
             </div>
           );
         })}
@@ -81,6 +87,8 @@ const CSS = `
 .moim-roles .b-brand{ background:var(--brand-soft); color:var(--brand-strong); }
 .moim-roles .b-green{ background:var(--green-soft); color:var(--green); }
 .moim-roles .b-gray{ background:#eff0f2; color:#6b717c; }
+.moim-roles .b-owner{ background:#fbf0d8; color:#9a6212; }
+.moim-roles .r-lock{ font-size:13px; font-weight:700; color:#9a6212; background:#fbf0d8; padding:7px 14px; border-radius:11px; white-space:nowrap; }
 .moim-roles .info-card{ background:var(--brand-softer); border:1px solid #d6e6fa; border-radius:16px; padding:16px 18px; margin-bottom:16px; max-width:760px; }
 .moim-roles .info-row{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-2); font-weight:500; padding:3px 0; }
 .moim-roles .info-note{ font-size:12px; color:var(--ink-3); margin-top:8px; font-weight:500; line-height:1.5; }

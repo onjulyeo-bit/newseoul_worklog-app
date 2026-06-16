@@ -11,7 +11,7 @@ export type ArchiveItem = {
   content: string | null; image_url: string | null; link: string | null;
 };
 
-const CATEGORIES = ["연혁", "역대회장", "사진", "문서", "기타"];
+const CATEGORIES = ["연혁", "역대임원", "행사사진", "영상", "문서", "기타"];
 
 export default function ArchiveBoard({ items, isAdmin, loggedIn }: { items: ArchiveItem[]; isAdmin: boolean; loggedIn: boolean }) {
   const router = useRouter();
@@ -59,7 +59,7 @@ export default function ArchiveBoard({ items, isAdmin, loggedIn }: { items: Arch
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-[22px] font-bold text-ink">새서울 CBMC 아카이브</h1>
-          <p className="text-[14px] text-ink-soft">창립일·역대 회장·연혁·사진을 기록하고 함께 봅니다.</p>
+          <p className="text-[14px] text-ink-soft">연혁·역대 임원·행사 사진·영상·문서를 기록하고 함께 봅니다.</p>
         </div>
         {isAdmin && <button onClick={() => setShow((v) => !v)} className="min-h-[44px] rounded-full bg-primary px-5 text-[16px] font-semibold text-white hover:bg-primary-pressed">+ 기록 추가</button>}
       </div>
@@ -76,7 +76,7 @@ export default function ArchiveBoard({ items, isAdmin, loggedIn }: { items: Arch
             <div className="sm:col-span-2"><label className="mb-1 block text-[13px] font-bold text-ink-soft">제목 *</label><input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="예: 새서울지회 창립 / 제25대 지회장 홍길동" className={inp} /></div>
             <div className="sm:col-span-2"><label className="mb-1 block text-[13px] font-bold text-ink-soft">내용</label><textarea value={form.content} onChange={(e) => set("content", e.target.value)} className={`${inp} min-h-[80px] py-2`} /></div>
             <div><label className="mb-1 block text-[13px] font-bold text-ink-soft">사진 (선택)</label><input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="block w-full text-[14px] text-ink-soft file:mr-3 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-[14px] file:font-semibold file:text-white" /></div>
-            <div><label className="mb-1 block text-[13px] font-bold text-ink-soft">링크 (선택)</label><input value={form.link} onChange={(e) => set("link", e.target.value)} placeholder="https://" className={inp} /></div>
+            <div><label className="mb-1 block text-[13px] font-bold text-ink-soft">링크 (선택)</label><input value={form.link} onChange={(e) => set("link", e.target.value)} placeholder={form.category === "영상" ? "유튜브 등 영상 링크 https://" : "https://"} className={inp} /></div>
           </div>
           <div className="mt-3 flex items-center gap-3">
             <button onClick={onAdd} disabled={busy} className="min-h-[44px] rounded-full bg-primary px-6 text-[16px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{busy ? "저장 중…" : "저장"}</button>
@@ -104,7 +104,7 @@ export default function ArchiveBoard({ items, isAdmin, loggedIn }: { items: Arch
                 <h3 className="text-[16px] font-bold text-ink">{it.title}</h3>
                 {it.content && <p className="mt-1 whitespace-pre-wrap text-[14px] text-ink-soft">{it.content}</p>}
                 <div className="mt-auto flex items-center gap-3 pt-3">
-                  {it.link && <a href={it.link} target="_blank" rel="noreferrer" className="text-[13px] font-semibold text-primary hover:underline">링크 →</a>}
+                  {it.link && <a href={it.link} target="_blank" rel="noreferrer" className="text-[13px] font-semibold text-primary hover:underline">{it.category === "영상" ? "▶ 영상 보기" : "링크 →"}</a>}
                   {isAdmin && <button onClick={() => onDelete(it.id, it.title)} className="text-[12px] font-bold text-unpaid hover:underline">삭제</button>}
                 </div>
               </div>

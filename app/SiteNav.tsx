@@ -6,24 +6,32 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, CalendarDays, ClipboardCheck, ReceiptText,
-  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog,
+  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact,
 } from "lucide-react";
 
-type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }> };
+type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string };
 
+// 주제별 묶음: 운영(op) → 모임(meet) → 관리(manage) → 설정(settings).
+// 그룹이 바뀌는 자리에 옅은 세로 구분선이 들어간다.
 const ADMIN: Item[] = [
-  { href: "/dashboard", label: "대시보드", Icon: LayoutDashboard },
-  { href: "/", label: "회원관리", Icon: Users },
-  { href: "/schedule", label: "연간일정", Icon: CalendarDays },
-  { href: "/attendance", label: "출석식대", Icon: ClipboardCheck },
-  { href: "/finance", label: "회계", Icon: ReceiptText },
-  { href: "/content", label: "콘텐츠", Icon: ImageIcon },
-  { href: "/notices", label: "공지", Icon: Megaphone },
-  { href: "/attendance/stats", label: "출석통계", Icon: BarChart3 },
-  { href: "/archive", label: "아카이브", Icon: Archive },
-  { href: "/roles", label: "역할관리", Icon: UserCog },
+  { href: "/dashboard", label: "대시보드", Icon: LayoutDashboard, group: "op" },
+  { href: "/notices", label: "공지", Icon: Megaphone, group: "op" },
+  { href: "/content", label: "콘텐츠", Icon: ImageIcon, group: "op" },
+  { href: "/schedule", label: "연간일정", Icon: CalendarDays, group: "meet" },
+  { href: "/attendance", label: "출석식대", Icon: ClipboardCheck, group: "meet" },
+  { href: "/attendance/stats", label: "출석통계", Icon: BarChart3, group: "meet" },
+  { href: "/", label: "회원관리", Icon: Users, group: "manage" },
+  { href: "/finance", label: "회계", Icon: ReceiptText, group: "manage" },
+  { href: "/archive", label: "아카이브", Icon: Archive, group: "manage" },
+  { href: "/roles", label: "역할관리", Icon: UserCog, group: "settings" },
 ];
-const MEMBER: Item[] = [{ href: "/", label: "공지", Icon: Megaphone }];
+// 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지만.
+const MEMBER: Item[] = [
+  { href: "/", label: "공지", Icon: Megaphone },
+  { href: "/directory", label: "회원명단", Icon: Contact },
+  { href: "/archive", label: "아카이브", Icon: Archive },
+];
+const GUEST: Item[] = [{ href: "/", label: "공지", Icon: Megaphone }];
 
 // 현재 경로에 가장 잘 맞는(가장 긴) href 하나만 active
 function activeHref(pathname: string, items: Item[]): string | null {
@@ -37,14 +45,18 @@ function activeHref(pathname: string, items: Item[]): string | null {
   return best;
 }
 
-export default function SiteNav({ role, email }: { role: string | null; email?: string | null }) {
+export default function SiteNav({ role, email, isOwner = false }: { role: string | null; email?: string | null; isOwner?: boolean }) {
   const pathname = usePathname() ?? "";
 
   if (pathname.startsWith("/checkin") || pathname.startsWith("/preview-landing")) return null;
   if (!role) return null; // 익명 → 랜딩 자체 헤더만
 
   const isExec = role === "admin";
-  const items = isExec ? ADMIN : MEMBER;
+  // 역할관리(/roles)는 메인 관리자(owner)에게만 노출. 서브 임원에겐 숨김.
+  // 회원=공지·명단·아카이브, 관심=공지만.
+  const items = isExec
+    ? ADMIN.filter((it) => it.href !== "/roles" || isOwner)
+    : role === "member" ? MEMBER : GUEST;
   const active = activeHref(pathname, items);
   const name = (email ?? "").split("@")[0] || "사용자";
 
@@ -64,7 +76,7 @@ export default function SiteNav({ role, email }: { role: string | null; email?: 
               <span className="who-mail">{email}</span>
             </div>
             <span className={`role-badge ${isExec ? "is-exec" : ""}`}>
-              <span className="role-dot" />{isExec ? "임원" : "회원"}
+              <span className="role-dot" />{isExec ? "임원" : role === "member" ? "회원" : "관심"}
             </span>
             <form action="/auth/signout" method="post">
               <button className="icon-btn" title="로그아웃" aria-label="로그아웃" type="submit"><LogOut size={19} /></button>
@@ -74,12 +86,17 @@ export default function SiteNav({ role, email }: { role: string | null; email?: 
 
         <nav className="navbar">
           <div className="navbar-in">
-            {items.map(({ href, label, Icon }) => {
+            {items.map(({ href, label, Icon, group }, i) => {
               const on = active === href;
+              const prevGroup = i > 0 ? items[i - 1].group : undefined;
+              const divider = group && prevGroup && group !== prevGroup;
               return (
-                <Link key={href} href={href} className={`navtab ${on ? "active" : ""}`}>
-                  <Icon size={17} strokeWidth={on ? 2.4 : 2} /><span>{label}</span>
-                </Link>
+                <span key={href} className="nav-cell">
+                  {divider && <span className="nav-div" aria-hidden />}
+                  <Link href={href} className={`navtab ${on ? "active" : ""}`}>
+                    <Icon size={17} strokeWidth={on ? 2.4 : 2} /><span>{label}</span>
+                  </Link>
+                </span>
               );
             })}
           </div>
@@ -114,6 +131,8 @@ const SHELL_CSS = `
 .moim-shell .navbar{ background:rgba(255,255,255,.86); border-bottom:1px solid var(--line); overflow-x:auto; scrollbar-width:none; }
 .moim-shell .navbar::-webkit-scrollbar{ display:none; }
 .moim-shell .navbar-in{ max-width:var(--maxw); margin:0 auto; padding:0 12px; display:flex; gap:2px; min-width:max-content; }
+.moim-shell .nav-cell{ display:inline-flex; align-items:center; }
+.moim-shell .nav-div{ width:1px; height:18px; margin:0 8px; background:var(--line); flex-shrink:0; }
 .moim-shell .navtab{ position:relative; display:inline-flex; align-items:center; gap:7px; padding:13px 14px 14px; font-size:14.5px; font-weight:600; color:var(--ink-3); white-space:nowrap; text-decoration:none; transition:color .15s; }
 .moim-shell .navtab:hover{ color:var(--ink-2); }
 .moim-shell .navtab.active{ color:var(--brand); }

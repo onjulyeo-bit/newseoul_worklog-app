@@ -16,9 +16,11 @@ export default async function RootLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   let role: string | null = null;
+  let isOwner = false;
   if (user) {
-    const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    const { data } = await supabase.from("profiles").select("role, is_owner").eq("id", user.id).single();
     role = data?.role ?? "guest";
+    isOwner = data?.is_owner === true;
   }
   return (
     <html lang="ko" suppressHydrationWarning>
@@ -38,7 +40,7 @@ export default async function RootLayout({
       </head>
       <body>
         {/* 앱 셸: 헤더 + 가로 메뉴 (역할별 · /checkin·랜딩·익명에선 자동 숨김) */}
-        <SiteNav role={role} email={user?.email} />
+        <SiteNav role={role} email={user?.email} isOwner={isOwner} />
 
         <main className="mx-auto max-w-[1120px] px-[18px] pb-20 pt-6 md:px-6">
           {children}
