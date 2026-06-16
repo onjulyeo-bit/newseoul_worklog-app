@@ -6,6 +6,15 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Mail, AtSign, Send, ShieldCheck, MailCheck, RotateCw, UserPlus, QrCode } from "lucide-react";
 
+// 카카오 말풍선 로고 (lucide에 없어 인라인 SVG). currentColor로 버튼 글자색 따라감.
+function KakaoIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.79 1.86 5.236 4.66 6.62-.205.74-.74 2.68-.847 3.096-.132.516.19.51.4.37.165-.11 2.62-1.78 3.685-2.504.69.103 1.4.158 2.102.158 5.523 0 10-3.477 10-7.74C22 6.477 17.523 3 12 3z" />
+    </svg>
+  );
+}
+
 export default function Welcome() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -29,6 +38,17 @@ export default function Welcome() {
   }
   function onSubmit(e: React.FormEvent) { e.preventDefault(); if (!valid) { setStatus("error"); setErrMsg("올바른 이메일 주소를 입력해 주세요."); return; } send(); }
   async function resend() { await send(); setResent(true); setTimeout(() => setResent(false), 2600); }
+
+  // 회원용 카카오 로그인. 성공 시 브라우저가 카카오 인증 페이지로 자동 이동(redirect)됨.
+  async function signInKakao() {
+    setStatus("idle"); setErrMsg("");
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "kakao",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) { setStatus("error"); setErrMsg(error.message); }
+  }
 
   return (
     <div className="moim-welcome">
@@ -67,6 +87,10 @@ export default function Welcome() {
                 </button>
                 {status === "error" && <p className="login-err">⚠️ {errMsg}</p>}
               </form>
+              <div className="login-divider"><span>또는</span></div>
+              <button type="button" className="btn btn-kakao" onClick={signInKakao}>
+                <KakaoIcon /> 카카오로 로그인
+              </button>
               <div className="login-note">
                 <ShieldCheck size={16} />
                 <span>입력하신 메일로 로그인 링크를 보내드려요. 링크를 누르면 바로 로그인돼요.</span>
@@ -150,6 +174,10 @@ const WELCOME_CSS = `
 .moim-welcome .btn-primary:hover{ background:var(--brand-strong); }
 .moim-welcome .btn-submit{ margin-top:16px; }
 .moim-welcome .login-err{ font-size:13px; color:#c8392c; font-weight:600; margin-top:10px; }
+.moim-welcome .login-divider{ display:flex; align-items:center; gap:12px; margin:18px 0; color:var(--ink-3); font-size:12.5px; font-weight:600; }
+.moim-welcome .login-divider::before,.moim-welcome .login-divider::after{ content:""; flex:1; height:1px; background:var(--line); }
+.moim-welcome .btn-kakao{ background:#FEE500; color:#191600; }
+.moim-welcome .btn-kakao:hover{ background:#f4dc00; }
 .moim-welcome .login-note{ display:flex; align-items:flex-start; gap:8px; font-size:13px; color:var(--ink-3); font-weight:500; margin-top:16px; line-height:1.55; }
 .moim-welcome .login-note svg{ color:var(--brand); flex-shrink:0; margin-top:1px; }
 .moim-welcome .sent-card{ background:var(--brand-softer); border:1px solid #d6e6fa; border-radius:var(--radius-card); box-shadow:var(--shadow-md); padding:30px 24px; margin-top:8px; text-align:center; }
