@@ -17,6 +17,7 @@ export type ParsedMember = {
   car_model: string | null;
   car_number: string | null;
   joined_on: string | null;
+  intended_role: string | null;
   tags: string[];
 };
 
@@ -61,6 +62,7 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
   const iCarModel0 = find("차종");
   const iCarNum0 = find("차량번호");
   const iJoined = find("등록시기", "가입", "등록일");
+  const iIntended = find("운영진");
   const iVision = find("비전");
   const iLeader = find("리더십");
 
@@ -122,6 +124,7 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
           : /^\d{4}$/.test(jRaw) ? `${jRaw}-01-01`           // 연도만(2020) → 1월1일
             : null
         : null,
+      intended_role: (() => { const v = cell(iIntended); return v === "O" || v === "운영진" || v === "운영진예정" ? "admin" : null; })(),
       tags: role ? [role] : [],
     });
   }

@@ -11,7 +11,7 @@ export default async function RolesPage() {
 
   const [{ data: profs }, { data: mems }] = await Promise.all([
     supabase.from("profiles").select("id, email, role, is_owner, member_id, created_at").order("created_at", { ascending: true }),
-    supabase.from("members").select("id, name, email").eq("chapter_id", "새서울").order("name", { ascending: true }),
+    supabase.from("members").select("id, name, email, intended_role").eq("chapter_id", "새서울").order("name", { ascending: true }),
   ]);
 
   return <RolesBoard initial={(profs as Profile[]) ?? []} members={(mems as MemberOpt[]) ?? []} myId={user!.id} />;

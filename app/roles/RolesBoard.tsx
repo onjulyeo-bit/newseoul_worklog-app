@@ -7,7 +7,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type Profile = { id: string; email: string | null; role: string; is_owner?: boolean; member_id?: string | null; created_at: string };
-export type MemberOpt = { id: string; name: string; email: string | null };
+export type MemberOpt = { id: string; name: string; email: string | null; intended_role?: string | null };
 
 const ROLES: { v: string; label: string }[] = [{ v: "admin", label: "운영진" }, { v: "member", label: "회원" }, { v: "guest", label: "관심" }];
 const roleTone = (r: string) => (r === "admin" ? "b-brand" : r === "member" ? "b-green" : "b-gray");
@@ -35,7 +35,9 @@ export default function RolesBoard({ initial: init, members, myId }: { initial: 
 
   async function linkMember(p: Profile, memberId: string) {
     if (!memberId) return;
-    const newRole = p.role === "guest" ? "member" : p.role; // 연결되면 최소 '회원'
+    const m = members.find((x) => x.id === memberId);
+    // 연결되면 최소 '회원'. 명단에 '운영진 예정'이면 운영진으로.
+    const newRole = m?.intended_role === "admin" ? "admin" : (p.role === "guest" ? "member" : p.role);
     setList((l) => l.map((x) => (x.id === p.id ? { ...x, member_id: memberId, role: newRole } : x)));
     const { error } = await supabase.from("profiles").update({ member_id: memberId, role: newRole }).eq("id", p.id);
     if (error) { setList((l) => l.map((x) => (x.id === p.id ? { ...x, member_id: p.member_id ?? null, role: p.role } : x))); alert("연결 실패: " + error.message); return; }

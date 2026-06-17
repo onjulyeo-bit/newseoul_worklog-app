@@ -30,6 +30,7 @@ function toExportRows(members: RawMember[]) {
     차종: m.car_model ?? "",
     차량번호: m.car_number ?? "",
     회원등록일: m.joined_on ?? "",
+    운영진예정: m.intended_role === "admin" ? "O" : "",
     기타: (m.tags ?? []).join(", "),
   }));
 }
@@ -38,7 +39,7 @@ export type RawMember = {
   id: string; name: string; gender: string | null; phone: string | null; email: string | null; registration: string | null;
   grade: string | null; status: string | null; spouse_name: string | null; industry: string | null;
   company: string | null; position: string | null; vision_school: string | null; leadership_school: string | null;
-  car_model: string | null; car_number: string | null; parking_registered: boolean | null;
+  car_model: string | null; car_number: string | null; parking_registered: boolean | null; intended_role: string | null;
   joined_on: string | null; tags: string[] | null; photo_url: string | null;
 };
 
@@ -326,7 +327,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
   const save = () => {
     start(async () => {
       const data = {
-        grade: m.grade, status: m.status, gender: m.gender, phone: m.phone, email: m.email, spouse_name: m.spouse_name,
+        grade: m.grade, status: m.status, gender: m.gender, phone: m.phone, email: m.email, spouse_name: m.spouse_name, intended_role: m.intended_role,
         industry: m.industry, company: m.company, position: m.position,
         vision_school: m.vision_school, leadership_school: m.leadership_school,
         car_model: m.car_model, car_number: m.car_number, parking_registered: m.parking_registered,
@@ -359,6 +360,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
               <div className="dm-badges">
                 {m.grade && <Badge tone={GRADE_TONE[m.grade] || "gray"}>{m.grade}</Badge>}
                 {m.status && <Badge tone={STATUS_TONE[m.status] || "gray"} dot>{m.status}</Badge>}
+                {m.intended_role === "admin" && <Badge tone="brand">운영진 예정</Badge>}
               </div>
               {m.phone && <a className="dm-phone" href={`tel:${m.phone}`}><Phone size={14} /> {m.phone}</a>}
             </div>
@@ -386,7 +388,10 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
                 <EditSelect label="성별" value={m.gender || ""} options={["남", "여"]} onChange={(v) => set("gender", v)} />
                 <EditText label="연락처" value={m.phone || ""} onChange={(v) => set("phone", v)} />
                 <EditText label="이메일 (로그인 연결용)" value={m.email || ""} onChange={(v) => set("email", v)} />
-                <EditText label="배우자" value={m.spouse_name || ""} onChange={(v) => set("spouse_name", v)} /></section>
+                <EditText label="배우자" value={m.spouse_name || ""} onChange={(v) => set("spouse_name", v)} />
+                <label className="fld-edit toggle-row"><span className="fld-label">운영진 예정 <span style={{ color: "#767d8a", fontWeight: 500 }}>(로그인 시 자동 운영진)</span></span>
+                  <button className={`switch ${m.intended_role === "admin" ? "on" : ""}`} onClick={() => setM((p) => ({ ...p, intended_role: p.intended_role === "admin" ? null : "admin" }))} type="button"><span className="switch-knob" /></button>
+                </label></section>
               <section className="dm-sec"><h3 className="dm-sec-t">직업</h3>
                 <EditText label="업종" value={m.industry || ""} onChange={(v) => set("industry", v)} />
                 <EditText label="회사" value={m.company || ""} onChange={(v) => set("company", v)} />
