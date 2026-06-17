@@ -1,6 +1,7 @@
 // 출석 통계 표현부 ⑧ — 클로드디자인 시안. 데이터는 page.tsx(서버)에서 주입.
 import Link from "next/link";
 import { CalendarCheck, Percent, Award, Medal, ChevronRight } from "lucide-react";
+import StatsTabs from "../StatsTabs";
 
 export type ProgRow = { name: string; meetings: number; avg: number; rate: number };
 export type SessRow = { id: string; round: number | string; topic: string; online: boolean; present: number; total: number; rate: number };
@@ -18,6 +19,8 @@ export default function StatsView({
   return (
     <div className="moim-stats">
       <style>{STATS_CSS}</style>
+
+      <StatsTabs />
 
       <div className="page-head">
         <div><h1 className="page-title">체크인 통계</h1><p className="page-sub">{curYear || "—"}년 출석 현황과 출석상 후보</p></div>

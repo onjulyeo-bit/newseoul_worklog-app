@@ -19,7 +19,7 @@ const ADMIN: Item[] = [
   { href: "/content", label: "콘텐츠", Icon: ImageIcon, group: "op" },
   { href: "/schedule", label: "연간일정", Icon: CalendarDays, group: "meet" },
   { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, group: "meet" },
-  { href: "/attendance/stats", label: "체크인 통계", Icon: BarChart3, group: "meet" },
+  { href: "/attendance/stats", label: "통계", Icon: BarChart3, group: "meet" },
   { href: "/", label: "회원관리", Icon: Users, group: "manage" },
   { href: "/finance", label: "회계", Icon: ReceiptText, group: "manage" },
   { href: "/archive", label: "아카이브", Icon: Archive, group: "manage" },
@@ -42,7 +42,9 @@ function activeHref(pathname: string, items: Item[]): string | null {
   for (const { href } of items) {
     const match = href === "/"
       ? pathname === "/" || pathname.startsWith("/members")
-      : pathname === href || pathname.startsWith(href + "/");
+      : href === "/attendance/stats"
+        ? pathname.startsWith("/attendance/stats") || pathname.startsWith("/attendance/registration") // 통계 탭(등록현황 포함)
+        : pathname === href || pathname.startsWith(href + "/");
     if (match && (best === null || href.length > best.length)) best = href;
   }
   return best;
