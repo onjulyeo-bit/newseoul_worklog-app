@@ -4,15 +4,31 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { A_CATEGORIES, B_CATEGORIES } from "@/lib/classifyTxn";
-import { ChevronDown, Trash2 } from "lucide-react";
+import { ChevronDown, Trash2, Download } from "lucide-react";
 import FinanceTabs from "../FinanceTabs";
 import { FIN_CSS } from "../finCss";
+import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
 
 const won = (n: number) => "₩" + (n || 0).toLocaleString("ko-KR");
 type Row = {
   id: string; txn_date: string; direction: "입금" | "출금"; amount: number; balance: number | null;
   category: string; track: "A" | "B"; counterparty: string; memo: string; is_confirmed: boolean;
 };
+
+// 내보내기용 행 (한글 헤더) — 현재 필터된 거래
+function toTxnRows(rows: Row[]) {
+  return rows.map((r) => ({
+    날짜: r.txn_date.slice(0, 10),
+    구분: r.direction,
+    금액: r.amount,
+    잔액: r.balance ?? "",
+    트랙: r.track === "B" ? "식대" : "회계",
+    항목: r.category,
+    적요: r.memo ?? "",
+    이름: r.counterparty ?? "",
+    확정: r.is_confirmed ? "O" : "",
+  }));
+}
 
 export default function TransactionsPage() {
   const [supabase] = useState(() => createClient());
@@ -72,6 +88,10 @@ export default function TransactionsPage() {
         <span className="fil-l">구분</span><Seg val={fDir} set={setFDir} opts={[["all", "전체"], ["입금", "입금"], ["출금", "출금"]]} />
         <span className="fil-l">트랙</span><Seg val={fTrack} set={setFTrack} opts={[["all", "전체"], ["A", "회계"], ["B", "식대"]]} />
         <span className="fil-count">{shown.length}건</span>
+        <div className="fil-export">
+          <button className="exp-btn" disabled={shown.length === 0} onClick={() => downloadXlsx(toTxnRows(shown), "거래내역")}><Download size={15} /> 엑셀</button>
+          <button className="exp-btn" disabled={shown.length === 0} onClick={() => downloadCsv(toTxnRows(shown), "거래내역")}><Download size={15} /> CSV</button>
+        </div>
       </div>
 
       {loading ? (

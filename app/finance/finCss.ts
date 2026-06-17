@@ -75,6 +75,10 @@ export const FIN_CSS = `
 .moim-fin .seg-btn.on{ background:#fff; color:var(--brand-strong); box-shadow:var(--shadow-sm); }
 .moim-fin .month-sel{ appearance:none; -webkit-appearance:none; font-family:inherit; font-size:13px; font-weight:700; color:var(--ink-2); background:#fff; border:1px solid var(--line); border-radius:10px; padding:8px 12px; cursor:pointer; }
 .moim-fin .fil-count{ font-size:12.5px; color:var(--ink-3); font-weight:600; margin-left:auto; }
+.moim-fin .fil-export{ display:flex; gap:6px; }
+.moim-fin .exp-btn{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:700; color:var(--ink-2); background:#fff; border:1px solid var(--line); border-radius:9px; padding:7px 11px; cursor:pointer; }
+.moim-fin .exp-btn:hover{ background:#f7f8f9; border-color:var(--brand); color:var(--brand-strong); }
+.moim-fin .exp-btn:disabled{ opacity:.5; cursor:default; }
 
 .moim-fin .led-sum{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
 .moim-fin .ls-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:6px; min-width:0; }
