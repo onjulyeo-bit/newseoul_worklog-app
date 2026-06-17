@@ -20,6 +20,7 @@ function toExportRows(members: RawMember[]) {
     회원구분: m.grade ?? "",
     상태: m.status ?? "",
     연락처: m.phone ?? "",
+    이메일: m.email ?? "",
     배우자: m.spouse_name ?? "",
     업종: m.industry ?? "",
     직장명: m.company ?? "",
@@ -34,7 +35,7 @@ function toExportRows(members: RawMember[]) {
 }
 
 export type RawMember = {
-  id: string; name: string; gender: string | null; phone: string | null; registration: string | null;
+  id: string; name: string; gender: string | null; phone: string | null; email: string | null; registration: string | null;
   grade: string | null; status: string | null; spouse_name: string | null; industry: string | null;
   company: string | null; position: string | null; vision_school: string | null; leadership_school: string | null;
   car_model: string | null; car_number: string | null; parking_registered: boolean | null;
@@ -325,7 +326,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
   const save = () => {
     start(async () => {
       const data = {
-        grade: m.grade, status: m.status, gender: m.gender, phone: m.phone, spouse_name: m.spouse_name,
+        grade: m.grade, status: m.status, gender: m.gender, phone: m.phone, email: m.email, spouse_name: m.spouse_name,
         industry: m.industry, company: m.company, position: m.position,
         vision_school: m.vision_school, leadership_school: m.leadership_school,
         car_model: m.car_model, car_number: m.car_number, parking_registered: m.parking_registered,
@@ -366,7 +367,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
           {!edit ? (
             <div className="dm-sections">
               <section className="dm-sec"><h3 className="dm-sec-t">기본</h3>
-                <Field label="성별" value={m.gender} /><Field label="연락처" value={m.phone} mono /><Field label="배우자" value={m.spouse_name} /></section>
+                <Field label="성별" value={m.gender} /><Field label="연락처" value={m.phone} mono /><Field label="이메일" value={m.email} mono /><Field label="배우자" value={m.spouse_name} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">직업</h3>
                 <Field label="업종" value={m.industry} /><Field label="회사" value={m.company} /><Field label="직책" value={m.position} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">교육</h3>
@@ -384,6 +385,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
                 <EditSelect label="상태" value={m.status || ""} options={STATUSES} onChange={(v) => set("status", v)} />
                 <EditSelect label="성별" value={m.gender || ""} options={["남", "여"]} onChange={(v) => set("gender", v)} />
                 <EditText label="연락처" value={m.phone || ""} onChange={(v) => set("phone", v)} />
+                <EditText label="이메일 (로그인 연결용)" value={m.email || ""} onChange={(v) => set("email", v)} />
                 <EditText label="배우자" value={m.spouse_name || ""} onChange={(v) => set("spouse_name", v)} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">직업</h3>
                 <EditText label="업종" value={m.industry || ""} onChange={(v) => set("industry", v)} />

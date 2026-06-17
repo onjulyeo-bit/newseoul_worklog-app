@@ -5,6 +5,7 @@ export type ParsedMember = {
   name: string;
   gender: string | null;
   phone: string | null;
+  email: string | null;
   grade: string | null;
   status: string;
   spouse_name: string | null;
@@ -49,6 +50,7 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
   const iName = find("이름");
   const iGender = find("성별");
   const iPhone = find("연락처");
+  const iEmail = find("이메일", "메일", "email", "E-mail");
   const iIndustry = find("업종");
   const iCompany = find("직장");
   const iPosition = find("직위");
@@ -104,6 +106,7 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
       name,
       gender: cell(iGender),
       phone,
+      email: cell(iEmail),
       grade,
       status: statusRaw ?? "활동",
       spouse_name: cell(iSpouse),

@@ -25,6 +25,8 @@ export default function Welcome() {
   useEffect(() => {
     const e = new URLSearchParams(window.location.search).get("error");
     if (e) { setStatus("error"); setErrMsg(e); }
+    // 지난번 이메일 자동 채우기(아이디 저장)
+    try { const saved = localStorage.getItem("cbmc:lastEmail"); if (saved) setEmail(saved); } catch {}
   }, []);
 
   async function send() {
@@ -34,7 +36,8 @@ export default function Welcome() {
       email: email.trim(),
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) { setStatus("error"); setErrMsg(error.message); } else { setStatus("sent"); }
+    if (error) { setStatus("error"); setErrMsg(error.message); }
+    else { setStatus("sent"); try { localStorage.setItem("cbmc:lastEmail", email.trim()); } catch {} }
   }
   function onSubmit(e: React.FormEvent) { e.preventDefault(); if (!valid) { setStatus("error"); setErrMsg("올바른 이메일 주소를 입력해 주세요."); return; } send(); }
   async function resend() { await send(); setResent(true); setTimeout(() => setResent(false), 2600); }
