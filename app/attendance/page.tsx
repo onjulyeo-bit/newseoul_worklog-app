@@ -17,7 +17,14 @@ export default async function AttendancePage({
     .eq("chapter_id", "새서울")
     .in("mode", ["online", "offline"])
     .order("date", { ascending: false });
-  const meetings: Meeting[] = meetingsData ?? [];
+  const all: Meeting[] = meetingsData ?? [];
+
+  // 정렬: 오늘·지난 회차를 최신순으로 앞에, 다가올(미래) 회차는 뒤로.
+  // (체크인·식대는 보통 진행된/오늘 회차를 다루므로 현재가 맨 앞에 오게 한다)
+  const today = new Date().toISOString().slice(0, 10);
+  const pastOrToday = all.filter((m) => (m.date ?? "") <= today); // 쿼리가 내림차순 → 최신 지난회차 먼저
+  const future = all.filter((m) => (m.date ?? "") > today).reverse(); // 미래는 가까운 것부터(오름차순)
+  const meetings: Meeting[] = [...pastOrToday, ...future];
 
   const { data: membersData } = await supabase
     .from("members")
