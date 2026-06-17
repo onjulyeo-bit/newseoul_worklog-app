@@ -161,17 +161,17 @@ export default function MemberEditForm({ member }: { member: MemberRow }) {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>등급</label>
+            <label className={labelCls}>회원구분</label>
             <select value={form.grade} onChange={(e) => set("grade", e.target.value)} className={inputCls}>
               <option value="">선택 안 함</option>
-              {["정회원", "부부회원", "명예회원", "준회원", "신입회원", "유보회원"].map((g) => <option key={g} value={g}>{g}</option>)}
+              {["정회원", "가족회원", "준회원", "신입회원", "명예회원", "유보회원", "VIP"].map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
           </div>
           <div>
             <label className={labelCls}>상태</label>
             <select value={form.status} onChange={(e) => set("status", e.target.value)} className={inputCls}>
               <option value="">선택 안 함</option>
-              {["활동", "휴면", "비활동", "OB"].map((g) => <option key={g} value={g}>{g}</option>)}
+              {["활동", "휴면", "OB"].map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
           </div>
         </div>

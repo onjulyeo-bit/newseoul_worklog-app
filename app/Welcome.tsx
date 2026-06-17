@@ -114,11 +114,11 @@ export default function Welcome() {
           <div className="helps">
             <div className="help">
               <div className="help-ic"><UserPlus size={19} /></div>
-              <div className="help-body"><div className="t">처음이신가요?</div><div className="d">간사(임원)가 등록한 이메일로 로그인하세요.</div></div>
+              <div className="help-body"><div className="t">처음이신가요?</div><div className="d">간사(운영진)가 등록한 이메일로 로그인하세요.</div></div>
             </div>
             <div className="help">
               <div className="help-ic"><QrCode size={19} /></div>
-              <div className="help-body"><div className="t">출석 체크는 현장에서</div><div className="d">출석은 모임 현장 QR로 따로 진행돼요.</div></div>
+              <div className="help-body"><div className="t">체크인은 현장에서</div><div className="d">체크인은 모임 현장 QR로 진행돼요.</div></div>
             </div>
           </div>
 

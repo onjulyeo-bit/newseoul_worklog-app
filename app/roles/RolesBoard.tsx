@@ -6,7 +6,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type Profile = { id: string; email: string | null; role: string; is_owner?: boolean; created_at: string };
-const ROLES: { v: string; label: string }[] = [{ v: "admin", label: "임원" }, { v: "member", label: "회원" }, { v: "guest", label: "관심" }];
+const ROLES: { v: string; label: string }[] = [{ v: "admin", label: "운영진" }, { v: "member", label: "회원" }, { v: "guest", label: "관심" }];
 const roleTone = (r: string) => (r === "admin" ? "b-brand" : r === "member" ? "b-green" : "b-gray");
 const roleLabel = (r: string) => ROLES.find((x) => x.v === r)?.label ?? r;
 const AV = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
@@ -31,12 +31,12 @@ export default function RolesBoard({ initial, myId }: { initial: Profile[]; myId
   return (
     <div className="moim-roles">
       <style>{CSS}</style>
-      <div className="page-head"><div><h1 className="page-title">역할 관리</h1><p className="page-sub">로그인한 사람의 권한을 지정해요 · 임원 {counts.admin} · 회원 {counts.member} · 관심 {counts.guest}</p></div></div>
+      <div className="page-head"><div><h1 className="page-title">권한 설정</h1><p className="page-sub">로그인한 사람의 권한을 지정해요 · 운영진 {counts.admin} · 회원 {counts.member} · 관심 {counts.guest}</p></div></div>
 
       <div className="info-card">
-        <div className="info-row"><span className="badge b-owner">메인</span> 최고 관리자 · 영구 보호(여기서만 서브 임원 지정 가능)</div>
-        <div className="info-row"><span className="badge b-brand">임원</span> 전체 운영(회원·출석·회계·콘텐츠…) 가능 · 역할변경은 불가</div>
-        <div className="info-row"><span className="badge b-green">회원</span> 공지·콘텐츠·명단·아카이브 보기 (회계·개인정보 차단)</div>
+        <div className="info-row"><span className="badge b-owner">메인</span> 최고 관리자 · 영구 보호(여기서만 서브 관리자 지정 가능)</div>
+        <div className="info-row"><span className="badge b-brand">운영진</span> 전체 앱 기능 사용(회원·체크인·회계·콘텐츠…) · 역할변경은 불가</div>
+        <div className="info-row"><span className="badge b-green">회원</span> 공지·회원명단·아카이브 보기 (회계·개인정보 차단)</div>
         <div className="info-row"><span className="badge b-gray">관심</span> 처음 로그인 기본값 · 공지만 보기</div>
         <p className="info-note">※ 권한은 로그인한 사람이 새로고침하면 바로 반영돼요. 회원이 한 번도 로그인 안 했으면 목록에 안 떠요(로그인해야 생성). 메인 관리자는 잠겨 있어 바꿀 수 없어요.</p>
       </div>

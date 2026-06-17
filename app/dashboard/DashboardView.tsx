@@ -16,13 +16,13 @@ const mdNum = (iso: string) => { const t = new Date(iso); return `${t.getMonth()
 const noticeTone = (c: string) => (c === "공지" ? "b-blue" : c === "포럼" ? "b-brand" : c === "경조사" ? "b-warm" : "b-gray");
 
 const SHORTCUTS = [
-  { href: "/", label: "회원관리", Icon: Users, desc: "명단·등급" },
+  { href: "/", label: "회원관리", Icon: Users, desc: "명단·회원구분" },
   { href: "/schedule", label: "연간일정", Icon: CalendarDays, desc: "금요 모임" },
-  { href: "/attendance", label: "출석·식대", Icon: ClipboardCheck, desc: "체크·정산" },
+  { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, desc: "체크·정산" },
   { href: "/finance", label: "회계", Icon: ReceiptText, desc: "수입·지출" },
   { href: "/content", label: "콘텐츠 생성", Icon: ImageIcon, desc: "포스터·안내" },
   { href: "/notices", label: "공지", Icon: Megaphone, desc: "게시·전달" },
-  { href: "/attendance/stats", label: "출석통계", Icon: BarChart3, desc: "출석률" },
+  { href: "/attendance/stats", label: "체크인 통계", Icon: BarChart3, desc: "출석률" },
 ];
 
 function Stat({ Icon, tone, label, value, sub }: { Icon: React.ComponentType<{ size?: number }>; tone: string; label: string; value: string; sub?: string }) {
@@ -80,7 +80,7 @@ export default function DashboardView({
                   </div>
                 </div>
                 <div className="meet-actions">
-                  <Link className="ui-btn ui-primary ui-md" href="/attendance"><ClipboardCheck size={18} /> 출석 관리</Link>
+                  <Link className="ui-btn ui-primary ui-md" href="/attendance"><ClipboardCheck size={18} /> 체크인 관리</Link>
                   <Link className="ui-btn ui-soft ui-md" href="/content"><ImageIcon size={18} /> 포스터 만들기</Link>
                 </div>
               </div>

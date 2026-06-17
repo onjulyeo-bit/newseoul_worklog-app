@@ -131,8 +131,8 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
       <style>{ATT_CSS}</style>
 
       <div className="page-head">
-        <div><h1 className="page-title">출석·식대</h1><p className="page-sub">회차를 골라 출석을 체크하고 식대를 안내하세요.</p></div>
-        <Link href="/attendance/stats" className="ui-btn ui-ghost ui-sm">📊 출석 통계</Link>
+        <div><h1 className="page-title">체크인·식대</h1><p className="page-sub">회차를 골라 체크인하고 식대를 안내하세요.</p></div>
+        <Link href="/attendance/stats" className="ui-btn ui-ghost ui-sm">📊 체크인 통계</Link>
       </div>
 
       {meetings.length === 0 ? (

@@ -20,7 +20,7 @@ export default function StatsView({
       <style>{STATS_CSS}</style>
 
       <div className="page-head">
-        <div><h1 className="page-title">출석 통계</h1><p className="page-sub">{curYear || "—"}년 출석 현황과 출석상 후보</p></div>
+        <div><h1 className="page-title">체크인 통계</h1><p className="page-sub">{curYear || "—"}년 출석 현황과 출석상 후보</p></div>
         <div className="page-acts">
           {years.length > 1 ? years.map((y) => (
             <Link key={y} href={`/attendance/stats?year=${y}`} className={`year-pill ${y === curYear ? "on" : ""}`}>{y}년</Link>

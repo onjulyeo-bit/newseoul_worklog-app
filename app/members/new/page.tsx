@@ -24,7 +24,6 @@ async function addMember(formData: FormData) {
     name,
     grade: emptyToNull(formData, "grade"),
     status: emptyToNull(formData, "status"),
-    registration: emptyToNull(formData, "registration"),
     phone: emptyToNull(formData, "phone"),
     company: emptyToNull(formData, "company"),
     position: emptyToNull(formData, "position"),
@@ -78,35 +77,27 @@ export default async function NewMemberPage({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>등급</label>
+              <label className={labelCls}>회원구분</label>
               <select name="grade" className={inputCls} defaultValue="">
                 <option value="">선택 안 함</option>
-                <option value="명예회원">명예회원</option>
                 <option value="정회원">정회원</option>
-                <option value="부부회원">부부회원</option>
+                <option value="가족회원">가족회원</option>
                 <option value="준회원">준회원</option>
                 <option value="신입회원">신입회원</option>
+                <option value="명예회원">명예회원</option>
+                <option value="유보회원">유보회원</option>
+                <option value="VIP">VIP</option>
               </select>
             </div>
             <div>
               <label className={labelCls}>상태</label>
               <select name="status" className={inputCls} defaultValue="">
                 <option value="">선택 안 함</option>
-                <option value="활동중">활동중</option>
-                <option value="유보">유보</option>
-                <option value="등록전">등록전</option>
+                <option value="활동">활동</option>
+                <option value="휴면">휴면</option>
                 <option value="OB">OB</option>
               </select>
             </div>
-          </div>
-
-          <div>
-            <label className={labelCls}>등록 여부</label>
-            <select name="registration" className={inputCls} defaultValue="">
-              <option value="">선택 안 함</option>
-              <option value="등록회원">등록회원</option>
-              <option value="비등록">비등록·관심</option>
-            </select>
           </div>
 
           <div>

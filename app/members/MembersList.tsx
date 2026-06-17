@@ -19,17 +19,17 @@ export type RawMember = {
   joined_on: string | null; tags: string[] | null; photo_url: string | null;
 };
 
-const GRADES = ["명예회원", "정회원", "부부회원", "준회원", "신입회원", "유보회원"];
-const STATUSES = ["활동", "휴면", "비활동", "OB"];
-const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: "blue", 부부회원: "green", 준회원: "warm", 신입회원: "gray", 유보회원: "gray" };
-const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm", 비활동: "gray", OB: "brand" };
+const GRADES = ["정회원", "가족회원", "준회원", "신입회원", "명예회원", "유보회원", "VIP"];
+const STATUSES = ["활동", "휴면", "OB"];
+const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: "blue", 가족회원: "green", 준회원: "warm", 신입회원: "gray", 유보회원: "gray", VIP: "purple" };
+const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm", OB: "brand" };
 const AV_COLORS = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const PRESET_TAGS = ["증경회장", "지회장", "총무", "간사", "감사", "부총무", "고문", "운영위원", "찬양팀", "봉사팀", "창립멤버", "새가족", "청년부"];
 
 const COLUMNS: { key: string; label: string; field: keyof RawMember }[] = [
   { key: "gender", label: "성별", field: "gender" },
   { key: "phone", label: "연락처", field: "phone" },
-  { key: "grade", label: "등급", field: "grade" },
+  { key: "grade", label: "회원구분", field: "grade" },
   { key: "status", label: "상태", field: "status" },
   { key: "spouse", label: "배우자", field: "spouse_name" },
   { key: "industry", label: "업종", field: "industry" },
@@ -120,7 +120,6 @@ export default function MembersList({ members: initial }: { members: RawMember[]
   const [members, setMembers] = useState(initial);
   const [grade, setGrade] = useState("");
   const [status, setStatus] = useState("");
-  const [reg, setReg] = useState("");
   const [q, setQ] = useState("");
   const [cols, setCols] = useState<string[]>(DEFAULT_COLS);
   const [selected, setSelected] = useState<RawMember | null>(null);
@@ -132,11 +131,9 @@ export default function MembersList({ members: initial }: { members: RawMember[]
   const filtered = members.filter((m) => {
     if (grade && m.grade !== grade) return false;
     if (status && m.status !== status) return false;
-    if (reg === "등록" && m.registration !== "등록회원") return false;
-    if (reg === "비등록" && m.registration !== "비등록") return false;
     if (q) {
       const s = q.toLowerCase();
-      if (![m.name, m.company, m.phone, m.position, m.industry].some((f) => (f || "").toLowerCase().includes(s))) return false;
+      if (![m.name, m.company, m.phone, m.position, m.industry, m.car_number].some((f) => (f || "").toLowerCase().includes(s))) return false;
     }
     return true;
   });
@@ -145,7 +142,7 @@ export default function MembersList({ members: initial }: { members: RawMember[]
     total: members.length,
     active: members.filter((m) => m.status === "활동").length,
     jung: members.filter((m) => m.grade === "정회원").length,
-    couple: members.filter((m) => m.grade === "부부회원").length,
+    couple: members.filter((m) => m.grade === "가족회원").length,
   };
 
   const onSaved = (m: RawMember) => { setMembers((list) => list.map((x) => x.id === m.id ? m : x)); setSelected(m); showToast("저장되었습니다"); };
@@ -170,19 +167,18 @@ export default function MembersList({ members: initial }: { members: RawMember[]
         <div className="card stat"><div className="stat-ic t-brand"><Users size={20} /></div><div className="stat-body"><div className="stat-label">전체 회원</div><div className="stat-value">{stat.total}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-green"><UserCheck size={20} /></div><div className="stat-body"><div className="stat-label">활동 회원</div><div className="stat-value">{stat.active}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-blue"><BadgeCheck size={20} /></div><div className="stat-body"><div className="stat-label">정회원</div><div className="stat-value">{stat.jung}명</div></div></div>
-        <div className="card stat"><div className="stat-ic t-warm"><Heart size={20} /></div><div className="stat-body"><div className="stat-label">부부회원</div><div className="stat-value">{stat.couple}명</div></div></div>
+        <div className="card stat"><div className="stat-ic t-warm"><Heart size={20} /></div><div className="stat-body"><div className="stat-label">가족회원</div><div className="stat-value">{stat.couple}명</div></div></div>
       </div>
 
       <div className="filters">
         <div className="filter-left">
-          <Dropdown label="등급" value={grade} options={GRADES} onChange={setGrade} />
+          <Dropdown label="회원구분" value={grade} options={GRADES} onChange={setGrade} />
           <Dropdown label="상태" value={status} options={STATUSES} onChange={setStatus} />
-          <Dropdown label="등록" value={reg} options={["등록", "비등록"]} onChange={setReg} />
         </div>
         <div className="filter-right">
           <div className="search">
             <Search size={16} />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름·회사·연락처 검색" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름·회사·연락처·차량번호 검색" />
             {q && <button className="search-x" onClick={() => setQ("")}><X size={14} /></button>}
           </div>
           <ColumnMenu visible={cols} onToggle={toggleCol} />
@@ -201,7 +197,6 @@ export default function MembersList({ members: initial }: { members: RawMember[]
                 <tr key={m.id} onClick={() => setSelected(m)}>
                   <td className="td-name">
                     <Avatar name={m.name} size={30} photo={m.photo_url} /><span className="td-nm">{m.name}</span>
-                    {m.registration === "비등록" && <span className="reg-dot" title="비등록" />}
                   </td>
                   {visibleCols.map((c) => {
                     const f = c.field; const raw = f ? (m[f] as unknown) : null;
@@ -361,7 +356,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
           ) : (
             <div className="dm-sections">
               <section className="dm-sec"><h3 className="dm-sec-t">기본</h3>
-                <EditSelect label="등급" value={m.grade || ""} options={GRADES} onChange={(v) => set("grade", v)} />
+                <EditSelect label="회원구분" value={m.grade || ""} options={GRADES} onChange={(v) => set("grade", v)} />
                 <EditSelect label="상태" value={m.status || ""} options={STATUSES} onChange={(v) => set("status", v)} />
                 <EditSelect label="성별" value={m.gender || ""} options={["남", "여"]} onChange={(v) => set("gender", v)} />
                 <EditText label="연락처" value={m.phone || ""} onChange={(v) => set("phone", v)} />

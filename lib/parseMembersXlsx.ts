@@ -25,7 +25,7 @@ const clean = (v: unknown): string | null => {
   return s === "" ? null : s;
 };
 
-const GRADES = ["명예회원", "정회원", "부부회원", "준회원", "신입회원", "유보회원"];
+const GRADES = ["정회원", "가족회원", "준회원", "신입회원", "명예회원", "유보회원", "VIP"];
 
 export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
   const wb = XLSX.read(buf, { type: "array" });
@@ -86,7 +86,8 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
       car_number = (headers[iCarNum0 + 1] ?? "") === "" ? cell(iCarNum0 + 1) : null;
     }
 
-    const gradeRaw = cell(iGrade);
+    let gradeRaw = cell(iGrade);
+    if (gradeRaw === "부부회원") gradeRaw = "가족회원"; // 옛 명칭 → 새 명칭
     const grade = gradeRaw && GRADES.includes(gradeRaw) ? gradeRaw : null;
     const role = cell(iRole);
     const vRaw = cell(iVision);

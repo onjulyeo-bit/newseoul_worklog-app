@@ -18,12 +18,12 @@ const ADMIN: Item[] = [
   { href: "/notices", label: "공지", Icon: Megaphone, group: "op" },
   { href: "/content", label: "콘텐츠", Icon: ImageIcon, group: "op" },
   { href: "/schedule", label: "연간일정", Icon: CalendarDays, group: "meet" },
-  { href: "/attendance", label: "출석식대", Icon: ClipboardCheck, group: "meet" },
-  { href: "/attendance/stats", label: "출석통계", Icon: BarChart3, group: "meet" },
+  { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, group: "meet" },
+  { href: "/attendance/stats", label: "체크인 통계", Icon: BarChart3, group: "meet" },
   { href: "/", label: "회원관리", Icon: Users, group: "manage" },
   { href: "/finance", label: "회계", Icon: ReceiptText, group: "manage" },
   { href: "/archive", label: "아카이브", Icon: Archive, group: "manage" },
-  { href: "/roles", label: "역할관리", Icon: UserCog, group: "settings" },
+  { href: "/roles", label: "권한설정", Icon: UserCog, group: "settings" },
 ];
 // 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지만.
 const MEMBER: Item[] = [
@@ -76,7 +76,7 @@ export default function SiteNav({ role, email, isOwner = false }: { role: string
               <span className="who-mail">{email}</span>
             </div>
             <span className={`role-badge ${isExec ? "is-exec" : ""}`}>
-              <span className="role-dot" />{isExec ? "임원" : role === "member" ? "회원" : "관심"}
+              <span className="role-dot" />{isExec ? "운영진" : role === "member" ? "회원" : "관심"}
             </span>
             <form action="/auth/signout" method="post">
               <button className="icon-btn" title="로그아웃" aria-label="로그아웃" type="submit"><LogOut size={19} /></button>
