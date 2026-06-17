@@ -11,18 +11,17 @@ import {
 
 type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string };
 
-// 주제별 묶음: 운영(op) → 모임(meet) → 관리(manage) → 설정(settings).
-// 그룹이 바뀌는 자리에 옅은 세로 구분선이 들어간다.
+// 업무 흐름순(사용자 지정). 운영 메뉴 → (구분선) → 설정(권한설정).
 const ADMIN: Item[] = [
-  { href: "/dashboard", label: "대시보드", Icon: LayoutDashboard, group: "op" },
-  { href: "/notices", label: "공지", Icon: Megaphone, group: "op" },
-  { href: "/content", label: "콘텐츠", Icon: ImageIcon, group: "op" },
-  { href: "/schedule", label: "연간일정", Icon: CalendarDays, group: "meet" },
-  { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, group: "meet" },
-  { href: "/attendance/stats", label: "통계", Icon: BarChart3, group: "meet" },
-  { href: "/", label: "회원관리", Icon: Users, group: "manage" },
-  { href: "/finance", label: "회계", Icon: ReceiptText, group: "manage" },
-  { href: "/archive", label: "아카이브", Icon: Archive, group: "manage" },
+  { href: "/dashboard", label: "대시보드", Icon: LayoutDashboard, group: "main" },
+  { href: "/", label: "회원관리", Icon: Users, group: "main" },
+  { href: "/schedule", label: "연간일정", Icon: CalendarDays, group: "main" },
+  { href: "/content", label: "콘텐츠", Icon: ImageIcon, group: "main" },
+  { href: "/notices", label: "공지", Icon: Megaphone, group: "main" },
+  { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, group: "main" },
+  { href: "/finance", label: "회계", Icon: ReceiptText, group: "main" },
+  { href: "/attendance/stats", label: "통계", Icon: BarChart3, group: "main" },
+  { href: "/archive", label: "아카이브", Icon: Archive, group: "main" },
   { href: "/roles", label: "권한설정", Icon: UserCog, group: "settings" },
 ];
 // 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지·아카이브(개인정보 명단 제외).
