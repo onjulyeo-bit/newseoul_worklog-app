@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { A_CATEGORIES, B_CATEGORIES } from "@/lib/classifyTxn";
 import { ChevronDown, Trash2, Download } from "lucide-react";
 import FinanceTabs from "../FinanceTabs";
+import FinanceAxis, { useAxis } from "../FinanceAxis";
 import { FIN_CSS } from "../finCss";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
 
@@ -36,7 +37,8 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState("all");
   const [fDir, setFDir] = useState<"all" | "입금" | "출금">("all");
-  const [fTrack, setFTrack] = useState<"all" | "A" | "B">("all");
+  const axis = useAxis();
+  const track = axis === "meal" ? "B" : "A"; // 회비=A / 식대=B
 
   async function load() {
     setLoading(true);
@@ -57,10 +59,10 @@ export default function TransactionsPage() {
 
   const months = useMemo(() => Array.from(new Set(rows.map((r) => r.txn_date.slice(0, 7)))).sort().reverse(), [rows]);
   const shown = useMemo(() => rows.filter((r) =>
+    r.track === track &&
     (month === "all" || r.txn_date.slice(0, 7) === month) &&
-    (fDir === "all" || r.direction === fDir) &&
-    (fTrack === "all" || r.track === fTrack)
-  ), [rows, month, fDir, fTrack]);
+    (fDir === "all" || r.direction === fDir)
+  ), [rows, month, fDir, track]);
 
   const income = shown.filter((r) => r.direction === "입금").reduce((s, r) => s + r.amount, 0);
   const expense = shown.filter((r) => r.direction === "출금").reduce((s, r) => s + r.amount, 0);
@@ -71,7 +73,8 @@ export default function TransactionsPage() {
 
   return (
     <div className="moim-fin"><style>{FIN_CSS}</style>
-      <div className="page-head"><div><h1 className="page-title">회계</h1><p className="page-sub">저장된 거래를 보고 항목·내용을 고쳐요. 바꾸면 바로 저장돼요.</p></div></div>
+      <div className="page-head"><div><h1 className="page-title">{axis === "meal" ? "식대 관리" : "회비 관리"}</h1><p className="page-sub">저장된 거래를 보고 항목·내용을 고쳐요. 바꾸면 바로 저장돼요.</p></div></div>
+      <FinanceAxis />
       <FinanceTabs />
 
       <div className="led-sum">
@@ -86,7 +89,6 @@ export default function TransactionsPage() {
           {months.map((m) => <option key={m} value={m}>{m.replace("-", ". ")}</option>)}
         </select>
         <span className="fil-l">구분</span><Seg val={fDir} set={setFDir} opts={[["all", "전체"], ["입금", "입금"], ["출금", "출금"]]} />
-        <span className="fil-l">트랙</span><Seg val={fTrack} set={setFTrack} opts={[["all", "전체"], ["A", "회계"], ["B", "식대"]]} />
         <span className="fil-count">{shown.length}건</span>
         <div className="fil-export">
           <button className="exp-btn" disabled={shown.length === 0} onClick={() => downloadXlsx(toTxnRows(shown), "거래내역")}><Download size={15} /> 엑셀</button>

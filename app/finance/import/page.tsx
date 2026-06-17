@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { classify, parseAmount, parseDate, memberJudge, A_CATEGORIES, B_CATEGORIES, type Txn } from "@/lib/classifyTxn";
 import { ChevronDown, FileSpreadsheet, Check } from "lucide-react";
 import FinanceTabs from "../FinanceTabs";
+import FinanceAxis, { useAxis } from "../FinanceAxis";
 import { FIN_CSS } from "../finCss";
 
 const won = (n: number) => "₩" + (n || 0).toLocaleString("ko-KR");
@@ -18,8 +19,8 @@ export default function FinanceImportPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
   const [fDir, setFDir] = useState<"all" | "입금" | "출금">("all");
-  const [fTrack, setFTrack] = useState<"all" | "A" | "B">("all");
   const [fReview, setFReview] = useState(false);
+  const axis = useAxis();
 
   async function onFile(file: File) {
     setSaved(null); setFileName(file.name);
@@ -35,7 +36,12 @@ export default function FinanceImportPage() {
       const direction = String(r[1]).trim() === "출금" ? "출금" : "입금";
       const amount = parseAmount(r[2]); const balance = parseAmount(r[3]) || null;
       const memo = String(r[4] ?? "").trim(); const counterparty = String(r[5] ?? "").trim();
-      out.push({ txn_date: date, direction, amount, balance, memo, counterparty, ...classify(memo, direction) });
+      // 식대 통장(meal)=전부 B / 회비 통장(fee)=전부 A. 계좌가 분리돼 있으므로 축으로 트랙 고정.
+      const c = classify(memo, direction);
+      const tc = axis === "meal"
+        ? { track: "B" as const, category: direction === "입금" ? "식대입금" : "식대결재", confident: true }
+        : { track: "A" as const, category: c.track === "A" ? c.category : "미분류", confident: c.track === "A" ? c.confident : false };
+      out.push({ txn_date: date, direction, amount, balance, memo, counterparty, ...tc });
     }
     setRows(out);
   }
@@ -52,8 +58,8 @@ export default function FinanceImportPage() {
   }, [rows]);
 
   const shown = useMemo(() => rows.map((r, i) => ({ r, i })).filter(({ r }) =>
-    (fDir === "all" || r.direction === fDir) && (fTrack === "all" || r.track === fTrack) && (!fReview || !r.confident || r.category === "미분류")
-  ), [rows, fDir, fTrack, fReview]);
+    (fDir === "all" || r.direction === fDir) && (!fReview || !r.confident || r.category === "미분류")
+  ), [rows, fDir, fReview]);
 
   async function save() {
     if (!rows.length) return;
@@ -74,7 +80,8 @@ export default function FinanceImportPage() {
 
   return (
     <div className="moim-fin"><style>{FIN_CSS}</style>
-      <div className="page-head"><div><h1 className="page-title">회계</h1><p className="page-sub">카카오뱅크 거래내역 엑셀을 올리면 자동 분류해요.</p></div></div>
+      <div className="page-head"><div><h1 className="page-title">{axis === "meal" ? "식대 관리" : "회비 관리"}</h1><p className="page-sub">{axis === "meal" ? "식대 통장" : "회비 통장"} 거래내역 엑셀을 올리면 자동 분류해요.</p></div></div>
+      <FinanceAxis />
       <FinanceTabs />
 
       {rows.length === 0 ? (
@@ -109,7 +116,6 @@ export default function FinanceImportPage() {
 
           <div className="fin-filters" style={{ marginTop: 6 }}>
             <span className="fil-l">구분</span><Seg val={fDir} set={setFDir} opts={[["all", "전체"], ["입금", "입금"], ["출금", "출금"]]} />
-            <span className="fil-l">트랙</span><Seg val={fTrack} set={setFTrack} opts={[["all", "전체"], ["A", "회계"], ["B", "식대"]]} />
             <button className={`seg-btn ${fReview ? "on" : ""}`} style={{ border: "1px solid var(--line)", borderRadius: 10 }} onClick={() => setFReview((v) => !v)}>⚠ 확인 필요만</button>
             <span className="fil-count">표시 {shown.length}건</span>
           </div>

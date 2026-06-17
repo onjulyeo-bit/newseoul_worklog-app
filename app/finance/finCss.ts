@@ -10,6 +10,9 @@ export const FIN_CSS = `
   color:var(--ink); line-height:1.5; letter-spacing:-0.01em;
 }
 .moim-fin *{ box-sizing:border-box; }
+.moim-fin .fin-axis{ display:inline-flex; gap:6px; background:#eef0f3; border-radius:13px; padding:5px; margin-bottom:14px; }
+.moim-fin .fin-axis-btn{ display:inline-flex; align-items:center; gap:7px; font-size:14.5px; font-weight:800; letter-spacing:-0.02em; color:var(--ink-3); padding:9px 18px; border-radius:9px; text-decoration:none; transition:all .15s; }
+.moim-fin .fin-axis-btn.on{ background:#fff; color:var(--brand-strong); box-shadow:0 1px 3px rgba(20,24,34,.12); }
 .moim-fin h1,.moim-fin h2,.moim-fin h3,.moim-fin p{ margin:0; }
 .moim-fin .card{ background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-card); box-shadow:var(--shadow-sm); }
 .moim-fin .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; }
