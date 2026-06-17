@@ -88,26 +88,15 @@ function useClickOutside(onOut: () => void) {
   return ref;
 }
 
-// 체크박스 다중 필터 (열 선택과 같은 스타일) — 비어있으면 전체, 고르면 그것만.
-function CheckFilter({ label, options, selected, onToggle, onClear }: { label: string; options: string[]; selected: string[]; onToggle: (v: string) => void; onClear: () => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useClickOutside(() => setOpen(false));
-  const active = selected.length > 0;
+// 칩 단일선택 필터 — 클릭하면 그 값만 보기(예: 정회원만), '전체'로 초기화.
+function Chips({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="dd" ref={ref}>
-      <button className={`dd-btn ${active ? "active" : ""}`} onClick={() => setOpen((o) => !o)}>
-        <span>{label}{active ? ` · ${selected.length}` : ""}</span><ChevronDown size={15} />
-      </button>
-      {open && (
-        <div className="dd-menu">
-          <button className={`dd-item ${!active ? "sel" : ""}`} onClick={() => { onClear(); }}>전체</button>
-          {options.map((o) => (
-            <button key={o} className="dd-item" onClick={() => onToggle(o)}>
-              <span className={`chkbox ${selected.includes(o) ? "on" : ""}`}>{selected.includes(o) && <Check size={12} />}</span>{o}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="chip-row">
+      <span className="chip-lbl">{label}</span>
+      <button className={`chipf ${!value ? "on" : ""}`} onClick={() => onChange("")}>전체</button>
+      {options.map((o) => (
+        <button key={o} className={`chipf ${value === o ? "on" : ""}`} onClick={() => onChange(value === o ? "" : o)}>{o}</button>
+      ))}
     </div>
   );
 }
@@ -144,8 +133,8 @@ function cellValue(m: RawMember, key: string) {
 
 export default function MembersList({ members: initial }: { members: RawMember[] }) {
   const [members, setMembers] = useState(initial);
-  const [gradeSel, setGradeSel] = useState<string[]>([]);
-  const [statusSel, setStatusSel] = useState<string[]>([]);
+  const [grade, setGrade] = useState("");
+  const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
   const [cols, setCols] = useState<string[]>(DEFAULT_COLS);
   const [selected, setSelected] = useState<RawMember | null>(null);
@@ -153,11 +142,10 @@ export default function MembersList({ members: initial }: { members: RawMember[]
 
   const showToast = (t: string) => { setToast(t); setTimeout(() => setToast(""), 2200); };
   const toggleCol = (k: string) => setCols((c) => c.includes(k) ? c.filter((x) => x !== k) : [...c, k]);
-  const toggleIn = (set: React.Dispatch<React.SetStateAction<string[]>>) => (v: string) => set((a) => a.includes(v) ? a.filter((x) => x !== v) : [...a, v]);
 
   const filtered = members.filter((m) => {
-    if (gradeSel.length && !(m.grade && gradeSel.includes(m.grade))) return false;
-    if (statusSel.length && !(m.status && statusSel.includes(m.status))) return false;
+    if (grade && m.grade !== grade) return false;
+    if (status && m.status !== status) return false;
     if (q) {
       const s = q.toLowerCase();
       if (![m.name, m.company, m.phone, m.position, m.industry, m.car_number].some((f) => (f || "").toLowerCase().includes(s))) return false;
@@ -200,9 +188,9 @@ export default function MembersList({ members: initial }: { members: RawMember[]
       </div>
 
       <div className="filters">
-        <div className="filter-left">
-          <CheckFilter label="회원구분" options={GRADES} selected={gradeSel} onToggle={toggleIn(setGradeSel)} onClear={() => setGradeSel([])} />
-          <CheckFilter label="상태" options={STATUSES} selected={statusSel} onToggle={toggleIn(setStatusSel)} onClear={() => setStatusSel([])} />
+        <div className="chip-groups">
+          <Chips label="회원구분" options={GRADES} value={grade} onChange={setGrade} />
+          <Chips label="상태" options={STATUSES} value={status} onChange={setStatus} />
         </div>
         <div className="filter-right">
           <div className="search">
@@ -485,8 +473,14 @@ const MEM_CSS = `
 .moim-mem .stat-label{ font-size:12.5px; color:var(--ink-3); font-weight:600; }
 .moim-mem .stat-value{ font-size:20px; font-weight:800; letter-spacing:-0.03em; margin-top:3px; }
 
-.moim-mem .filters{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.moim-mem .filters{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 .moim-mem .filter-left,.moim-mem .filter-right{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.moim-mem .chip-groups{ display:flex; flex-direction:column; gap:8px; flex:1; min-width:0; }
+.moim-mem .chip-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.moim-mem .chip-lbl{ font-size:12.5px; font-weight:700; color:var(--ink-3); min-width:52px; }
+.moim-mem .chipf{ font-size:13px; font-weight:600; color:var(--ink-2); background:#fff; border:1px solid var(--line); border-radius:999px; padding:6px 13px; cursor:pointer; transition:all .12s; white-space:nowrap; }
+.moim-mem .chipf:hover{ border-color:#bcd6f5; }
+.moim-mem .chipf.on{ background:var(--brand); color:#fff; border-color:var(--brand); box-shadow:0 2px 6px rgba(0,102,204,.25); }
 .moim-mem .dd{ position:relative; }
 .moim-mem .dd-btn{ display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; color:var(--ink-2); background:#fff; border:1px solid var(--line); border-radius:11px; padding:9px 12px; cursor:pointer; transition:border-color .15s, background .15s; }
 .moim-mem .dd-btn:hover{ background:#f7f8f9; }
