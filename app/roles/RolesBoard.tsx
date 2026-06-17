@@ -62,8 +62,8 @@ export default function RolesBoard({ initial: init, members, myId }: { initial: 
       <div className="info-card">
         <div className="info-row"><span className="badge b-owner">메인</span> 최고 관리자 · 영구 보호(여기서만 서브 관리자 지정 가능)</div>
         <div className="info-row"><span className="badge b-brand">운영진</span> 전체 앱 기능 사용 · 역할변경 불가</div>
-        <div className="info-row"><span className="badge b-green">회원</span> 공지·회원명단·아카이브 보기</div>
-        <div className="info-row"><span className="badge b-gray">관심</span> 처음 로그인 기본값 · 공지만 보기</div>
+        <div className="info-row"><span className="badge b-green">회원</span> 공지·아카이브 + <b>회원명단</b>(개인정보) 보기</div>
+        <div className="info-row"><span className="badge b-gray">관심</span> 처음 로그인 기본값 · 공지·아카이브 보기(명단 제외)</div>
         <p className="info-note">※ 카카오로 로그인하면 ‘미연결’로 떠요. 명단의 회원과 연결하면 자동으로 ‘회원’ 권한이 돼요. 명단에 이메일이 입력돼 있고 같은 이메일로 로그인하면 자동 연결됩니다.</p>
       </div>
 

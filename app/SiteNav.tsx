@@ -25,13 +25,16 @@ const ADMIN: Item[] = [
   { href: "/archive", label: "아카이브", Icon: Archive, group: "manage" },
   { href: "/roles", label: "권한설정", Icon: UserCog, group: "settings" },
 ];
-// 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지만.
+// 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지·아카이브(개인정보 명단 제외).
 const MEMBER: Item[] = [
   { href: "/", label: "공지", Icon: Megaphone },
   { href: "/directory", label: "회원명단", Icon: Contact },
   { href: "/archive", label: "아카이브", Icon: Archive },
 ];
-const GUEST: Item[] = [{ href: "/", label: "공지", Icon: Megaphone }];
+const GUEST: Item[] = [
+  { href: "/", label: "공지", Icon: Megaphone },
+  { href: "/archive", label: "아카이브", Icon: Archive },
+];
 
 // 현재 경로에 가장 잘 맞는(가장 긴) href 하나만 active
 function activeHref(pathname: string, items: Item[]): string | null {
