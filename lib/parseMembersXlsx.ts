@@ -52,12 +52,13 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
   const iIndustry = find("업종");
   const iCompany = find("직장");
   const iPosition = find("직위");
-  const iRole = headers.findIndex((hh) => ["직책", "?", "임원", "이력", "배지"].includes(hh));
+  const iRole = headers.findIndex((hh) => ["직책", "?", "임원", "이력", "배지", "기타"].includes(hh));
   const iGrade = find("회원구분", "등급");
+  const iStatus = find("상태");
   const iSpouse = find("배우자");
   const iCarModel0 = find("차종");
   const iCarNum0 = find("차량번호");
-  const iJoined = find("등록시기", "가입");
+  const iJoined = find("등록시기", "가입", "등록일");
   const iVision = find("비전");
   const iLeader = find("리더십");
 
@@ -89,6 +90,11 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
     let gradeRaw = cell(iGrade);
     if (gradeRaw === "부부회원") gradeRaw = "가족회원"; // 옛 명칭 → 새 명칭
     const grade = gradeRaw && GRADES.includes(gradeRaw) ? gradeRaw : null;
+
+    // 상태: 엑셀의 '상태' 칸을 읽음. 옛 값은 새 값으로, 비우면 '활동'.
+    let statusRaw = cell(iStatus);
+    if (statusRaw === "활동중") statusRaw = "활동";
+    if (statusRaw === "비활동") statusRaw = "휴면";
     const role = cell(iRole);
     const vRaw = cell(iVision);
     const lRaw = cell(iLeader);
@@ -99,7 +105,7 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
       gender: cell(iGender),
       phone,
       grade,
-      status: "활동",
+      status: statusRaw ?? "활동",
       spouse_name: cell(iSpouse),
       industry: cell(iIndustry),
       company: cell(iCompany),
@@ -108,7 +114,11 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
       leadership_school: lRaw === "O" ? "수료" : lRaw === "X" ? null : lRaw,
       car_model,
       car_number,
-      joined_on: jRaw && /^\d{4}$/.test(jRaw) ? `${jRaw}-01-01` : null,
+      joined_on: jRaw
+        ? /^\d{4}-\d{2}-\d{2}$/.test(jRaw) ? jRaw            // 전체 날짜(2020-01-01) 그대로
+          : /^\d{4}$/.test(jRaw) ? `${jRaw}-01-01`           // 연도만(2020) → 1월1일
+            : null
+        : null,
       tags: role ? [role] : [],
     });
   }

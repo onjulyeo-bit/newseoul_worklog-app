@@ -6,10 +6,32 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ChevronDown, Check, SlidersHorizontal, Search, X, Upload, UserPlus,
-  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera,
+  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
 import { saveMember } from "./actions";
+
+// 내보내기용 행 (한글 헤더) — 다운로드한 파일을 그대로 다시 업로드(append)할 수 있게 컬럼 일치
+function toExportRows(members: RawMember[]) {
+  return members.map((m) => ({
+    이름: m.name,
+    성별: m.gender ?? "",
+    회원구분: m.grade ?? "",
+    상태: m.status ?? "",
+    연락처: m.phone ?? "",
+    배우자: m.spouse_name ?? "",
+    업종: m.industry ?? "",
+    직장명: m.company ?? "",
+    직위: m.position ?? "",
+    "비전스쿨 수료": m.vision_school ?? "",
+    "리더십스쿨 수료": m.leadership_school ?? "",
+    차종: m.car_model ?? "",
+    차량번호: m.car_number ?? "",
+    회원등록일: m.joined_on ?? "",
+    기타: (m.tags ?? []).join(", "),
+  }));
+}
 
 export type RawMember = {
   id: string; name: string; gender: string | null; phone: string | null; registration: string | null;
@@ -158,6 +180,8 @@ export default function MembersList({ members: initial }: { members: RawMember[]
           <p className="page-sub">모임 회원 {stat.total}명 · 활동 {stat.active}명</p>
         </div>
         <div className="page-acts">
+          <button className="ui-btn ui-ghost ui-sm" onClick={() => downloadXlsx(toExportRows(filtered), "회원명단")}><Download size={16} /> 엑셀</button>
+          <button className="ui-btn ui-ghost ui-sm" onClick={() => downloadCsv(toExportRows(filtered), "회원명단")}><Download size={16} /> CSV</button>
           <Link href="/members/import" className="ui-btn ui-ghost ui-sm"><Upload size={16} /> 엑셀 업로드</Link>
           <Link href="/members/new" className="ui-btn ui-primary ui-sm"><UserPlus size={16} /> 회원 추가</Link>
         </div>

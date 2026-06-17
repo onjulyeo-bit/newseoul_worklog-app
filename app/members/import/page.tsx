@@ -11,7 +11,7 @@ export default function ImportPage() {
   const router = useRouter();
   const [rows, setRows] = useState<ParsedMember[]>([]);
   const [fileName, setFileName] = useState("");
-  const [mode, setMode] = useState<"replace" | "append">("replace");
+  const [mode, setMode] = useState<"replace" | "append">("append");
   const [parseError, setParseError] = useState("");
   const [result, setResult] = useState<string>("");
   const [pending, startTransition] = useTransition();
@@ -90,7 +90,7 @@ export default function ImportPage() {
                 <table className="w-full border-collapse text-[14px]">
                   <thead className="sticky top-0 bg-surface-soft">
                     <tr className="text-left">
-                      {["이름", "성별", "회원구분", "연락처", "직장", "배지"].map((th) => (
+                      {["이름", "성별", "회원구분", "상태", "연락처", "직장", "배지"].map((th) => (
                         <th key={th} className="whitespace-nowrap px-3 py-2 text-[12px] font-bold text-ink-soft">{th}</th>
                       ))}
                     </tr>
@@ -101,6 +101,7 @@ export default function ImportPage() {
                         <td className="px-3 py-1.5 font-bold text-ink">{m.name}</td>
                         <td className="px-3 py-1.5 text-ink-soft">{m.gender ?? "—"}</td>
                         <td className="px-3 py-1.5 text-ink-soft">{m.grade ?? "—"}</td>
+                        <td className="px-3 py-1.5 text-ink-soft">{m.status ?? "—"}</td>
                         <td className="px-3 py-1.5 text-ink-soft">{m.phone ?? "—"}</td>
                         <td className="px-3 py-1.5 text-ink-soft">{m.company ?? "—"}</td>
                         <td className="px-3 py-1.5 text-ink-soft">{m.tags.join(", ") || "—"}</td>
@@ -116,15 +117,15 @@ export default function ImportPage() {
               <label className="mb-1.5 block text-[14px] font-bold text-ink-soft">3. 반영 방식</label>
               <div className="flex flex-col gap-2">
                 <label className="flex cursor-pointer items-start gap-2 rounded-md border border-line p-3 hover:border-primary">
-                  <input type="radio" checked={mode === "replace"} onChange={() => setMode("replace")} className="mt-1 accent-primary" />
+                  <input type="radio" checked={mode === "append"} onChange={() => setMode("append")} className="mt-1 accent-primary" />
                   <span className="text-[15px] text-ink">
-                    <b>전체 교체</b> — 기존 명단을 지우고 이 파일 {rows.length}명으로 새로 채움
+                    <b>새 회원만 추가</b> (권장) — 이름 기준, 없는 사람만 추가하고 기존 회원은 그대로 둠. 새로 추가할 사람만 적은 파일을 올리면 돼요.
                   </span>
                 </label>
                 <label className="flex cursor-pointer items-start gap-2 rounded-md border border-line p-3 hover:border-primary">
-                  <input type="radio" checked={mode === "append"} onChange={() => setMode("append")} className="mt-1 accent-primary" />
+                  <input type="radio" checked={mode === "replace"} onChange={() => setMode("replace")} className="mt-1 accent-primary" />
                   <span className="text-[15px] text-ink">
-                    <b>새 회원만 추가</b> — 이름 기준, 없는 사람만 추가하고 기존 회원은 그대로 둠
+                    <b>전체 교체</b> — 기존 명단을 모두 지우고 이 파일 {rows.length}명으로 새로 채움 (처음 세팅·대규모 정리용)
                   </span>
                 </label>
               </div>
@@ -150,7 +151,7 @@ export default function ImportPage() {
         )}
 
         <div className="mt-6 rounded-md border border-[rgba(0,102,204,.2)] bg-[rgba(0,102,204,.07)] px-3.5 py-3 text-[14px] text-ink-soft">
-          💡 엑셀 첫 시트에 <b>이름</b> 헤더가 있어야 하고, 성별·연락처·업종·직장명·직위·회원구분·배우자·차량·등록시기·비전스쿨·리더십 열을 자동 인식합니다. (열 순서 바뀌어도 OK)
+          💡 엑셀 첫 시트에 <b>이름</b> 헤더가 있어야 하고, 성별·연락처·업종·직장명·직위·<b>회원구분</b>·<b>상태</b>·배우자·차량·회원등록일·비전스쿨·리더십·기타 열을 자동 인식합니다. (열 순서 바뀌어도 OK) <b>회원관리 화면에서 ‘엑셀’로 내려받은 파일</b>을 그대로 고쳐 올리면 컬럼이 딱 맞아요.
         </div>
       </div>
     </div>
