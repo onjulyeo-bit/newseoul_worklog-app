@@ -88,20 +88,22 @@ function useClickOutside(onOut: () => void) {
   return ref;
 }
 
-function Dropdown({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
+// 체크박스 다중 필터 (열 선택과 같은 스타일) — 비어있으면 전체, 고르면 그것만.
+function CheckFilter({ label, options, selected, onToggle, onClear }: { label: string; options: string[]; selected: string[]; onToggle: (v: string) => void; onClear: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useClickOutside(() => setOpen(false));
+  const active = selected.length > 0;
   return (
     <div className="dd" ref={ref}>
-      <button className={`dd-btn ${value ? "active" : ""}`} onClick={() => setOpen((o) => !o)}>
-        <span>{label}{value ? ` · ${value}` : ""}</span><ChevronDown size={15} />
+      <button className={`dd-btn ${active ? "active" : ""}`} onClick={() => setOpen((o) => !o)}>
+        <span>{label}{active ? ` · ${selected.length}` : ""}</span><ChevronDown size={15} />
       </button>
       {open && (
         <div className="dd-menu">
-          <button className={`dd-item ${!value ? "sel" : ""}`} onClick={() => { onChange(""); setOpen(false); }}>전체</button>
+          <button className={`dd-item ${!active ? "sel" : ""}`} onClick={() => { onClear(); }}>전체</button>
           {options.map((o) => (
-            <button key={o} className={`dd-item ${value === o ? "sel" : ""}`} onClick={() => { onChange(o); setOpen(false); }}>
-              {o}{value === o && <Check size={15} />}
+            <button key={o} className="dd-item" onClick={() => onToggle(o)}>
+              <span className={`chkbox ${selected.includes(o) ? "on" : ""}`}>{selected.includes(o) && <Check size={12} />}</span>{o}
             </button>
           ))}
         </div>
@@ -142,8 +144,8 @@ function cellValue(m: RawMember, key: string) {
 
 export default function MembersList({ members: initial }: { members: RawMember[] }) {
   const [members, setMembers] = useState(initial);
-  const [grade, setGrade] = useState("");
-  const [status, setStatus] = useState("");
+  const [gradeSel, setGradeSel] = useState<string[]>([]);
+  const [statusSel, setStatusSel] = useState<string[]>([]);
   const [q, setQ] = useState("");
   const [cols, setCols] = useState<string[]>(DEFAULT_COLS);
   const [selected, setSelected] = useState<RawMember | null>(null);
@@ -151,10 +153,11 @@ export default function MembersList({ members: initial }: { members: RawMember[]
 
   const showToast = (t: string) => { setToast(t); setTimeout(() => setToast(""), 2200); };
   const toggleCol = (k: string) => setCols((c) => c.includes(k) ? c.filter((x) => x !== k) : [...c, k]);
+  const toggleIn = (set: React.Dispatch<React.SetStateAction<string[]>>) => (v: string) => set((a) => a.includes(v) ? a.filter((x) => x !== v) : [...a, v]);
 
   const filtered = members.filter((m) => {
-    if (grade && m.grade !== grade) return false;
-    if (status && m.status !== status) return false;
+    if (gradeSel.length && !(m.grade && gradeSel.includes(m.grade))) return false;
+    if (statusSel.length && !(m.status && statusSel.includes(m.status))) return false;
     if (q) {
       const s = q.toLowerCase();
       if (![m.name, m.company, m.phone, m.position, m.industry, m.car_number].some((f) => (f || "").toLowerCase().includes(s))) return false;
@@ -198,8 +201,8 @@ export default function MembersList({ members: initial }: { members: RawMember[]
 
       <div className="filters">
         <div className="filter-left">
-          <Dropdown label="회원구분" value={grade} options={GRADES} onChange={setGrade} />
-          <Dropdown label="상태" value={status} options={STATUSES} onChange={setStatus} />
+          <CheckFilter label="회원구분" options={GRADES} selected={gradeSel} onToggle={toggleIn(setGradeSel)} onClear={() => setGradeSel([])} />
+          <CheckFilter label="상태" options={STATUSES} selected={statusSel} onToggle={toggleIn(setStatusSel)} onClear={() => setStatusSel([])} />
         </div>
         <div className="filter-right">
           <div className="search">
