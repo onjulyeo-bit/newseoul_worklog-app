@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ChevronDown, Check, SlidersHorizontal, Search, X, Upload, UserPlus,
-  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Moon, Contact,
+  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Star, Contact,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
@@ -164,7 +164,7 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
     jung: members.filter((m) => m.grade === "정회원").length,
     jun: members.filter((m) => m.grade === "준회원").length,
     couple: members.filter((m) => m.grade === "가족회원").length,
-    dormant: members.filter((m) => m.status === "휴면").length,
+    vip: members.filter((m) => m.grade === "VIP").length,
   };
 
   const onSaved = (m: RawMember) => { setMembers((list) => list.map((x) => x.id === m.id ? m : x)); setSelected(m); showToast("저장되었습니다"); };
@@ -193,7 +193,7 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
         <div className="card stat"><div className="stat-ic t-blue"><BadgeCheck size={20} /></div><div className="stat-body"><div className="stat-label">정회원</div><div className="stat-value">{stat.jung}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-green"><UserCheck size={20} /></div><div className="stat-body"><div className="stat-label">준회원</div><div className="stat-value">{stat.jun}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-warm"><Heart size={20} /></div><div className="stat-body"><div className="stat-label">가족회원</div><div className="stat-value">{stat.couple}명</div></div></div>
-        <div className="card stat"><div className="stat-ic t-gray"><Moon size={20} /></div><div className="stat-body"><div className="stat-label">휴면</div><div className="stat-value">{stat.dormant}명</div></div></div>
+        <div className="card stat"><div className="stat-ic t-warm"><Star size={20} /></div><div className="stat-body"><div className="stat-label">VIP</div><div className="stat-value">{stat.vip}명</div></div></div>
       </div>
 
       <div className="filters">
