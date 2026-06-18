@@ -7,7 +7,7 @@ import { BarChart3, BadgeCheck } from "lucide-react";
 
 const TABS = [
   { href: "/attendance/stats", label: "체크인 통계", Icon: BarChart3 },
-  { href: "/attendance/registration", label: "회원등록현황", Icon: BadgeCheck },
+  { href: "/attendance/registration", label: "연도별 회원등록 현황", Icon: BadgeCheck },
 ];
 
 export default function StatsTabs() {

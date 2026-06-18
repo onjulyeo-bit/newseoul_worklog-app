@@ -9,7 +9,7 @@ const TABS = [
   { href: "/finance/import", label: "거래 가져오기", Icon: Upload },
   { href: "/finance/transactions", label: "거래 내역", Icon: List },
   { href: "/finance/report", label: "보고서", Icon: FileText },
-  { href: "/finance/dues", label: "연도별 회비", Icon: CalendarRange },
+  { href: "/finance/dues", label: "연도별 회비 납부내역", Icon: CalendarRange },
   { href: "/finance/accounts", label: "계좌관리", Icon: Landmark },
 ];
 
