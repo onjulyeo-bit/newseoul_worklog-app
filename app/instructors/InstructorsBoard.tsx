@@ -3,8 +3,8 @@
 // 강사·간사 풀 — 필터(강사/간사·내부/외부) + 추가/삭제. 운영진 전용(서버 게이트).
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Phone, Trash2, GraduationCap, Download, Upload } from "lucide-react";
-import { addInstructor, deleteInstructor, importInstructors } from "./actions";
+import { Plus, Phone, Trash2, GraduationCap, Download, Upload, Pencil } from "lucide-react";
+import { addInstructor, updateInstructor, deleteInstructor, importInstructors } from "./actions";
 import { parseInstructorsXlsx } from "@/lib/parseInstructorsXlsx";
 import { downloadXlsx } from "@/lib/exportTable";
 
@@ -31,8 +31,17 @@ export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instr
   const [fKind, setFKind] = useState("");
   const [fExt, setFExt] = useState("");
   const [, startT] = useTransition();
+  const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", kind: "강사", is_external: true, org: "", phone: "", field: "", fee_note: "", note: "" });
   const set = (k: keyof typeof form, v: string | boolean) => setForm((s) => ({ ...s, [k]: v }));
+  const blank = { name: "", kind: "강사", is_external: true, org: "", phone: "", field: "", fee_note: "", note: "" };
+  function openAdd() { setEditId(null); setForm(blank); setMsg(""); setShow(true); }
+  function startEdit(i: Instructor) {
+    setEditId(i.id);
+    setForm({ name: i.name, kind: i.kind ?? "강사", is_external: i.is_external, org: i.org ?? "", phone: i.phone ?? "", field: i.field ?? "", fee_note: i.fee_note ?? "", note: i.note ?? "" });
+    setMsg(""); setShow(true);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   const list = useMemo(() => rows.filter((r) =>
     (!fKind || r.kind === fKind) && (!fExt || (fExt === "외부" ? r.is_external : !r.is_external))
@@ -40,13 +49,14 @@ export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instr
   const nLect = rows.filter((r) => r.kind === "강사").length;
   const nStaff = rows.filter((r) => r.kind === "간사").length;
 
-  async function onAdd() {
+  async function onSave() {
     if (!form.name.trim()) { setMsg("이름을 입력해 주세요."); return; }
     setBusy(true); setMsg("");
-    const r = await addInstructor({ ...form, name: form.name.trim() });
+    const data = { ...form, name: form.name.trim() };
+    const r = editId ? await updateInstructor(editId, data) : await addInstructor(data);
     setBusy(false);
     if (r.error) { setMsg("❌ " + r.error); return; }
-    setForm({ name: "", kind: "강사", is_external: true, org: "", phone: "", field: "", fee_note: "", note: "" }); setShow(false);
+    setForm(blank); setShow(false); setEditId(null);
     startT(() => router.refresh());
   }
   const onDelete = (i: Instructor) => { if (!confirm(`'${i.name}'을(를) 삭제할까요?`)) return; deleteInstructor(i.id).then(() => router.refresh()); };
@@ -79,13 +89,14 @@ export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instr
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={downloadForm} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[14px] font-semibold text-ink-soft hover:bg-surface-soft"><Download size={16} /> 양식 다운로드</button>
           {canEdit && <label className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[14px] font-semibold text-ink-soft hover:bg-surface-soft cursor-pointer"><Upload size={16} /> {busy ? "처리 중…" : "엑셀 업로드"}<input type="file" accept=".xlsx,.xls,.csv" hidden onChange={onUpload} disabled={busy} /></label>}
-          {canEdit && <button onClick={() => setShow((v) => !v)} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-primary px-5 text-[15px] font-semibold text-white hover:bg-primary-pressed"><Plus size={17} /> 추가</button>}
+          {canEdit && <button onClick={openAdd} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-primary px-5 text-[15px] font-semibold text-white hover:bg-primary-pressed"><Plus size={17} /> 추가</button>}
         </div>
       </div>
       {msg && <p className="mb-3 text-[14px] font-semibold" style={{ color: msg.startsWith("✅") ? "#0a7d3f" : "#c0392b" }}>{msg}</p>}
 
       {canEdit && show && (
         <div className="mb-5 rounded-xl border border-primary/40 bg-[rgba(0,102,204,.04)] p-5">
+          <h3 className="mb-3 text-[15px] font-extrabold">{editId ? "강사·간사 수정" : "강사·간사 추가"}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <div><label className="mb-1 block text-[13px] font-bold text-ink-soft">이름 *</label><input value={form.name} onChange={(e) => set("name", e.target.value)} className={inp} /></div>
             <div className="flex gap-2">
@@ -107,8 +118,8 @@ export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instr
           </div>
           <div className="mt-3 flex items-center justify-end gap-3">
             {msg && <span className="text-[14px] font-semibold text-unpaid">{msg}</span>}
-            <button onClick={() => { setShow(false); setMsg(""); }} className="rounded-full bg-[rgba(112,115,124,.08)] px-5 py-2.5 text-[15px] font-semibold text-ink-soft">취소</button>
-            <button onClick={onAdd} disabled={busy} className="rounded-full bg-primary px-6 py-2.5 text-[15px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{busy ? "저장 중…" : "저장"}</button>
+            <button onClick={() => { setShow(false); setMsg(""); setEditId(null); }} className="rounded-full bg-[rgba(112,115,124,.08)] px-5 py-2.5 text-[15px] font-semibold text-ink-soft">취소</button>
+            <button onClick={onSave} disabled={busy} className="rounded-full bg-primary px-6 py-2.5 text-[15px] font-semibold text-white hover:bg-primary-pressed disabled:opacity-50">{busy ? "저장 중…" : "저장"}</button>
           </div>
         </div>
       )}
@@ -128,6 +139,7 @@ export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instr
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((i) => (
             <div key={i.id} className="relative rounded-xl border border-line bg-card p-4">
+              {canEdit && <button onClick={() => startEdit(i)} className="absolute right-10 top-3 text-muted hover:text-primary" aria-label="수정"><Pencil size={16} /></button>}
               {canEdit && <button onClick={() => onDelete(i)} className="absolute right-3 top-3 text-muted hover:text-unpaid" aria-label="삭제"><Trash2 size={16} /></button>}
               <div className="mb-1.5 flex items-center gap-2 pr-6">
                 <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-[rgba(0,102,204,.1)] text-primary"><GraduationCap size={17} /></span>
