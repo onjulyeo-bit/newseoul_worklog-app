@@ -9,6 +9,6 @@ export default async function DuesPage() {
   if (user) { const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single(); role = data?.role ?? null; }
   if (role !== "admin" && role !== "viewer") return <p className="rounded-lg border border-line bg-card px-4 py-10 text-center text-[15px] text-ink-soft">운영진 전용 화면이에요.</p>;
 
-  const { data } = await supabase.from("annual_dues").select("name, year, amount").eq("chapter_id", "새서울");
+  const { data } = await supabase.from("annual_dues").select("name, year, amount, grade").eq("chapter_id", "새서울");
   return <DuesBoard rows={(data as DuesRow[]) ?? []} canEdit={role === "admin"} />;
 }
