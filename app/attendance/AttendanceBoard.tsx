@@ -125,7 +125,7 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
     t += "확인 후 다시 안내드리겠습니다. 감사합니다 🤍";
     return t;
   })();
-  const copyReminder = async () => { try { await navigator.clipboard.writeText(reminderText); showToast("독촉 문구를 복사했어요"); } catch {} };
+  const copyReminder = async () => { try { await navigator.clipboard.writeText(reminderText); showToast("안내 문구를 복사했어요"); } catch {} };
   const copyText = async (t: string, msg: string) => { try { await navigator.clipboard.writeText(t); showToast(msg); } catch {} };
 
   return (
@@ -258,7 +258,7 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
               </div>
 
               <div className="card remind-card">
-                <div className="sec-row"><h2 className="sec-title">미납 독촉 문구</h2><button className="ui-btn ui-primary ui-sm" onClick={copyReminder}>📋 전체 복사</button></div>
+                <div className="sec-row"><h2 className="sec-title">미납 안내 문구</h2><button className="ui-btn ui-primary ui-sm" onClick={copyReminder}>📋 전체 복사</button></div>
                 <pre className="remind-box">{reminderText}</pre>
                 <p className="remind-hint">단톡방에 붙여넣거나, 위 [📩 문자]로 개별 발송하세요.</p>
               </div>

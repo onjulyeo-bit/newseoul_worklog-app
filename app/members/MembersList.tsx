@@ -6,11 +6,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ChevronDown, Check, SlidersHorizontal, Search, X, Upload, UserPlus,
-  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Star, Contact, Info,
+  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Star, Contact, Info, Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
-import { saveMember } from "./actions";
+import { saveMember, removeMember } from "./actions";
 
 // 내보내기용 행 (한글 헤더) — 다운로드한 파일을 그대로 다시 업로드(append)할 수 있게 컬럼 일치
 function toExportRows(members: RawMember[]) {
@@ -170,6 +170,7 @@ export default function MembersList({ members: initial, canEdit = true, asOf }: 
   };
 
   const onSaved = (m: RawMember) => { setMembers((list) => list.map((x) => x.id === m.id ? m : x)); setSelected(m); showToast("저장되었습니다"); };
+  const onDeleted = (id: string) => { setMembers((list) => list.filter((x) => x.id !== id)); setSelected(null); showToast("삭제되었습니다"); };
   const visibleCols = COLUMNS.filter((c) => cols.includes(c.key));
 
   return (
@@ -269,7 +270,7 @@ export default function MembersList({ members: initial, canEdit = true, asOf }: 
         {!filtered.length && <div className="empty">조건에 맞는 회원이 없습니다.</div>}
       </div>
 
-      {selected && <MemberDetail member={selected} canEdit={canEdit} onClose={() => setSelected(null)} onSaved={onSaved} />}
+      {selected && <MemberDetail member={selected} canEdit={canEdit} onClose={() => setSelected(null)} onSaved={onSaved} onDeleted={onDeleted} />}
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
@@ -364,7 +365,7 @@ function CardUpload({ member, onChange }: { member: RawMember; onChange: (url: s
   );
 }
 
-function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: RawMember; canEdit?: boolean; onClose: () => void; onSaved: (m: RawMember) => void }) {
+function MemberDetail({ member, canEdit = true, onClose, onSaved, onDeleted }: { member: RawMember; canEdit?: boolean; onClose: () => void; onSaved: (m: RawMember) => void; onDeleted?: (id: string) => void }) {
   const [edit, setEdit] = useState(false);
   const [m, setM] = useState(member);
   const [pending, start] = useTransition();
@@ -393,6 +394,15 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
     });
   };
 
+  const remove = () => {
+    if (!confirm(`'${m.name}' 회원을 삭제할까요?\n되돌릴 수 없어요.`)) return;
+    start(async () => {
+      const r = await removeMember(m.id);
+      if (r.error) { alert("삭제 실패: " + r.error); return; }
+      onDeleted?.(m.id);
+    });
+  };
+
   return (
     <div className="drawer-root" onClick={onClose}>
       <aside className="drawer" onClick={(e) => e.stopPropagation()}>
@@ -403,7 +413,12 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
               <button className="ui-btn ui-ghost ui-sm" onClick={() => { setM(member); setEdit(false); }}>취소</button>
               <button className="ui-btn ui-primary ui-sm" onClick={save} disabled={pending}><Check size={16} /> {pending ? "저장 중…" : "저장"}</button>
             </div>
-          ) : <button className="ui-btn ui-soft ui-sm" onClick={() => setEdit(true)}><Pencil size={16} /> 편집</button>}
+          ) : (
+            <div className="drawer-acts">
+              <button className="ui-btn ui-ghost ui-sm" onClick={remove} disabled={pending} title="회원 삭제"><Trash2 size={16} /> 삭제</button>
+              <button className="ui-btn ui-soft ui-sm" onClick={() => setEdit(true)}><Pencil size={16} /> 편집</button>
+            </div>
+          )}
         </div>
 
         <div className="drawer-body">

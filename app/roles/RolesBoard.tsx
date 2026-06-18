@@ -63,11 +63,11 @@ export default function RolesBoard({ initial: init, members, myId }: { initial: 
 
       <div className="info-card">
         <div className="info-row"><span className="badge b-owner">메인</span> 최고 관리자 · 영구 보호(여기서만 서브 관리자 지정 가능)</div>
-        <div className="info-row"><span className="badge b-brand">운영진</span> 전체 앱 기능 사용 · 역할변경 불가</div>
+        <div className="info-row"><span className="badge b-brand">운영진</span> 전체 앱 기능 사용 · 권한설정 불가</div>
         <div className="info-row"><span className="badge b-warm">읽기 운영진</span> 운영진 화면 <b>보기만</b> 가능 · 추가·수정·삭제 불가</div>
         <div className="info-row"><span className="badge b-green">회원</span> 공지·아카이브 + <b>회원명단</b>(개인정보) 보기</div>
         <div className="info-row"><span className="badge b-gray">관심</span> 처음 로그인 기본값 · 공지·아카이브 보기(명단 제외)</div>
-        <p className="info-note">※ 카카오로 로그인하면 ‘미연결’로 떠요. 명단의 회원과 연결하면 자동으로 ‘회원’ 권한이 돼요. 명단에 이메일이 입력돼 있고 같은 이메일로 로그인하면 자동 연결됩니다.</p>
+        <p className="info-note">※ 카카오로 <b>처음</b> 로그인하면 ‘미연결’로 떠요. 아래에서 명단 회원과 연결하면 ‘회원’ 권한이 됩니다.<br />• <b>자동 연결</b>: 명단에 이메일이 입력돼 있고, 같은 이메일로 로그인하면 자동으로 연결돼요.<br />• <b>이메일을 나중에 받는 경우</b>: 자동 연결이 안 되니, 운영진이 여기서 직접 연결하면 됩니다(앱을 쓰는 분만 한 명씩). 나중에 명단에 이메일을 넣어두면 그 사람이 <b>다음에 같은 이메일로 로그인</b>할 때 자동 연결됩니다.</p>
       </div>
 
       {/* 미연결 로그인 */}

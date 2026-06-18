@@ -19,12 +19,12 @@ export default async function AttendancePage({
     .order("date", { ascending: false });
   const all: Meeting[] = meetingsData ?? [];
 
-  // 정렬: 오늘·지난 회차를 최신순으로 앞에, 다가올(미래) 회차는 뒤로.
-  // (체크인·식대는 보통 진행된/오늘 회차를 다루므로 현재가 맨 앞에 오게 한다)
+  // 정렬: 시간순(과거→미래)으로 두고, '당회'(오늘/직전 회차)를 기본 선택 + 가운데로(전·후 회차가 양옆에 보임).
   const today = new Date().toISOString().slice(0, 10);
-  const pastOrToday = all.filter((m) => (m.date ?? "") <= today); // 쿼리가 내림차순 → 최신 지난회차 먼저
-  const future = all.filter((m) => (m.date ?? "") > today).reverse(); // 미래는 가까운 것부터(오름차순)
-  const meetings: Meeting[] = [...pastOrToday, ...future];
+  const meetings: Meeting[] = [...all].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")); // 오름차순
+  // 당회 = 오늘이거나 가장 최근 지난 회차(없으면 가장 가까운 다음 회차)
+  const pastOrToday = meetings.filter((m) => (m.date ?? "") <= today);
+  const currentId = (pastOrToday.length ? pastOrToday[pastOrToday.length - 1] : meetings[0])?.id;
 
   const { data: membersData } = await supabase
     .from("members")
@@ -33,7 +33,7 @@ export default async function AttendancePage({
     .order("name", { ascending: true });
   const members: Member[] = membersData ?? [];
 
-  const selectedId = meeting && meetings.some((m) => m.id === meeting) ? meeting : meetings[0]?.id;
+  const selectedId = meeting && meetings.some((m) => m.id === meeting) ? meeting : currentId;
 
   let attendance: Att[] = [];
   if (selectedId) {

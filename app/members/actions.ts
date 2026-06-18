@@ -60,6 +60,15 @@ export async function importMembers(
   return { ok: true, inserted: newRows.length, skipped: withChapter.length - newRows.length };
 }
 
+// 드로어용 삭제 — redirect 없이 결과만 반환(목록 화면 유지). RLS상 임원만.
+export async function removeMember(id: string): Promise<{ ok?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("members").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/");
+  return { ok: true };
+}
+
 export async function deleteMember(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("members").delete().eq("id", id);
