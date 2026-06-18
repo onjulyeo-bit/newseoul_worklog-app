@@ -222,15 +222,21 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
       setBgImage(dataUrl);
     } catch { setBgImage(url); } finally { setLibBusy(false); }
   }
-  async function uploadBg(file: File) {
+  async function uploadBg(files: FileList | File[]) {
+    const arr = Array.from(files);
+    if (!arr.length) return;
     setLibBusy(true);
+    let lastUrl = ""; let fail = 0;
     try {
-      const name = `${crypto.randomUUID()}_${file.name.replace(/[^\w.]+/g, "_")}`.slice(0, 90);
-      const { error } = await supabase.storage.from("backgrounds").upload(name, file, { contentType: file.type || "image/jpeg" });
-      if (error) { alert("업로드 실패: " + error.message); return; }
-      const url = supabase.storage.from("backgrounds").getPublicUrl(name).data.publicUrl;
-      await applyLib(url);
+      for (const file of arr) {
+        const name = `${crypto.randomUUID()}_${file.name.replace(/[^\w.]+/g, "_")}`.slice(0, 90);
+        const { error } = await supabase.storage.from("backgrounds").upload(name, file, { contentType: file.type || "image/jpeg" });
+        if (error) { fail++; continue; }
+        lastUrl = supabase.storage.from("backgrounds").getPublicUrl(name).data.publicUrl;
+      }
       await loadLib();
+      if (lastUrl) await applyLib(lastUrl); // 마지막 장은 바로 적용
+      if (fail) alert(`${fail}장 업로드 실패(나머지는 올라갔어요). 용량이 크면 줄여서 다시 시도하세요.`);
     } finally { setLibBusy(false); }
   }
   async function saveToLib() {
@@ -369,8 +375,8 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
               <div>
                 <div className="mb-2 flex flex-wrap gap-2">
                   <label className="cursor-pointer rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary hover:text-primary">
-                    📤 내 이미지 업로드
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBg(f); e.currentTarget.value = ""; }} />
+                    📤 내 이미지 업로드 (여러 장)
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadBg(e.target.files); e.currentTarget.value = ""; }} />
                   </label>
                   <button onClick={loadLib} className="rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary">↻ 새로고침</button>
                 </div>
