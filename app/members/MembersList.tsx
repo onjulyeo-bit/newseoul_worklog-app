@@ -188,6 +188,7 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
         </div>
       </div>
 
+      <div className="stat-cap">회원 현황 <span>현재 명단 기준 (오늘)</span></div>
       <div className="stat-grid mb">
         <div className="card stat"><div className="stat-ic t-brand"><Users size={20} /></div><div className="stat-body"><div className="stat-label">전체 회원</div><div className="stat-value">{stat.total}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-blue"><BadgeCheck size={20} /></div><div className="stat-body"><div className="stat-label">정회원</div><div className="stat-value">{stat.jung}명</div><div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 1 }}>부부정회원 포함</div></div></div>
@@ -494,6 +495,8 @@ const MEM_CSS = `
 .moim-mem .page-sub{ color:var(--ink-3); font-size:14px; margin-top:5px; font-weight:500; }
 .moim-mem .page-acts{ display:flex; gap:8px; }
 
+.moim-mem .stat-cap{ display:flex; align-items:baseline; gap:8px; font-size:13.5px; font-weight:800; color:var(--ink-2); margin-bottom:10px; }
+.moim-mem .stat-cap span{ font-size:12px; font-weight:600; color:var(--ink-3); }
 .moim-mem .stat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
 .moim-mem .stat-grid.mb{ margin-bottom:20px; }
 .moim-mem .stat{ padding:16px; display:flex; gap:13px; align-items:flex-start; min-width:0; }
