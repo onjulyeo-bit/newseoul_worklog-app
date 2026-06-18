@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ChevronDown, Check, SlidersHorizontal, Search, X, Upload, UserPlus,
-  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Moon,
+  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Moon, Contact,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
@@ -174,6 +174,7 @@ export default function MembersList({ members: initial }: { members: RawMember[]
           <p className="page-sub">모임 회원 {stat.total}명 (현재 카톡방 명단) · 정회원 {stat.jung}명</p>
         </div>
         <div className="page-acts">
+          <button className="ui-btn ui-soft ui-sm" onClick={() => { try { navigator.clipboard.writeText(`${location.origin}/my-info`); showToast("정보요청 링크 복사됨 — 카톡방에 붙여넣으세요"); } catch {} }}><Contact size={16} /> 정보요청 링크</button>
           <button className="ui-btn ui-ghost ui-sm" onClick={() => downloadXlsx(toExportRows(filtered), "회원명단")}><Download size={16} /> 엑셀</button>
           <button className="ui-btn ui-ghost ui-sm" onClick={() => downloadCsv(toExportRows(filtered), "회원명단")}><Download size={16} /> CSV</button>
           <Link href="/members/import" className="ui-btn ui-ghost ui-sm"><Upload size={16} /> 엑셀 업로드</Link>
