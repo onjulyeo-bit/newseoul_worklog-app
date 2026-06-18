@@ -22,12 +22,26 @@ type El = {
 };
 
 const FONTS = [
-  { key: "pretendard", label: "기본", css: "'Pretendard', sans-serif" },
-  { key: "myeongjo", label: "명조", css: "'Nanum Myeongjo', serif" },
-  { key: "dohyeon", label: "고딕", css: "'Do Hyeon', sans-serif" },
-  { key: "blackhan", label: "굵은제목", css: "'Black Han Sans', sans-serif" },
-  { key: "gaegu", label: "손글씨", css: "'Gaegu', cursive" },
-  { key: "pen", label: "펜글씨", css: "'Nanum Pen Script', cursive" },
+  { key: "pretendard", label: "기본(프리텐다드)", css: "'Pretendard', sans-serif" },
+  { key: "nanumgothic", label: "나눔고딕", css: "'Nanum Gothic', sans-serif" },
+  { key: "gowdodum", label: "고운돋움", css: "'Gowun Dodum', sans-serif" },
+  { key: "dohyeon", label: "도현(굵은고딕)", css: "'Do Hyeon', sans-serif" },
+  { key: "blackhan", label: "검은고딕(굵은제목)", css: "'Black Han Sans', sans-serif" },
+  { key: "jua", label: "주아(둥근제목)", css: "'Jua', sans-serif" },
+  { key: "sunflower", label: "선플라워(둥근굵게)", css: "'Sunflower', sans-serif" },
+  { key: "stylish", label: "스타일리시(가는고딕)", css: "'Stylish', sans-serif" },
+  { key: "myeongjo", label: "나눔명조", css: "'Nanum Myeongjo', serif" },
+  { key: "songmyung", label: "송명(고전명조)", css: "'Song Myung', serif" },
+  { key: "gowbatang", label: "고운바탕", css: "'Gowun Batang', serif" },
+  { key: "notoserif", label: "노토명조", css: "'Noto Serif KR', serif" },
+  { key: "gaegu", label: "개구(손글씨)", css: "'Gaegu', cursive" },
+  { key: "pen", label: "나눔펜(펜글씨)", css: "'Nanum Pen Script', cursive" },
+  { key: "gamja", label: "감자꽃(귀여운)", css: "'Gamja Flower', cursive" },
+  { key: "hi", label: "하이멜로디(말랑)", css: "'Hi Melody', cursive" },
+  { key: "poorstory", label: "또박또박", css: "'Poor Story', cursive" },
+  { key: "kirang", label: "기랑해랑(붓)", css: "'Kirang Haerang', cursive" },
+  { key: "dongle", label: "동글(둥근손글씨)", css: "'Dongle', sans-serif" },
+  { key: "yeonsung", label: "연성(붓글씨)", css: "'Yeon Sung', cursive" },
 ];
 const fontCss = (k: string) => FONTS.find((f) => f.key === k)?.css ?? FONTS[0].css;
 
@@ -104,6 +118,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
   const [scrim, setScrim] = useState(true);
   const [bgTab, setBgTab] = useState<"lib" | "stock" | "ai" | "theme">("lib");
   const [bgColor, setBgColor] = useState(""); // 직접 고른 단색 (있으면 테마 그라데이션 대신 사용)
+  const [zoom, setZoom] = useState(1); // 편집 캔버스 확대 배율
 
   const posterRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
@@ -306,17 +321,26 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
         {/* 포스터 미리보기 */}
-        <div>
-          <div
-            ref={posterRef}
-            onPointerMove={onMove}
-            onPointerUp={onUp}
-            onPointerDown={() => setSel(null)}
-            className="relative mx-auto aspect-[3/4] w-full max-w-[320px] select-none overflow-hidden rounded-[14px]"
-            style={{ background: bgColor || THEMES[theme].bg, touchAction: "none" }}
-          >
+        <div className="overflow-x-auto">
+          {/* 편집 확대 */}
+          <div className="mb-2 flex items-center gap-1.5">
+            <span className="text-[12px] font-semibold text-ink-soft">편집 크기</span>
+            {([["기본", 1], ["크게", 1.5], ["더크게", 2]] as const).map(([l, z]) => (
+              <button key={l} onClick={() => setZoom(z)} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${zoom === z ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{l}</button>
+            ))}
+          </div>
+          {/* 스케일 래퍼(레이아웃 공간 확보) — posterRef 자체는 320px 유지(드래그·내보내기 일관) */}
+          <div className="mx-auto" style={{ width: 320 * zoom, height: 320 * zoom * 4 / 3, maxWidth: "100%" }}>
+            <div
+              ref={posterRef}
+              onPointerMove={onMove}
+              onPointerUp={onUp}
+              onPointerDown={() => setSel(null)}
+              className="relative aspect-[3/4] select-none overflow-hidden rounded-[14px]"
+              style={{ width: 320, transform: `scale(${zoom})`, transformOrigin: "top left", background: bgColor || THEMES[theme].bg, touchAction: "none" }}
+            >
             {bgImage && (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -341,6 +365,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
                 )}
               </div>
             ))}
+          </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <button onClick={addText} className="flex-1 rounded-full border border-line px-3 py-2 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">＋ 글자</button>

@@ -35,7 +35,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Black+Han+Sans&family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Do+Hyeon&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Black+Han+Sans&family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Do+Hyeon&family=Jua&family=Gowun+Dodum&family=Gowun+Batang:wght@400;700&family=Sunflower:wght@300;500;700&family=Song+Myung&family=Nanum+Gothic:wght@400;700;800&family=Noto+Serif+KR:wght@400;600;900&family=Gamja+Flower&family=Hi+Melody&family=Poor+Story&family=Kirang+Haerang&family=Dongle:wght@400;700&family=Yeon+Sung&family=Stylish&display=swap"
         />
       </head>
       <body>
