@@ -17,7 +17,9 @@ export type ParsedMember = {
   car_model: string | null;
   car_number: string | null;
   birth_date: string | null;
+  birth_calendar: string | null;
   address: string | null;
+  address_type: string | null;
   home_church: string | null;
   joined_on: string | null;
   intended_role: string | null;
@@ -65,7 +67,9 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
   const iCarModel0 = find("차종");
   const iCarNum0 = find("차량번호");
   const iBirth = find("생년월일", "생일", "출생");
-  const iAddress = find("주소");
+  const iBirthCal = find("양/음력", "음양력", "양음력", "음력", "양력");
+  const iAddrType = find("주소구분");
+  const iAddress = headers.findIndex((hh) => hh === "주소"); // '주소구분'과 구분 위해 정확히 일치
   const iChurch = find("출석교회", "교회");
   const iJoined = find("등록시기", "가입", "등록일");
   const iIntended = find("운영진");
@@ -126,7 +130,9 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
       car_model,
       car_number,
       birth_date: cell(iBirth),
+      birth_calendar: cell(iBirthCal),
       address: cell(iAddress),
+      address_type: cell(iAddrType),
       home_church: cell(iChurch),
       joined_on: jRaw
         ? /^\d{4}-\d{2}-\d{2}$/.test(jRaw) ? jRaw            // 전체 날짜(2020-01-01) 그대로

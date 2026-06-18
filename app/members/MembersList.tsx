@@ -29,8 +29,10 @@ function toExportRows(members: RawMember[]) {
     "리더십스쿨 수료": m.leadership_school ?? "",
     차종: m.car_model ?? "",
     차량번호: m.car_number ?? "",
-    생년월일: m.birth_date ?? "",
+    생일: m.birth_date ?? "",
+    "양/음력": m.birth_calendar ?? "",
     주소: m.address ?? "",
+    주소구분: m.address_type ?? "",
     출석교회: m.home_church ?? "",
     회원등록일: m.joined_on ?? "",
     운영진예정: m.intended_role === "admin" ? "O" : "",
@@ -44,7 +46,7 @@ export type RawMember = {
   company: string | null; position: string | null; vision_school: string | null; leadership_school: string | null;
   car_model: string | null; car_number: string | null; parking_registered: boolean | null; intended_role: string | null;
   joined_on: string | null; tags: string[] | null; photo_url: string | null;
-  birth_date: string | null; address: string | null; home_church: string | null;
+  birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null;
 };
 
 const GRADES = ["정회원", "가족회원", "준회원", "신입회원", "명예회원", "유보회원", "VIP"];
@@ -326,7 +328,7 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
     start(async () => {
       const data = {
         grade: m.grade, status: m.status, gender: m.gender, phone: m.phone, email: m.email, spouse_name: m.spouse_name, intended_role: m.intended_role,
-        birth_date: m.birth_date, address: m.address, home_church: m.home_church,
+        birth_date: m.birth_date, birth_calendar: m.birth_calendar, address: m.address, address_type: m.address_type, home_church: m.home_church,
         industry: m.industry, company: m.company, position: m.position,
         vision_school: m.vision_school, leadership_school: m.leadership_school,
         car_model: m.car_model, car_number: m.car_number, parking_registered: m.parking_registered,
@@ -368,9 +370,9 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
           {!edit ? (
             <div className="dm-sections">
               <section className="dm-sec"><h3 className="dm-sec-t">기본</h3>
-                <Field label="성별" value={m.gender} /><Field label="연락처" value={m.phone} mono /><Field label="이메일" value={m.email} mono /><Field label="생년월일" value={m.birth_date} /><Field label="배우자" value={m.spouse_name} /></section>
+                <Field label="성별" value={m.gender} /><Field label="연락처" value={m.phone} mono /><Field label="이메일" value={m.email} mono /><Field label="생일" value={m.birth_date ? `${m.birth_date}${m.birth_calendar ? ` (${m.birth_calendar})` : ""}` : null} /><Field label="배우자" value={m.spouse_name} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">연락·신앙</h3>
-                <Field label="주소" value={m.address} /><Field label="출석교회" value={m.home_church} /></section>
+                <Field label={m.address_type ? `주소 (${m.address_type})` : "주소"} value={m.address} /><Field label="출석교회" value={m.home_church} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">직업</h3>
                 <Field label="업종" value={m.industry} /><Field label="회사" value={m.company} /><Field label="직책" value={m.position} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">교육</h3>
@@ -389,7 +391,8 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
                 <EditSelect label="성별" value={m.gender || ""} options={["남", "여"]} onChange={(v) => set("gender", v)} />
                 <EditText label="연락처" value={m.phone || ""} onChange={(v) => set("phone", v)} />
                 <EditText label="이메일 (로그인 연결용)" value={m.email || ""} onChange={(v) => set("email", v)} />
-                <EditText label="생년월일 (예: 1970-03-15)" value={m.birth_date || ""} onChange={(v) => set("birth_date", v)} />
+                <EditText label="생일 (예: 03-15 또는 1970-03-15)" value={m.birth_date || ""} onChange={(v) => set("birth_date", v)} />
+                <EditSelect label="양/음력" value={m.birth_calendar || ""} options={["양력", "음력"]} onChange={(v) => set("birth_calendar", v)} />
                 <EditText label="배우자" value={m.spouse_name || ""} onChange={(v) => set("spouse_name", v)} />
                 <label className="fld-edit toggle-row"><span className="fld-label">운영진 예정 <span style={{ color: "#767d8a", fontWeight: 500 }}>(로그인 시 자동 운영진)</span></span>
                   <button className={`switch ${m.intended_role === "admin" ? "on" : ""}`} onClick={() => setM((p) => ({ ...p, intended_role: p.intended_role === "admin" ? null : "admin" }))} type="button"><span className="switch-knob" /></button>
@@ -399,6 +402,7 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
                 <EditText label="회사" value={m.company || ""} onChange={(v) => set("company", v)} />
                 <EditText label="직책" value={m.position || ""} onChange={(v) => set("position", v)} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">연락·신앙</h3>
+                <EditSelect label="주소 구분" value={m.address_type || ""} options={["집", "회사"]} onChange={(v) => set("address_type", v)} />
                 <EditText label="주소" value={m.address || ""} onChange={(v) => set("address", v)} />
                 <EditText label="출석교회" value={m.home_church || ""} onChange={(v) => set("home_church", v)} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">교육</h3>
