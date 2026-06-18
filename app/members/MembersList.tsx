@@ -161,7 +161,7 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
 
   const stat = {
     total: members.length,
-    jung: members.filter((m) => m.grade === "정회원").length,
+    jung: members.filter((m) => m.grade === "정회원" || m.grade === "부부정회원").length,
     jun: members.filter((m) => m.grade === "준회원").length,
     couple: members.filter((m) => m.grade === "가족회원").length,
     vip: members.filter((m) => m.grade === "VIP").length,
@@ -190,7 +190,7 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
 
       <div className="stat-grid mb">
         <div className="card stat"><div className="stat-ic t-brand"><Users size={20} /></div><div className="stat-body"><div className="stat-label">전체 회원</div><div className="stat-value">{stat.total}명</div></div></div>
-        <div className="card stat"><div className="stat-ic t-blue"><BadgeCheck size={20} /></div><div className="stat-body"><div className="stat-label">정회원</div><div className="stat-value">{stat.jung}명</div></div></div>
+        <div className="card stat"><div className="stat-ic t-blue"><BadgeCheck size={20} /></div><div className="stat-body"><div className="stat-label">정회원</div><div className="stat-value">{stat.jung}명</div><div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 1 }}>부부정회원 포함</div></div></div>
         <div className="card stat"><div className="stat-ic t-green"><UserCheck size={20} /></div><div className="stat-body"><div className="stat-label">준회원</div><div className="stat-value">{stat.jun}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-warm"><Heart size={20} /></div><div className="stat-body"><div className="stat-label">가족회원</div><div className="stat-value">{stat.couple}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-warm"><Star size={20} /></div><div className="stat-body"><div className="stat-label">VIP</div><div className="stat-value">{stat.vip}명</div></div></div>
