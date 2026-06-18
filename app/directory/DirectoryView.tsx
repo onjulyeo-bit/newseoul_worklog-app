@@ -1,10 +1,10 @@
 "use client";
 
-// 회원 명단(제한) 표시 — 이름·회사·연락처. 검색 + 전화 걸기. 고령 배려로 큼직하게.
+// 회원 명단(제한) 표시 — 이름·연락처·회사·이메일·직위·업종. 검색 + 전화·메일. 고령 배려로 큼직하게.
 import { useMemo, useState } from "react";
-import { Search, Phone } from "lucide-react";
+import { Search, Phone, Mail } from "lucide-react";
 
-export type DirEntry = { id: string; name: string | null; phone: string | null; company: string | null };
+export type DirEntry = { id: string; name: string | null; phone: string | null; company: string | null; email: string | null; position: string | null; industry: string | null };
 
 const AV = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 
@@ -15,7 +15,7 @@ export default function DirectoryView({ entries }: { entries: DirEntry[] }) {
     const k = q.trim().toLowerCase();
     if (!k) return entries;
     return entries.filter((e) =>
-      [e.name, e.company, e.phone].some((v) => (v ?? "").toLowerCase().includes(k)),
+      [e.name, e.company, e.phone, e.email, e.position, e.industry].some((v) => (v ?? "").toLowerCase().includes(k)),
     );
   }, [entries, q]);
 
@@ -24,7 +24,7 @@ export default function DirectoryView({ entries }: { entries: DirEntry[] }) {
       <style>{CSS}</style>
       <div className="page-head">
         <h1 className="page-title">회원 명단</h1>
-        <p className="page-sub">새서울 CBMC 회원 {entries.length}명 · 이름·연락처·회사</p>
+        <p className="page-sub">새서울 CBMC 회원 {entries.length}명 · 이름·연락처·회사·이메일·직위·업종</p>
       </div>
 
       <div className="search">
@@ -43,14 +43,22 @@ export default function DirectoryView({ entries }: { entries: DirEntry[] }) {
               <div key={e.id} className="row">
                 <span className="av" style={{ background: color }}>{initial}</span>
                 <div className="who">
-                  <span className="nm">{e.name ?? "(이름 없음)"}</span>
-                  {e.company && <span className="co">{e.company}</span>}
+                  <span className="nm">{e.name ?? "(이름 없음)"}{e.position && <span className="pos"> · {e.position}</span>}</span>
+                  {(e.company || e.industry) && <span className="co">{[e.company, e.industry].filter(Boolean).join(" · ")}</span>}
+                  {e.email && <span className="em">{e.email}</span>}
                 </div>
-                {e.phone && (
-                  <a className="call" href={`tel:${e.phone.replace(/[^0-9+]/g, "")}`}>
-                    <Phone size={16} /><span>{e.phone}</span>
-                  </a>
-                )}
+                <div className="acts">
+                  {e.phone && (
+                    <a className="call" href={`tel:${e.phone.replace(/[^0-9+]/g, "")}`}>
+                      <Phone size={16} /><span>{e.phone}</span>
+                    </a>
+                  )}
+                  {e.email && (
+                    <a className="mail" href={`mailto:${e.email}`} aria-label="메일 보내기">
+                      <Mail size={16} />
+                    </a>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -79,8 +87,13 @@ const CSS = `
 .moim-dir .av{ width:42px; height:42px; border-radius:50%; display:grid; place-items:center; color:#fff; font-weight:700; font-size:17px; flex-shrink:0; }
 .moim-dir .who{ flex:1; min-width:120px; display:flex; flex-direction:column; gap:2px; }
 .moim-dir .nm{ font-weight:700; font-size:17px; }
+.moim-dir .pos{ font-size:14px; color:var(--ink-3); font-weight:600; }
 .moim-dir .co{ font-size:14px; color:var(--ink-3); font-weight:500; }
+.moim-dir .em{ font-size:13px; color:var(--ink-3); font-weight:500; word-break:break-all; }
+.moim-dir .acts{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
 .moim-dir .call{ display:inline-flex; align-items:center; gap:7px; background:var(--brand-soft); color:var(--brand-strong); font-weight:700; font-size:15px; padding:10px 16px; border-radius:999px; text-decoration:none; white-space:nowrap; }
 .moim-dir .call:hover{ background:#dbeafe; }
+.moim-dir .mail{ display:inline-grid; place-items:center; width:42px; height:42px; background:var(--bg-warm); color:var(--ink-2); border:1px solid var(--line); border-radius:999px; text-decoration:none; }
+.moim-dir .mail:hover{ background:#eef2f7; }
 .moim-dir .empty{ padding:48px; text-align:center; color:var(--ink-3); font-size:15px; font-weight:500; background:var(--bg); border:1px solid var(--line); border-radius:16px; }
 `;
