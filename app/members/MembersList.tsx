@@ -47,6 +47,7 @@ export type RawMember = {
   car_model: string | null; car_number: string | null; parking_registered: boolean | null; intended_role: string | null;
   joined_on: string | null; tags: string[] | null; photo_url: string | null;
   birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null;
+  intro: string | null; business_card_url: string | null;
 };
 
 const GRADES = ["정회원", "부부정회원", "가족회원", "준회원", "신입회원", "명예회원", "유보회원", "VIP"];
@@ -55,6 +56,7 @@ const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: 
 const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm" };
 const AV_COLORS = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const PRESET_TAGS = ["증경회장", "지회장", "총무", "간사", "감사", "부총무", "고문", "운영위원", "찬양팀", "봉사팀", "창립멤버", "새가족", "청년부"];
+const INTRO_EXAMPLE = "예) 안녕하세요. ○○에서 △△ 일을 하는 □□□입니다. 새서울 CBMC에서 좋은 분들과 신앙·비즈니스로 함께 성장하길 기대합니다. 잘 부탁드립니다.";
 
 const COLUMNS: { key: string; label: string; field: keyof RawMember }[] = [
   { key: "gender", label: "성별", field: "gender" },
@@ -327,6 +329,41 @@ function PhotoCircle({ member, onChange }: { member: RawMember; onChange: (url: 
   );
 }
 
+function CardUpload({ member, onChange }: { member: RawMember; onChange: (url: string | null) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; e.target.value = "";
+    if (!f) return;
+    if (f.size > 7 * 1024 * 1024) { alert("7MB 이하 이미지만 올릴 수 있어요."); return; }
+    setBusy(true);
+    const supabase = createClient();
+    const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+    const up = await supabase.storage.from("member-cards").upload(`${member.id}-${Date.now()}.${ext}`, f, { upsert: true, contentType: f.type });
+    if (up.error) { setBusy(false); alert("업로드 실패: " + up.error.message); return; }
+    const { data } = supabase.storage.from("member-cards").getPublicUrl(up.data.path);
+    setBusy(false); onChange(data.publicUrl);
+  };
+  return (
+    <div className="fld-edit">
+      <span className="fld-label">명함 이미지</span>
+      {member.business_card_url ? (
+        <div className="card-prev">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={member.business_card_url} alt="명함" />
+          <div className="card-acts">
+            <button type="button" className="ui-btn ui-ghost ui-sm" onClick={() => fileRef.current?.click()} disabled={busy}>{busy ? "올리는 중…" : "변경"}</button>
+            <button type="button" className="ui-btn ui-ghost ui-sm" onClick={() => onChange(null)}>삭제</button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" className="card-drop" onClick={() => fileRef.current?.click()} disabled={busy}><Camera size={18} /> {busy ? "올리는 중…" : "명함 사진 올리기"}</button>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={pick} />
+    </div>
+  );
+}
+
 function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: RawMember; canEdit?: boolean; onClose: () => void; onSaved: (m: RawMember) => void }) {
   const [edit, setEdit] = useState(false);
   const [m, setM] = useState(member);
@@ -344,6 +381,7 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
       const data = {
         grade: m.grade, status: m.status, gender: m.gender, phone: m.phone, email: m.email, spouse_name: m.spouse_name, intended_role: m.intended_role,
         birth_date: m.birth_date, birth_calendar: m.birth_calendar, address: m.address, address_type: m.address_type, home_church: m.home_church,
+        intro: m.intro, business_card_url: m.business_card_url,
         industry: m.industry, company: m.company, position: m.position,
         vision_school: m.vision_school, leadership_school: m.leadership_school,
         car_model: m.car_model, car_number: m.car_number, parking_registered: m.parking_registered,
@@ -384,6 +422,15 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
 
           {!edit ? (
             <div className="dm-sections">
+              {(m.intro || m.business_card_url) && (
+                <section className="dm-sec"><h3 className="dm-sec-t">자기소개</h3>
+                  {m.intro && <p className="dm-intro">{m.intro}</p>}
+                  {m.business_card_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <a className="dm-card" href={m.business_card_url} target="_blank" rel="noreferrer"><img src={m.business_card_url} alt="명함" /></a>
+                  )}
+                </section>
+              )}
               <section className="dm-sec"><h3 className="dm-sec-t">기본</h3>
                 <Field label="성별" value={m.gender} /><Field label="연락처" value={m.phone} mono /><Field label="이메일" value={m.email} mono /><Field label="생일" value={m.birth_date ? `${m.birth_date}${m.birth_calendar ? ` (${m.birth_calendar})` : ""}` : null} /><Field label="배우자" value={m.spouse_name} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">연락·신앙</h3>
@@ -400,6 +447,10 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
             </div>
           ) : (
             <div className="dm-sections">
+              <section className="dm-sec"><h3 className="dm-sec-t">자기소개·명함</h3>
+                <label className="fld-edit"><span className="fld-label">자기소개 (한 줄)</span>
+                  <textarea className="inp" rows={3} value={m.intro || ""} onChange={(e) => set("intro", e.target.value)} placeholder={INTRO_EXAMPLE} /></label>
+                <CardUpload member={m} onChange={(url) => set("business_card_url", url ?? "")} /></section>
               <section className="dm-sec"><h3 className="dm-sec-t">기본</h3>
                 <EditSelect label="상태" value={m.status || ""} options={STATUSES} onChange={(v) => set("status", v)} />
                 <EditSelect label="회원구분" value={m.grade || ""} options={GRADES} onChange={(v) => set("grade", v)} />
@@ -594,6 +645,15 @@ const MEM_CSS = `
 .moim-mem .fld-label{ font-size:13.5px; color:var(--ink-3); font-weight:600; width:84px; flex-shrink:0; }
 .moim-mem .fld-value{ font-size:14.5px; color:var(--ink); font-weight:600; }
 .moim-mem .dm-tags{ display:flex; flex-wrap:wrap; gap:6px; }
+.moim-mem .dm-intro{ font-size:14.5px; color:var(--ink); line-height:1.6; background:var(--brand-softer); border:1px solid #e1ecfb; border-radius:12px; padding:12px 14px; white-space:pre-wrap; }
+.moim-mem .dm-card{ display:block; margin-top:10px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.moim-mem .dm-card img{ width:100%; display:block; }
+.moim-mem .card-prev{ display:flex; flex-direction:column; gap:8px; }
+.moim-mem .card-prev img{ width:100%; border:1px solid var(--line); border-radius:12px; display:block; }
+.moim-mem .card-acts{ display:flex; gap:8px; }
+.moim-mem .card-drop{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:18px; border:1.5px dashed #c5d6ee; border-radius:12px; background:var(--brand-softer); color:var(--brand-strong); font-weight:700; font-size:14px; cursor:pointer; }
+.moim-mem .card-drop:hover{ background:#e8f1fc; }
+.moim-mem textarea.inp{ resize:vertical; font-family:inherit; line-height:1.5; }
 .moim-mem .fld-edit{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
 .moim-mem .fld-edit .fld-label{ width:auto; }
 .moim-mem .inp{ font-family:inherit; font-size:14.5px; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:11px; padding:10px 12px; outline:0; transition:border-color .15s, box-shadow .15s; width:100%; }

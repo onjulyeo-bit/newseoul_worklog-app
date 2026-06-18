@@ -18,7 +18,7 @@ export default async function DirectoryPage() {
   // 제한 뷰: 이름·연락처·회사만 (민감정보 제외)
   const { data } = await supabase
     .from("members_directory")
-    .select("id, name, phone, company, email, position, industry")
+    .select("id, name, phone, company, email, position, industry, intro, business_card_url")
     .order("name", { ascending: true });
 
   return <DirectoryView entries={(data as DirEntry[]) ?? []} />;

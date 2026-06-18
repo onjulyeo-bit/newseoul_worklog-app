@@ -5,7 +5,9 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null; birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null };
+type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null; birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null; intro: string | null; business_card_url: string | null };
+
+const INTRO_EXAMPLE = "예) 안녕하세요. ○○에서 △△ 일을 하는 □□□입니다. 새서울 CBMC에서 좋은 분들과 신앙·비즈니스로 함께 성장하길 기대합니다. 잘 부탁드립니다.";
 
 export default function MyInfoPage() {
   const [supabase] = useState(() => createClient());
@@ -13,6 +15,7 @@ export default function MyInfoPage() {
   const [name, setName] = useState("");
   const [last4, setLast4] = useState("");
   const [busy, setBusy] = useState(false);
+  const [cardBusy, setCardBusy] = useState(false);
   const [err, setErr] = useState("");
   const [rec, setRec] = useState<Rec | null>(null);
   const set = (k: keyof Rec, v: string) => setRec((r) => (r ? { ...r, [k]: v } : r));
@@ -37,10 +40,23 @@ export default function MyInfoPage() {
       p_car_model: rec.car_model ?? "", p_car_number: rec.car_number ?? "",
       p_birth: rec.birth_date ?? "", p_birth_cal: rec.birth_calendar ?? "",
       p_address: rec.address ?? "", p_addr_type: rec.address_type ?? "", p_church: rec.home_church ?? "",
+      p_intro: rec.intro ?? "", p_card: rec.business_card_url ?? "",
     });
     setBusy(false);
     if (error || data === false) { setErr("저장에 실패했어요. 간사님께 문의해 주세요."); return; }
     setStep("done");
+  }
+  async function uploadCard(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; e.target.value = "";
+    if (!f || !rec) return;
+    if (f.size > 7 * 1024 * 1024) { setErr("명함은 7MB 이하 이미지만 올릴 수 있어요."); return; }
+    setCardBusy(true); setErr("");
+    const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+    const up = await supabase.storage.from("member-cards").upload(`${rec.id}-${Date.now()}.${ext}`, f, { upsert: true, contentType: f.type });
+    setCardBusy(false);
+    if (up.error) { setErr("명함 업로드 실패: " + up.error.message); return; }
+    const { data } = supabase.storage.from("member-cards").getPublicUrl(up.data.path);
+    set("business_card_url", data.publicUrl);
   }
 
   const wrap: React.CSSProperties = { minHeight: "100vh", background: "#fafafb", display: "flex", justifyContent: "center", padding: "24px 16px", fontFamily: "Pretendard, -apple-system, sans-serif", color: "#16181d" };
@@ -91,6 +107,26 @@ export default function MyInfoPage() {
               )}
             </div>
           ))}
+
+          <label style={label}>자기소개 (한 줄)</label>
+          <textarea style={{ ...input, minHeight: 92, resize: "vertical", lineHeight: 1.5 }} value={rec.intro ?? ""} onChange={(e) => set("intro", e.target.value)} placeholder={INTRO_EXAMPLE} />
+
+          <label style={label}>명함 이미지</label>
+          {rec.business_card_url ? (
+            <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={rec.business_card_url} alt="명함" style={{ width: "100%", border: "1px solid #ecedf0", borderRadius: 12, display: "block" }} />
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <label style={{ ...input, width: "auto", flex: 1, textAlign: "center", cursor: "pointer", padding: "10px 14px", fontSize: 15, fontWeight: 700, color: "#3d424d" }}>{cardBusy ? "올리는 중…" : "명함 변경"}<input type="file" accept="image/*" hidden onChange={uploadCard} /></label>
+                <button type="button" style={{ ...input, width: "auto", padding: "10px 14px", fontSize: 15, fontWeight: 700, color: "#c0392b", cursor: "pointer", background: "#fff" }} onClick={() => set("business_card_url", "")}>삭제</button>
+              </div>
+            </div>
+          ) : (
+            <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 18, border: "1.5px dashed #c5d6ee", borderRadius: 12, background: "#f3f8fe", color: "#0052a8", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+              📇 {cardBusy ? "올리는 중…" : "명함 사진 올리기"}<input type="file" accept="image/*" hidden onChange={uploadCard} />
+            </label>
+          )}
+
           {err && <p style={{ color: "#c0392b", fontSize: 14, fontWeight: 600, marginTop: 12 }}>{err}</p>}
           <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} onClick={save} disabled={busy}>{busy ? "저장 중…" : "저장하기"}</button>
         </>)}

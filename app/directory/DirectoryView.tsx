@@ -2,9 +2,9 @@
 
 // 회원 명단(제한) 표시 — 이름·연락처·회사·이메일·직위·업종. 검색 + 전화·메일. 고령 배려로 큼직하게.
 import { useMemo, useState } from "react";
-import { Search, Phone, Mail } from "lucide-react";
+import { Search, Phone, Mail, CreditCard } from "lucide-react";
 
-export type DirEntry = { id: string; name: string | null; phone: string | null; company: string | null; email: string | null; position: string | null; industry: string | null };
+export type DirEntry = { id: string; name: string | null; phone: string | null; company: string | null; email: string | null; position: string | null; industry: string | null; intro: string | null; business_card_url: string | null };
 
 const AV = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 
@@ -15,7 +15,7 @@ export default function DirectoryView({ entries }: { entries: DirEntry[] }) {
     const k = q.trim().toLowerCase();
     if (!k) return entries;
     return entries.filter((e) =>
-      [e.name, e.company, e.phone, e.email, e.position, e.industry].some((v) => (v ?? "").toLowerCase().includes(k)),
+      [e.name, e.company, e.phone, e.email, e.position, e.industry, e.intro].some((v) => (v ?? "").toLowerCase().includes(k)),
     );
   }, [entries, q]);
 
@@ -46,8 +46,14 @@ export default function DirectoryView({ entries }: { entries: DirEntry[] }) {
                   <span className="nm">{e.name ?? "(이름 없음)"}{e.position && <span className="pos"> · {e.position}</span>}</span>
                   {(e.company || e.industry) && <span className="co">{[e.company, e.industry].filter(Boolean).join(" · ")}</span>}
                   {e.email && <span className="em">{e.email}</span>}
+                  {e.intro && <span className="intro">{e.intro}</span>}
                 </div>
                 <div className="acts">
+                  {e.business_card_url && (
+                    <a className="cardbtn" href={e.business_card_url} target="_blank" rel="noreferrer" aria-label="명함 보기">
+                      <CreditCard size={16} /><span>명함</span>
+                    </a>
+                  )}
                   {e.phone && (
                     <a className="call" href={`tel:${e.phone.replace(/[^0-9+]/g, "")}`}>
                       <Phone size={16} /><span>{e.phone}</span>
@@ -90,6 +96,9 @@ const CSS = `
 .moim-dir .pos{ font-size:14px; color:var(--ink-3); font-weight:600; }
 .moim-dir .co{ font-size:14px; color:var(--ink-3); font-weight:500; }
 .moim-dir .em{ font-size:13px; color:var(--ink-3); font-weight:500; word-break:break-all; }
+.moim-dir .intro{ font-size:13px; color:var(--ink-2); font-weight:500; line-height:1.5; margin-top:4px; width:100%; }
+.moim-dir .cardbtn{ display:inline-flex; align-items:center; gap:6px; background:#f3f8fe; color:#0052a8; border:1px solid #d6e6fa; font-weight:700; font-size:14px; padding:9px 14px; border-radius:999px; text-decoration:none; white-space:nowrap; }
+.moim-dir .cardbtn:hover{ background:#e8f1fc; }
 .moim-dir .acts{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
 .moim-dir .call{ display:inline-flex; align-items:center; gap:7px; background:var(--brand-soft); color:var(--brand-strong); font-weight:700; font-size:15px; padding:10px 16px; border-radius:999px; text-decoration:none; white-space:nowrap; }
 .moim-dir .call:hover{ background:#dbeafe; }
