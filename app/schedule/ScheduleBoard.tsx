@@ -189,7 +189,7 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
 
 const SCHED_CSS = `
 .moim-sched{
-  --brand:#0066cc; --brand-strong:#0052a8; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --green:#0a7d3f; --warning:#c47d1a;
   --radius-btn:14px; --radius-card:20px;
@@ -215,7 +215,7 @@ const SCHED_CSS = `
 .moim-sched .legend{ display:flex; gap:14px; font-size:12.5px; color:var(--ink-3); font-weight:600; flex-wrap:wrap; }
 .moim-sched .legend span{ display:inline-flex; align-items:center; gap:5px; }
 .moim-sched .lg{ width:9px; height:9px; border-radius:3px; display:inline-block; }
-.moim-sched .lg-brand{ background:var(--brand); } .moim-sched .lg-blue{ background:#0b62c4; } .moim-sched .lg-gray{ background:#b8bdc6; }
+.moim-sched .lg-brand{ background:var(--brand); } .moim-sched .lg-blue{ background:#00559e; } .moim-sched .lg-gray{ background:#b8bdc6; }
 .moim-sched .sched-tools{ display:flex; gap:12px; flex-wrap:wrap; margin-left:auto; }
 .moim-sched .link-act{ display:inline-flex; align-items:center; gap:4px; font-size:13px; font-weight:700; color:var(--ink-3); background:none; border:0; cursor:pointer; }
 .moim-sched .link-act:hover{ color:var(--brand); }

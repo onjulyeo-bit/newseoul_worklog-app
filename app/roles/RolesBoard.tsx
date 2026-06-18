@@ -12,7 +12,7 @@ export type MemberOpt = { id: string; name: string; email: string | null; intend
 const ROLES: { v: string; label: string }[] = [{ v: "admin", label: "운영진" }, { v: "viewer", label: "읽기 운영진" }, { v: "member", label: "회원" }, { v: "guest", label: "관심" }];
 const roleTone = (r: string) => (r === "admin" ? "b-brand" : r === "viewer" ? "b-warm" : r === "member" ? "b-green" : "b-gray");
 const roleLabel = (r: string) => ROLES.find((x) => x.v === r)?.label ?? r;
-const AV = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
+const AV = ["#00559e", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const initial = (s: string | null) => (s ?? "?").charAt(0).toUpperCase();
 const avColor = (s: string | null) => AV[(s?.charCodeAt(0) ?? 0) % AV.length];
 
@@ -135,7 +135,7 @@ function UnconnectedRow({ p, members, suggest, onLink }: { p: Profile; members: 
 
 const CSS = `
 .moim-roles{
-  --brand:#0066cc; --brand-strong:#0052a8; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb; --green:#0a7d3f; --green-soft:#e4f6ec;
   --radius-card:20px; --shadow-sm:0 1px 2px rgba(20,24,34,.04), 0 3px 12px rgba(20,24,34,.045);
   color:var(--ink); line-height:1.5; letter-spacing:-0.01em;

@@ -14,7 +14,7 @@ export type TxSuggest = { year: number; aIn: number; aOut: number };
 const START_YEAR = 2021;
 const won = (n: number) => "₩" + (n || 0).toLocaleString("ko-KR");
 const man = (n: number) => Math.round((n || 0) / 10000);
-const C = { in: "#0066cc", out: "#e8643c", carry: "#0a7d3f", line: "#ecedf0", ink3: "#767d8a" };
+const C = { in: "#00559e", out: "#e8643c", carry: "#0a7d3f", line: "#ecedf0", ink3: "#767d8a" };
 
 type Row = { income: number; expense: number };
 

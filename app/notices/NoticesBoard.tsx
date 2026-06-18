@@ -151,7 +151,7 @@ function Compose({ onClose, onSubmit }: { onClose: () => void; onSubmit: (c: str
 
 const NT_CSS = `
 .moim-nt{
-  --brand:#0066cc; --brand-strong:#0052a8; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --green:#0a7d3f; --green-soft:#e4f6ec;
   --radius-btn:14px; --radius-card:20px;
@@ -196,7 +196,7 @@ const NT_CSS = `
 .moim-nt .nt-card{ display:flex; gap:14px; background:#fff; border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:var(--shadow-sm); text-align:left; cursor:pointer; transition:transform .14s, box-shadow .14s, border-color .14s; }
 .moim-nt .nt-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:#dde7f3; }
 .moim-nt .nt-thumb{ width:72px; height:72px; border-radius:14px; flex-shrink:0; display:grid; place-items:center; color:#fff; background-size:cover; background-position:center; }
-.moim-nt .nt-thumb.tone-brand{ background:linear-gradient(140deg,#3a8bff,#0066cc); }
+.moim-nt .nt-thumb.tone-brand{ background:linear-gradient(140deg,#3a8bff,#00559e); }
 .moim-nt .nt-thumb.tone-warm{ background:linear-gradient(140deg,#f0894e,#d4612f); }
 .moim-nt .nt-thumb.tone-gray{ background:linear-gradient(140deg,#9aa3b0,#6b717c); }
 .moim-nt .nt-card-body{ flex:1; min-width:0; }

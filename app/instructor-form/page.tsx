@@ -40,7 +40,7 @@ export default function InstructorFormPage() {
       <div style={card}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 4 }}>
           <span style={{ width: 32, height: 32, borderRadius: 9, background: "#1a2238", color: "#fff", display: "grid", placeItems: "center", fontWeight: 800 }}>C</span>
-          <b style={{ fontSize: 16 }}>CBMC <span style={{ color: "#0066cc" }}>새서울지회</span></b>
+          <b style={{ fontSize: 16 }}>CBMC <span style={{ color: "#00559e" }}>새서울지회</span></b>
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 800, margin: "12px 0 4px", letterSpacing: "-0.5px" }}>강사·간사 정보 입력</h1>
 

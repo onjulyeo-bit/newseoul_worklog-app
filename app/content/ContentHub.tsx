@@ -24,7 +24,7 @@ export default function ContentHub({ meetings }: { meetings: MeetingOpt[] }) {
 }
 
 const HUB_CSS = `
-.moim-content{ --brand:#0066cc; --line:#ecedf0; --ink:#16181d; --ink-3:#767d8a; color:var(--ink); }
+.moim-content{ --brand:#00559e; --line:#ecedf0; --ink:#16181d; --ink-3:#767d8a; color:var(--ink); }
 .moim-content .page-head{ margin-bottom:16px; }
 .moim-content .page-title{ font-size:clamp(21px,5vw,26px); font-weight:800; letter-spacing:-0.04em; }
 .moim-content .page-sub{ color:var(--ink-3); font-size:14px; margin-top:5px; font-weight:500; }

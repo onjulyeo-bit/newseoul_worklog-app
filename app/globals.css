@@ -11,10 +11,10 @@
    ========================================================= */
 @theme {
   /* Primary — 강조색은 파랑 하나뿐 */
-  --color-primary: #0066cc;          /* 모든 클릭 요소(버튼·링크·선택) */
-  --color-primary-pressed: #0055aa;  /* 눌림 상태 */
+  --color-primary: #00559e;          /* 모든 클릭 요소(버튼·링크·선택) */
+  --color-primary-pressed: #00468a;  /* 눌림 상태 */
   --color-primary-on-dark: #2997ff;  /* 남색 배경 위 링크(밝은 파랑) */
-  --color-primary-focus: #0071e3;    /* 키보드 포커스 링 */
+  --color-primary-focus: #0a64b5;    /* 키보드 포커스 링 */
 
   /* Brand Navy — 배경·헤더용(강조색 아님) */
   --color-navy: #1a2238;             /* 헤더 밴드·메시지 박스 배경 */
@@ -35,7 +35,7 @@
   --color-on-dark-muted: #b0b4c0;
 
   /* Semantic — 상태(강조색과 별개, 의미 신호) */
-  --color-present: #0066cc;         /* 출석(강조 파랑 계열) */
+  --color-present: #00559e;         /* 출석(강조 파랑 계열) */
   --color-success: #2e7d52;         /* 납부 완료(녹색) */
   --color-unpaid: #c0392b;          /* 미납·경고(붉은색) */
   --color-warning: #c47d1a;         /* 중간 경고(주황) */

@@ -1,6 +1,6 @@
 // 아카이브 화면 공유 CSS — .moim-arc 스코프. 클로드디자인 핸드오프(아카이브.dc.html) 비주얼 이식.
 export const ARC_CSS = `
-.moim-arc{ --b:#0066cc; --b-strong:#0052a8; --b-soft:#e8f1fc; --b-softer:#f3f8fe; --b-line:#dbe6f5;
+.moim-arc{ --b:#00559e; --b-strong:#003f7a; --b-soft:#e8f1fc; --b-softer:#f3f8fe; --b-line:#dbe6f5;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#fff; --warm:#fafafb; --red:#c0392b;
   color:var(--ink-2); letter-spacing:-0.01em; }
 .moim-arc *{ box-sizing:border-box; }

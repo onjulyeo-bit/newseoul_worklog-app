@@ -115,7 +115,7 @@ export default function SiteNav({ role, email, isOwner = false }: { role: string
 
 const SHELL_CSS = `
 .moim-shell{
-  --brand:#0066cc; --brand-strong:#0052a8; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --maxw:1120px;
 }
 .moim-shell *{ box-sizing:border-box; }
