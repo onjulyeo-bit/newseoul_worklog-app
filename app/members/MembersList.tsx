@@ -49,9 +49,9 @@ export type RawMember = {
   birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null;
 };
 
-const GRADES = ["정회원", "가족회원", "준회원", "신입회원", "명예회원", "유보회원", "VIP"];
+const GRADES = ["정회원", "부부정회원", "가족회원", "준회원", "신입회원", "명예회원", "유보회원", "VIP"];
 const STATUSES = ["활동", "휴면"];
-const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: "blue", 가족회원: "green", 준회원: "warm", 신입회원: "gray", 유보회원: "gray", VIP: "purple" };
+const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: "blue", 부부정회원: "blue", 가족회원: "green", 준회원: "warm", 신입회원: "gray", 유보회원: "gray", VIP: "purple" };
 const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm" };
 const AV_COLORS = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const PRESET_TAGS = ["증경회장", "지회장", "총무", "간사", "감사", "부총무", "고문", "운영위원", "찬양팀", "봉사팀", "창립멤버", "새가족", "청년부"];
@@ -59,8 +59,8 @@ const PRESET_TAGS = ["증경회장", "지회장", "총무", "간사", "감사", 
 const COLUMNS: { key: string; label: string; field: keyof RawMember }[] = [
   { key: "gender", label: "성별", field: "gender" },
   { key: "phone", label: "연락처", field: "phone" },
-  { key: "grade", label: "회원구분", field: "grade" },
   { key: "status", label: "상태", field: "status" },
+  { key: "grade", label: "회원구분", field: "grade" },
   { key: "spouse", label: "배우자", field: "spouse_name" },
   { key: "industry", label: "업종", field: "industry" },
   { key: "company", label: "회사", field: "company" },
@@ -70,7 +70,7 @@ const COLUMNS: { key: string; label: string; field: keyof RawMember }[] = [
   { key: "join", label: "가입일", field: "joined_on" },
   { key: "tags", label: "태그", field: "tags" },
 ];
-const DEFAULT_COLS = ["gender", "phone", "grade", "status", "company", "position", "join", "tags"];
+const DEFAULT_COLS = ["gender", "phone", "status", "grade", "company", "position", "join", "tags"];
 
 function Avatar({ name, size = 38, photo }: { name: string; size?: number; photo?: string | null }) {
   if (photo) {
@@ -198,8 +198,8 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
 
       <div className="filters">
         <div className="chip-groups">
-          <Chips label="회원구분" options={GRADES} value={grade} onChange={setGrade} />
           <Chips label="상태" options={STATUSES} value={status} onChange={setStatus} />
+          <Chips label="회원구분" options={GRADES} value={grade} onChange={setGrade} />
         </div>
         <div className="filter-right">
           <div className="search">
@@ -386,8 +386,8 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: Ra
           ) : (
             <div className="dm-sections">
               <section className="dm-sec"><h3 className="dm-sec-t">기본</h3>
-                <EditSelect label="회원구분" value={m.grade || ""} options={GRADES} onChange={(v) => set("grade", v)} />
                 <EditSelect label="상태" value={m.status || ""} options={STATUSES} onChange={(v) => set("status", v)} />
+                <EditSelect label="회원구분" value={m.grade || ""} options={GRADES} onChange={(v) => set("grade", v)} />
                 <EditSelect label="성별" value={m.gender || ""} options={["남", "여"]} onChange={(v) => set("gender", v)} />
                 <EditText label="연락처" value={m.phone || ""} onChange={(v) => set("phone", v)} />
                 <EditText label="이메일 (로그인 연결용)" value={m.email || ""} onChange={(v) => set("email", v)} />
