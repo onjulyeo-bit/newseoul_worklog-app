@@ -3,11 +3,12 @@
 // 통계 서브탭 — 체크인 통계 / 등록 현황. (현재 경로 강조)
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BadgeCheck } from "lucide-react";
+import { BarChart3, BadgeCheck, PieChart } from "lucide-react";
 
 const TABS = [
   { href: "/attendance/stats", label: "체크인 통계", Icon: BarChart3 },
   { href: "/attendance/registration", label: "연도별 회원등록 현황", Icon: BadgeCheck },
+  { href: "/attendance/annual", label: "연간결산", Icon: PieChart },
 ];
 
 export default function StatsTabs() {

@@ -3,19 +3,18 @@
 // 회계 서브탭 — 가져오기·내역·보고서 (현재 경로 강조). 부모 .moim-fin이 CSS 제공.
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Upload, List, FileText, CalendarRange, Landmark, PieChart } from "lucide-react";
+import { Upload, List, FileText, CalendarRange, Landmark } from "lucide-react";
 
 const TABS = [
   { href: "/finance/import", label: "거래 가져오기", Icon: Upload },
   { href: "/finance/transactions", label: "거래 내역", Icon: List },
   { href: "/finance/report", label: "보고서", Icon: FileText },
-  { href: "/finance/annual", label: "연간결산", Icon: PieChart },
   { href: "/finance/dues", label: "연도별 회비 납부내역", Icon: CalendarRange },
   { href: "/finance/accounts", label: "계좌관리", Icon: Landmark },
 ];
 
-// axis(회비/식대)를 유지하지 않는 탭 — 보고서·연간결산·연도별회비·계좌관리는 통합/독립
-const NO_AXIS = ["/finance/report", "/finance/annual", "/finance/dues", "/finance/accounts"];
+// axis(회비/식대)를 유지하지 않는 탭 — 보고서·연도별회비·계좌관리는 통합/독립 (연간결산은 통계로 이동)
+const NO_AXIS = ["/finance/report", "/finance/dues", "/finance/accounts"];
 
 export default function FinanceTabs() {
   const pathname = usePathname() ?? "";

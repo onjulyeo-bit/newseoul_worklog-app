@@ -3,8 +3,21 @@
 // 강사·간사 풀 — 필터(강사/간사·내부/외부) + 추가/삭제. 운영진 전용(서버 게이트).
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Phone, Trash2, GraduationCap } from "lucide-react";
-import { addInstructor, deleteInstructor } from "./actions";
+import { Plus, Phone, Trash2, GraduationCap, Download, Upload } from "lucide-react";
+import { addInstructor, deleteInstructor, importInstructors } from "./actions";
+import { parseInstructorsXlsx } from "@/lib/parseInstructorsXlsx";
+import { downloadXlsx } from "@/lib/exportTable";
+
+const tplRow = (i?: Instructor) => ({
+  이름: i?.name ?? "예: 홍길동",
+  구분: i?.kind ?? "강사",
+  소속구분: i ? (i.is_external ? "외부" : "내부") : "외부",
+  "소속·직함": i?.org ?? "○○대 교수 / ○○회사 대표",
+  연락처: i?.phone ?? "010-0000-0000",
+  전문분야: i?.field ?? "리더십 / 신앙간증",
+  강사비메모: i?.fee_note ?? "예: 30만원/회",
+  비고: i?.note ?? "",
+});
 
 export type Instructor = { id: string; name: string; kind: string | null; is_external: boolean; org: string | null; phone: string | null; field: string | null; fee_note: string | null; note: string | null };
 
@@ -37,6 +50,21 @@ export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instr
     startT(() => router.refresh());
   }
   const onDelete = (i: Instructor) => { if (!confirm(`'${i.name}'을(를) 삭제할까요?`)) return; deleteInstructor(i.id).then(() => router.refresh()); };
+  function downloadForm() { downloadXlsx(rows.length ? rows.map((r) => tplRow(r)) : [tplRow()], "강사간사_양식"); }
+  async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; e.currentTarget.value = "";
+    if (!f) return;
+    setBusy(true); setMsg("");
+    try {
+      const parsed = parseInstructorsXlsx(await f.arrayBuffer());
+      if (!parsed.length) throw new Error("인식된 행이 없어요. 양식의 '이름' 열을 확인해 주세요.");
+      if (!confirm(`${parsed.length}건 인식. 새 인원만 추가할까요? (이미 있는 이름은 건너뜀)`)) { setBusy(false); return; }
+      const res = await importInstructors(parsed);
+      if (res.error) throw new Error(res.error);
+      setMsg(`✅ ${res.inserted}명 추가 (중복 ${res.skipped} 제외)`);
+      startT(() => router.refresh());
+    } catch (err) { setMsg("❌ " + (err instanceof Error ? err.message : "오류")); } finally { setBusy(false); }
+  }
 
   const inp = "min-h-[42px] w-full rounded-md border border-line bg-card px-3 text-[15px] outline-none focus:border-primary";
   const chip = (on: boolean) => `rounded-full px-3.5 py-1.5 text-[13px] font-semibold border ${on ? "bg-primary text-white border-primary" : "bg-card text-ink-soft border-line"}`;
@@ -48,8 +76,13 @@ export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instr
           <h1 className="text-[clamp(21px,5vw,26px)] font-extrabold tracking-tight">강사·간사</h1>
           <p className="mt-1 text-[14px] font-medium text-ink-soft">강사 {nLect}명 · 간사 {nStaff}명 · 회원과 분리된 풀(외부 포함)</p>
         </div>
-        {canEdit && <button onClick={() => setShow((v) => !v)} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-primary px-5 text-[15px] font-semibold text-white hover:bg-primary-pressed"><Plus size={17} /> 추가</button>}
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={downloadForm} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[14px] font-semibold text-ink-soft hover:bg-surface-soft"><Download size={16} /> 양식 다운로드</button>
+          {canEdit && <label className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[14px] font-semibold text-ink-soft hover:bg-surface-soft cursor-pointer"><Upload size={16} /> {busy ? "처리 중…" : "엑셀 업로드"}<input type="file" accept=".xlsx,.xls,.csv" hidden onChange={onUpload} disabled={busy} /></label>}
+          {canEdit && <button onClick={() => setShow((v) => !v)} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-primary px-5 text-[15px] font-semibold text-white hover:bg-primary-pressed"><Plus size={17} /> 추가</button>}
+        </div>
       </div>
+      {msg && <p className="mb-3 text-[14px] font-semibold" style={{ color: msg.startsWith("✅") ? "#0a7d3f" : "#c0392b" }}>{msg}</p>}
 
       {canEdit && show && (
         <div className="mb-5 rounded-xl border border-primary/40 bg-[rgba(0,102,204,.04)] p-5">

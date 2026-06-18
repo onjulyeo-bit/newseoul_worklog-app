@@ -6,7 +6,6 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { TrendingUp, TrendingDown, PiggyBank, RefreshCw } from "lucide-react";
 import { saveAnnualFinance } from "./actions";
-import FinanceTabs from "../FinanceTabs";
 import { FIN_CSS } from "../finCss";
 
 export type FinRow = { year: number; income_total: number; expense_total: number };
@@ -19,7 +18,7 @@ const C = { in: "#0066cc", out: "#e8643c", carry: "#0a7d3f", line: "#ecedf0", in
 
 type Row = { income: number; expense: number };
 
-export default function AnnualBoard({ fin, suggest, canEdit }: { fin: FinRow[]; suggest: TxSuggest[]; canEdit: boolean }) {
+export default function AnnualBoard({ fin, suggest, canEdit, tabs }: { fin: FinRow[]; suggest: TxSuggest[]; canEdit: boolean; tabs?: React.ReactNode }) {
   const router = useRouter();
   const nowYear = new Date().getFullYear();
   const maxYear = Math.max(nowYear, ...fin.map((f) => f.year), START_YEAR);
@@ -54,8 +53,8 @@ export default function AnnualBoard({ fin, suggest, canEdit }: { fin: FinRow[]; 
 
   return (
     <div className="moim-fin"><style>{FIN_CSS}</style><style>{AN_CSS}</style>
+      {tabs}
       <div className="page-head"><div><h1 className="page-title">연간결산</h1><p className="page-sub">연도별 수입·지출·이월금 ({START_YEAR}~) · 과거는 결산서 입력, 2026~는 거래 자동집계</p></div></div>
-      <FinanceTabs />
 
       {/* 최신연도 요약 */}
       <div className="an-cards">
