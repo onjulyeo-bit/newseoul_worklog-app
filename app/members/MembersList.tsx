@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ChevronDown, Check, SlidersHorizontal, Search, X, Upload, UserPlus,
-  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Star, Contact,
+  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Star, Contact, Info,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
@@ -195,6 +195,20 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
         <div className="card stat"><div className="stat-ic t-warm"><Heart size={20} /></div><div className="stat-body"><div className="stat-label">가족회원</div><div className="stat-value">{stat.couple}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-warm"><Star size={20} /></div><div className="stat-body"><div className="stat-label">VIP</div><div className="stat-value">{stat.vip}명</div></div></div>
       </div>
+
+      <details className="grade-guide">
+        <summary><Info size={15} /> 회원구분 기준 안내 <span className="gg-hint">(운영진 참고)</span></summary>
+        <ul>
+          <li><b>정회원</b> — 연회비(중앙회 정회원 등록)를 납부하는 정식 회원</li>
+          <li><b>부부정회원</b> — 부부가 함께 가입한 정회원 (회비 1건, 정회원 2명으로 집계)</li>
+          <li><b>가족회원</b> — 정회원의 부부·가족으로, 회비를 내지 않아도 되는 회원</li>
+          <li><b>준회원</b> — 준회원 회비를 납부하는 회원</li>
+          <li><b>신입회원</b> — 당해 새로 가입한 회원</li>
+          <li><b>명예회원</b> — 원로·예우 회원 (회비 면제, 입금 시 후원금으로 처리)</li>
+          <li><b>유보회원</b> — 활동을 잠시 보류한 회원</li>
+          <li><b>VIP</b> — 입회 의사로 지회 카톡방에 들어왔으나, 아직 중앙회 정회원 등록도 준회원 회비도 하지 않은 회원 (입회 전 단계)</li>
+        </ul>
+      </details>
 
       <div className="filters">
         <div className="chip-groups">
@@ -492,6 +506,13 @@ const MEM_CSS = `
 .moim-mem .stat-label{ font-size:12.5px; color:var(--ink-3); font-weight:600; }
 .moim-mem .stat-value{ font-size:20px; font-weight:800; letter-spacing:-0.03em; margin-top:3px; }
 
+.moim-mem .grade-guide{ background:var(--brand-softer); border:1px solid #dbe9fb; border-radius:14px; padding:0 14px; margin-bottom:14px; }
+.moim-mem .grade-guide summary{ display:flex; align-items:center; gap:7px; cursor:pointer; padding:13px 0; font-size:13.5px; font-weight:800; color:var(--brand-strong); list-style:none; }
+.moim-mem .grade-guide summary::-webkit-details-marker{ display:none; }
+.moim-mem .grade-guide .gg-hint{ font-size:12px; font-weight:600; color:var(--ink-3); }
+.moim-mem .grade-guide ul{ margin:0; padding:0 0 14px 2px; list-style:none; display:flex; flex-direction:column; gap:7px; }
+.moim-mem .grade-guide li{ font-size:13.5px; color:var(--ink-2); line-height:1.55; }
+.moim-mem .grade-guide li b{ color:var(--ink); }
 .moim-mem .filters{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 .moim-mem .filter-left,.moim-mem .filter-right{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .moim-mem .chip-groups{ display:flex; flex-direction:column; gap:8px; flex:1; min-width:0; }
