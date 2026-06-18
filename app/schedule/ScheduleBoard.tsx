@@ -8,6 +8,7 @@ import { parseScheduleXlsx } from "@/lib/parseScheduleXlsx";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
 import { saveSchedule, createEvent, deleteEvent } from "./actions";
 import { ChevronDown, Sparkles, Save, Upload, Download, Calendar, Star, Trash2, MapPin } from "lucide-react";
+import { useCanEdit } from "@/lib/useCanEdit";
 
 export type ExistingRow = { date: string; session: number | null; mode: string; title: string; speaker: string; note: string; program: string };
 export type EventRow = { id: string; title: string; date: string; end_date: string | null; type: string | null; location: string | null; link: string | null };
@@ -26,6 +27,7 @@ const modeTone = (m: string) => (m === "offline" ? "brand" : m === "online" ? "b
 const modeLabelOf = (m: string) => MODES.find((x) => x.v === m)?.label ?? m;
 
 export default function ScheduleBoard({ existing, events, fee, account }: { existing: ExistingRow[]; events: EventRow[]; fee: number | null; account: string | null }) {
+  const canEdit = useCanEdit();
   const router = useRouter();
   const [year, setYear] = useState(2026);
   const [anchorDate, setAnchorDate] = useState("2026-05-29");
@@ -82,9 +84,9 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
       <div className="page-head">
         <div><h1 className="page-title">연간 일정</h1><p className="page-sub">{year}년 금요 정기모임 · 모임 {meetN}회 · 예정 {upcoming}회</p></div>
         <div className="page-acts">
-          {rows.length > 0 && <button className="ui-btn ui-primary ui-sm" onClick={onSave} disabled={pending}><Save size={16} /> {pending ? "저장 중…" : "저장"}</button>}
-          <button className="ui-btn ui-ghost ui-sm" onClick={() => setGenOpen((v) => !v)}><Sparkles size={16} /> 자동 생성</button>
-          <label className="ui-btn ui-ghost ui-sm" style={{ cursor: "pointer" }}><Upload size={16} /> 업로드<input type="file" accept=".xlsx,.xls,.csv" onChange={onUpload} hidden /></label>
+          {canEdit && rows.length > 0 && <button className="ui-btn ui-primary ui-sm" onClick={onSave} disabled={pending}><Save size={16} /> {pending ? "저장 중…" : "저장"}</button>}
+          {canEdit && <button className="ui-btn ui-ghost ui-sm" onClick={() => setGenOpen((v) => !v)}><Sparkles size={16} /> 자동 생성</button>}
+          {canEdit && <label className="ui-btn ui-ghost ui-sm" style={{ cursor: "pointer" }}><Upload size={16} /> 업로드<input type="file" accept=".xlsx,.xls,.csv" onChange={onUpload} hidden /></label>}
         </div>
       </div>
 
@@ -94,10 +96,10 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
           <span><i className="lg lg-brand" />오프라인</span><span><i className="lg lg-blue" />온라인</span><span><i className="lg lg-gray" />미정·휴회</span>
         </div>
         <div className="sched-tools">
-          {rows.length > 0 && <button className="link-act" onClick={recompute}>회차 재계산</button>}
+          {canEdit && rows.length > 0 && <button className="link-act" onClick={recompute}>회차 재계산</button>}
           {rows.length > 0 && <button className="link-act" onClick={() => downloadXlsx(exportRows(), "연간일정")}><Download size={14} /> 엑셀</button>}
           {rows.length > 0 && <button className="link-act" onClick={() => downloadCsv(exportRows(), "연간일정")}><Download size={14} /> CSV</button>}
-          <button className="link-act act-star" onClick={() => setShowEvent((v) => !v)}><Star size={14} /> 이벤트 추가</button>
+          {canEdit && <button className="link-act act-star" onClick={() => setShowEvent((v) => !v)}><Star size={14} /> 이벤트 추가</button>}
         </div>
       </div>
 
@@ -153,7 +155,7 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
                           <td className="td-name"><span className="ev-tag">★ 행사</span></td>
                           <td className="nowrap">{wd(e.date)}{e.end_date ? `~${wd(e.end_date)}` : ""}</td>
                           <td colSpan={4}><b className="ev-title">{e.title}</b>{e.type && <span className="ev-type">{e.type}</span>}{e.location && <span className="ev-loc"><MapPin size={12} /> {e.location}</span>}{e.link && <a className="ev-link" href={e.link} target="_blank" rel="noreferrer">링크</a>}</td>
-                          <td colSpan={2}><button className="row-del" onClick={() => removeEvent(e.id, e.title)}><Trash2 size={13} /> 삭제</button></td>
+                          <td colSpan={2}>{canEdit && <button className="row-del" onClick={() => removeEvent(e.id, e.title)}><Trash2 size={13} /> 삭제</button>}</td>
                         </tr>
                       </Fragment>
                     );

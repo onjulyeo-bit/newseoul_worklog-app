@@ -56,8 +56,10 @@ export default function SiteNav({ role, email, isOwner = false }: { role: string
   if (pathname.startsWith("/checkin") || pathname.startsWith("/preview-landing") || pathname.startsWith("/my-info")) return null;
   if (!role) return null; // 익명 → 랜딩 자체 헤더만
 
-  const isExec = role === "admin";
-  // 역할관리(/roles)는 메인 관리자(owner)에게만 노출. 서브 임원에겐 숨김.
+  const isAdmin = role === "admin";
+  const isViewer = role === "viewer";
+  const isExec = isAdmin || isViewer; // 운영진 + 읽기 운영진 → 운영 메뉴 노출
+  // 역할관리(/roles)는 메인 관리자(owner)에게만 노출. 읽기 운영진·서브 임원에겐 숨김.
   // 회원=공지·명단·아카이브, 관심=공지만.
   const items = isExec
     ? ADMIN.filter((it) => it.href !== "/roles" || isOwner)
@@ -80,8 +82,8 @@ export default function SiteNav({ role, email, isOwner = false }: { role: string
               <span className="who-name">{name}</span>
               <span className="who-mail">{email}</span>
             </div>
-            <span className={`role-badge ${isExec ? "is-exec" : ""}`}>
-              <span className="role-dot" />{isExec ? "운영진" : role === "member" ? "회원" : "관심"}
+            <span className={`role-badge ${isExec ? "is-exec" : ""} ${isViewer ? "is-viewer" : ""}`}>
+              <span className="role-dot" />{isViewer ? "읽기 운영진" : isAdmin ? "운영진" : role === "member" ? "회원" : "관심"}
             </span>
             <form action="/auth/signout" method="post">
               <button className="icon-btn" title="로그아웃" aria-label="로그아웃" type="submit"><LogOut size={19} /></button>
@@ -130,6 +132,7 @@ const SHELL_CSS = `
 .moim-shell .who-mail{ font-size:11.5px; color:var(--ink-3); }
 .moim-shell .role-badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; letter-spacing:-0.02em; padding:4px 10px; border-radius:999px; white-space:nowrap; background:#eff0f2; color:#6b717c; }
 .moim-shell .role-badge.is-exec{ background:var(--brand-soft); color:var(--brand-strong); }
+.moim-shell .role-badge.is-viewer{ background:#fef3e7; color:#b06a18; }
 .moim-shell .role-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
 .moim-shell .icon-btn{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:var(--ink-3); background:none; border:0; cursor:pointer; transition:background .15s, color .15s; }
 .moim-shell .icon-btn:hover{ background:#f1f2f4; color:var(--ink); }

@@ -9,8 +9,8 @@ import { createClient } from "@/lib/supabase/client";
 export type Profile = { id: string; email: string | null; role: string; is_owner?: boolean; member_id?: string | null; created_at: string };
 export type MemberOpt = { id: string; name: string; email: string | null; intended_role?: string | null };
 
-const ROLES: { v: string; label: string }[] = [{ v: "admin", label: "운영진" }, { v: "member", label: "회원" }, { v: "guest", label: "관심" }];
-const roleTone = (r: string) => (r === "admin" ? "b-brand" : r === "member" ? "b-green" : "b-gray");
+const ROLES: { v: string; label: string }[] = [{ v: "admin", label: "운영진" }, { v: "viewer", label: "읽기 운영진" }, { v: "member", label: "회원" }, { v: "guest", label: "관심" }];
+const roleTone = (r: string) => (r === "admin" ? "b-brand" : r === "viewer" ? "b-warm" : r === "member" ? "b-green" : "b-gray");
 const roleLabel = (r: string) => ROLES.find((x) => x.v === r)?.label ?? r;
 const AV = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const initial = (s: string | null) => (s ?? "?").charAt(0).toUpperCase();
@@ -64,6 +64,7 @@ export default function RolesBoard({ initial: init, members, myId }: { initial: 
       <div className="info-card">
         <div className="info-row"><span className="badge b-owner">메인</span> 최고 관리자 · 영구 보호(여기서만 서브 관리자 지정 가능)</div>
         <div className="info-row"><span className="badge b-brand">운영진</span> 전체 앱 기능 사용 · 역할변경 불가</div>
+        <div className="info-row"><span className="badge b-warm">읽기 운영진</span> 운영진 화면 <b>보기만</b> 가능 · 추가·수정·삭제 불가</div>
         <div className="info-row"><span className="badge b-green">회원</span> 공지·아카이브 + <b>회원명단</b>(개인정보) 보기</div>
         <div className="info-row"><span className="badge b-gray">관심</span> 처음 로그인 기본값 · 공지·아카이브 보기(명단 제외)</div>
         <p className="info-note">※ 카카오로 로그인하면 ‘미연결’로 떠요. 명단의 회원과 연결하면 자동으로 ‘회원’ 권한이 돼요. 명단에 이메일이 입력돼 있고 같은 이메일로 로그인하면 자동 연결됩니다.</p>
@@ -150,6 +151,7 @@ const CSS = `
 .moim-roles .b-green{ background:var(--green-soft); color:var(--green); }
 .moim-roles .b-gray{ background:#eff0f2; color:#6b717c; }
 .moim-roles .b-owner{ background:#fbf0d8; color:#9a6212; }
+.moim-roles .b-warm{ background:#fef3e7; color:#b06a18; }
 .moim-roles .info-card{ background:var(--brand-softer); border:1px solid #d6e6fa; border-radius:16px; padding:16px 18px; margin-bottom:18px; max-width:780px; }
 .moim-roles .info-row{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-2); font-weight:500; padding:3px 0; }
 .moim-roles .info-note{ font-size:12px; color:var(--ink-3); margin-top:8px; font-weight:500; line-height:1.5; }

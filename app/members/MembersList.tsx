@@ -131,7 +131,7 @@ function cellValue(m: RawMember, key: string) {
   return v ? <span>{v}</span> : <span className="fld-empty">—</span>;
 }
 
-export default function MembersList({ members: initial }: { members: RawMember[] }) {
+export default function MembersList({ members: initial, canEdit = true }: { members: RawMember[]; canEdit?: boolean }) {
   const [members, setMembers] = useState(initial);
   const [grade, setGrade] = useState("");
   const [status, setStatus] = useState("");
@@ -174,11 +174,11 @@ export default function MembersList({ members: initial }: { members: RawMember[]
           <p className="page-sub">모임 회원 {stat.total}명 (현재 카톡방 명단) · 정회원 {stat.jung}명</p>
         </div>
         <div className="page-acts">
-          <button className="ui-btn ui-soft ui-sm" onClick={() => { try { navigator.clipboard.writeText(`${location.origin}/my-info`); showToast("정보요청 링크 복사됨 — 카톡방에 붙여넣으세요"); } catch {} }}><Contact size={16} /> 정보요청 링크</button>
+          {canEdit && <button className="ui-btn ui-soft ui-sm" onClick={() => { try { navigator.clipboard.writeText(`${location.origin}/my-info`); showToast("정보요청 링크 복사됨 — 카톡방에 붙여넣으세요"); } catch {} }}><Contact size={16} /> 정보요청 링크</button>}
           <button className="ui-btn ui-ghost ui-sm" onClick={() => downloadXlsx(toExportRows(filtered), "회원명단")}><Download size={16} /> 엑셀</button>
           <button className="ui-btn ui-ghost ui-sm" onClick={() => downloadCsv(toExportRows(filtered), "회원명단")}><Download size={16} /> CSV</button>
-          <Link href="/members/import" className="ui-btn ui-ghost ui-sm"><Upload size={16} /> 엑셀 업로드</Link>
-          <Link href="/members/new" className="ui-btn ui-primary ui-sm"><UserPlus size={16} /> 회원 추가</Link>
+          {canEdit && <Link href="/members/import" className="ui-btn ui-ghost ui-sm"><Upload size={16} /> 엑셀 업로드</Link>}
+          {canEdit && <Link href="/members/new" className="ui-btn ui-primary ui-sm"><UserPlus size={16} /> 회원 추가</Link>}
         </div>
       </div>
 
@@ -246,7 +246,7 @@ export default function MembersList({ members: initial }: { members: RawMember[]
         {!filtered.length && <div className="empty">조건에 맞는 회원이 없습니다.</div>}
       </div>
 
-      {selected && <MemberDetail member={selected} onClose={() => setSelected(null)} onSaved={onSaved} />}
+      {selected && <MemberDetail member={selected} canEdit={canEdit} onClose={() => setSelected(null)} onSaved={onSaved} />}
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
@@ -306,7 +306,7 @@ function PhotoCircle({ member, onChange }: { member: RawMember; onChange: (url: 
   );
 }
 
-function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose: () => void; onSaved: (m: RawMember) => void }) {
+function MemberDetail({ member, canEdit = true, onClose, onSaved }: { member: RawMember; canEdit?: boolean; onClose: () => void; onSaved: (m: RawMember) => void }) {
   const [edit, setEdit] = useState(false);
   const [m, setM] = useState(member);
   const [pending, start] = useTransition();
@@ -338,7 +338,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
       <aside className="drawer" onClick={(e) => e.stopPropagation()}>
         <div className="drawer-head">
           <button className="icon-btn" onClick={onClose} aria-label="닫기"><X size={20} /></button>
-          {edit ? (
+          {!canEdit ? <span className="ro-tag">읽기 전용</span> : edit ? (
             <div className="drawer-acts">
               <button className="ui-btn ui-ghost ui-sm" onClick={() => { setM(member); setEdit(false); }}>취소</button>
               <button className="ui-btn ui-primary ui-sm" onClick={save} disabled={pending}><Check size={16} /> {pending ? "저장 중…" : "저장"}</button>
@@ -348,7 +348,7 @@ function MemberDetail({ member, onClose, onSaved }: { member: RawMember; onClose
 
         <div className="drawer-body">
           <div className="dm-top">
-            <PhotoCircle member={m} onChange={setPhoto} />
+            {canEdit ? <PhotoCircle member={m} onChange={setPhoto} /> : <Avatar name={m.name} size={64} photo={m.photo_url} />}
             <div className="dm-id">
               <h2 className="dm-name">{m.name}</h2>
               <div className="dm-badges">
@@ -538,6 +538,7 @@ const MEM_CSS = `
 @keyframes mem-slide{ from{transform:translateX(30px);opacity:.6} to{transform:none;opacity:1} }
 .moim-mem .drawer-head{ position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:rgba(255,255,255,.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
 .moim-mem .drawer-acts{ display:flex; gap:8px; }
+.moim-mem .ro-tag{ font-size:12px; font-weight:700; color:#b06a18; background:#fef3e7; padding:5px 11px; border-radius:999px; }
 .moim-mem .icon-btn{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:var(--ink-3); background:none; border:0; cursor:pointer; transition:background .15s, color .15s; }
 .moim-mem .icon-btn:hover{ background:#f1f2f4; color:var(--ink); }
 .moim-mem .drawer-body{ padding:22px 22px 40px; }

@@ -5,12 +5,13 @@ import DashboardView, { type DashMeeting, type DashAnn } from "./DashboardView";
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  let isAdmin = false;
+  let role: string | null = null;
   if (user) {
     const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-    isAdmin = data?.role === "admin";
+    role = data?.role ?? null;
   }
-  if (!isAdmin) {
+  // 운영진 + 읽기 운영진(viewer) 조회 가능. 대시보드는 읽기 전용 화면.
+  if (role !== "admin" && role !== "viewer") {
     return <p className="rounded-lg border border-line bg-card px-4 py-10 text-center text-[15px] text-ink-soft">관리자 전용 화면이에요.</p>;
   }
 

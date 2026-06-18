@@ -25,8 +25,8 @@ export default async function MemberListPage() {
     role = profile?.role ?? null;
   }
 
-  // 회원(비관리자) 로그인 → 회원 전용 홈(인사 + 이번 주 모임 + 공지 피드)
-  if (user && role !== "admin") {
+  // 회원(비운영진) 로그인 → 회원 전용 홈. 읽기 운영진(viewer)은 운영진과 같은 회원관리 화면(읽기 전용)으로.
+  if (user && role !== "admin" && role !== "viewer") {
     const today = new Date().toISOString().slice(0, 10);
     const [annR, mtR, chapR] = await Promise.all([
       supabase.from("announcements").select("id, category, title, body, created_at, image_url").eq("chapter_id", "새서울").order("created_at", { ascending: false }),
@@ -58,5 +58,6 @@ export default async function MemberListPage() {
   const members = (membersData ?? []) as RawMember[];
 
   // 새 디자인 회원 목록 ③ + 상세 드로어 ④ (헤더의 로그아웃·역할은 앱 셸에 있음)
-  return <MembersList members={members} />;
+  // 읽기 운영진(viewer)은 조회만 — 추가/수정/업로드 버튼 숨김.
+  return <MembersList members={members} canEdit={role === "admin"} />;
 }

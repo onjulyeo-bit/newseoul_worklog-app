@@ -10,7 +10,7 @@ export type Instructor = { id: string; name: string; kind: string | null; is_ext
 
 const won = (s: string) => s;
 
-export default function InstructorsBoard({ rows }: { rows: Instructor[] }) {
+export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instructor[]; canEdit?: boolean }) {
   const router = useRouter();
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -48,10 +48,10 @@ export default function InstructorsBoard({ rows }: { rows: Instructor[] }) {
           <h1 className="text-[clamp(21px,5vw,26px)] font-extrabold tracking-tight">강사·간사</h1>
           <p className="mt-1 text-[14px] font-medium text-ink-soft">강사 {nLect}명 · 간사 {nStaff}명 · 회원과 분리된 풀(외부 포함)</p>
         </div>
-        <button onClick={() => setShow((v) => !v)} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-primary px-5 text-[15px] font-semibold text-white hover:bg-primary-pressed"><Plus size={17} /> 추가</button>
+        {canEdit && <button onClick={() => setShow((v) => !v)} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-primary px-5 text-[15px] font-semibold text-white hover:bg-primary-pressed"><Plus size={17} /> 추가</button>}
       </div>
 
-      {show && (
+      {canEdit && show && (
         <div className="mb-5 rounded-xl border border-primary/40 bg-[rgba(0,102,204,.04)] p-5">
           <div className="grid gap-3 sm:grid-cols-2">
             <div><label className="mb-1 block text-[13px] font-bold text-ink-soft">이름 *</label><input value={form.name} onChange={(e) => set("name", e.target.value)} className={inp} /></div>
@@ -95,7 +95,7 @@ export default function InstructorsBoard({ rows }: { rows: Instructor[] }) {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((i) => (
             <div key={i.id} className="relative rounded-xl border border-line bg-card p-4">
-              <button onClick={() => onDelete(i)} className="absolute right-3 top-3 text-muted hover:text-unpaid" aria-label="삭제"><Trash2 size={16} /></button>
+              {canEdit && <button onClick={() => onDelete(i)} className="absolute right-3 top-3 text-muted hover:text-unpaid" aria-label="삭제"><Trash2 size={16} /></button>}
               <div className="mb-1.5 flex items-center gap-2 pr-6">
                 <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-[rgba(0,102,204,.1)] text-primary"><GraduationCap size={17} /></span>
                 <span className="text-[16px] font-bold">{i.name}</span>

@@ -9,10 +9,12 @@ import { ChevronDown, FileSpreadsheet, Check } from "lucide-react";
 import FinanceTabs from "../FinanceTabs";
 import FinanceAxis, { useAxis } from "../FinanceAxis";
 import { FIN_CSS } from "../finCss";
+import { useCanEdit } from "@/lib/useCanEdit";
 
 const won = (n: number) => "₩" + (n || 0).toLocaleString("ko-KR");
 
 export default function FinanceImportPage() {
+  const canEdit = useCanEdit();
   const [supabase] = useState(() => createClient());
   const [rows, setRows] = useState<Txn[]>([]);
   const [fileName, setFileName] = useState("");
@@ -84,7 +86,9 @@ export default function FinanceImportPage() {
       <FinanceAxis />
       <FinanceTabs />
 
-      {rows.length === 0 ? (
+      {!canEdit ? (
+        <div className="card empty">읽기 운영진은 거래를 가져올 수 없어요. <b>거래 내역</b> 탭에서 조회만 가능합니다.</div>
+      ) : rows.length === 0 ? (
         <div className="imp">
           <label className="dropzone dz-file">
             <div className="dz-ic"><FileSpreadsheet size={30} /></div>

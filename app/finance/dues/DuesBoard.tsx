@@ -13,7 +13,7 @@ export type DuesRow = { name: string; year: number; amount: number };
 const won = (n: number) => "₩" + (n || 0).toLocaleString("ko-KR");
 const man = (n: number) => (n ? Math.round(n / 10000) + "만" : "—");
 
-export default function DuesBoard({ rows }: { rows: DuesRow[] }) {
+export default function DuesBoard({ rows, canEdit = true }: { rows: DuesRow[]; canEdit?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -47,15 +47,17 @@ export default function DuesBoard({ rows }: { rows: DuesRow[] }) {
       <div className="page-head"><div><h1 className="page-title">연도별 회비</h1><p className="page-sub">연도별 연회비 납부와 정회원 수 (부부 80만원 = 2명 자동 집계)</p></div></div>
       <FinanceTabs />
 
-      {/* 업로드 */}
-      <div className="card" style={{ padding: 16, marginBottom: 18, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-        <label className="ui-btn ui-primary ui-sm" style={{ cursor: "pointer" }}>
-          <Upload size={16} /> {busy ? "처리 중…" : "엑셀 업로드 (전체 교체)"}
-          <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={onFile} disabled={busy} />
-        </label>
-        <span style={{ fontSize: 13, color: "var(--ink-3)" }}>이름 + 연도(2025 등) 열이 있는 표. "유보"·빈칸은 제외돼요.</span>
-        {msg && <span style={{ fontSize: 14, fontWeight: 700, color: msg.startsWith("✅") ? "var(--green)" : "#c0392b" }}>{msg}</span>}
-      </div>
+      {/* 업로드 (운영진만) */}
+      {canEdit && (
+        <div className="card" style={{ padding: 16, marginBottom: 18, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <label className="ui-btn ui-primary ui-sm" style={{ cursor: "pointer" }}>
+            <Upload size={16} /> {busy ? "처리 중…" : "엑셀 업로드 (전체 교체)"}
+            <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={onFile} disabled={busy} />
+          </label>
+          <span style={{ fontSize: 13, color: "var(--ink-3)" }}>이름 + 연도(2025 등) 열이 있는 표. "유보"·빈칸은 제외돼요.</span>
+          {msg && <span style={{ fontSize: 14, fontWeight: 700, color: msg.startsWith("✅") ? "var(--green)" : "#c0392b" }}>{msg}</span>}
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <div className="card empty">아직 연도별 회비 자료가 없어요. 위에서 엑셀을 올려 주세요.</div>

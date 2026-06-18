@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/client";
 import { saveAttendance } from "./actions";
+import { useCanEdit } from "@/lib/useCanEdit";
 
 export type Meeting = {
   id: string; date: string; session_no: number | null; mode: string;
@@ -30,6 +31,7 @@ function Avatar({ name, size = 36 }: { name: string; size?: number }) {
 export default function AttendanceBoard({ meetings, members, selectedId, attendance }: {
   meetings: Meeting[]; members: Member[]; selectedId: string | null; attendance: Att[];
 }) {
+  const canEdit = useCanEdit();
   const router = useRouter();
   const meeting = meetings.find((m) => m.id === selectedId) ?? null;
   const isOnline = meeting?.mode === "online";
@@ -185,7 +187,7 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
                     <label className="att-fld"><span className="att-flabel">송금 링크 (선택)</span>
                       <input className="inp" value={mealLink} onChange={(e) => setMealLink(e.target.value)} placeholder="토스/카카오 송금링크" />
                     </label>
-                    <div className="fee-actions"><button className="ui-btn ui-primary ui-sm" onClick={saveMeal}>저장</button><span className="fee-hint">QR 출석 시 이 정보로 안내가 떠요</span></div>
+                    {canEdit && <div className="fee-actions"><button className="ui-btn ui-primary ui-sm" onClick={saveMeal}>저장</button><span className="fee-hint">QR 출석 시 이 정보로 안내가 떠요</span></div>}
                   </div>
                 )}
               </div>
@@ -200,7 +202,7 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
                       {!isOnline && <span className="rs rs-paid"><b>{paid.length}</b> 납부</span>}
                       <span className="rs rs-total">총 {members.length}명</span>
                     </div>
-                    <button className="ui-btn ui-ghost ui-sm" onClick={allPresent}>전체 참석</button>
+                    {canEdit && <button className="ui-btn ui-ghost ui-sm" onClick={allPresent}>전체 참석</button>}
                   </div>
                   <div className="roster-search">🔍<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름 검색" /></div>
                   <ul className="roster-list">
@@ -211,12 +213,18 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
                           <Avatar name={m.name} size={36} />
                           <div className="att-who"><span className="att-name">{m.name}</span><span className="att-grade">{m.grade || ""}</span></div>
                           {!isOnline && s.present && (
-                            <button className={`paid-chip ${s.paid ? "on" : ""}`} onClick={() => setPaid(m.id, !s.paid)}>{s.paid ? "납부✓" : "미납"}</button>
+                            canEdit
+                              ? <button className={`paid-chip ${s.paid ? "on" : ""}`} onClick={() => setPaid(m.id, !s.paid)}>{s.paid ? "납부✓" : "미납"}</button>
+                              : <span className={`paid-chip ${s.paid ? "on" : ""}`}>{s.paid ? "납부✓" : "미납"}</span>
                           )}
-                          <div className="seg">
-                            <button className={`seg-btn ${s.present ? "on" : ""}`} onClick={() => setPresent(m.id, true)}>참석</button>
-                            <button className={`seg-btn ${!s.present ? "off" : ""}`} onClick={() => setPresent(m.id, false)}>결석</button>
-                          </div>
+                          {canEdit ? (
+                            <div className="seg">
+                              <button className={`seg-btn ${s.present ? "on" : ""}`} onClick={() => setPresent(m.id, true)}>참석</button>
+                              <button className={`seg-btn ${!s.present ? "off" : ""}`} onClick={() => setPresent(m.id, false)}>결석</button>
+                            </div>
+                          ) : (
+                            <span className={`rs ${s.present ? "rs-on" : "rs-off"}`}>{s.present ? "참석" : "결석"}</span>
+                          )}
                         </li>
                       );
                     })}
@@ -241,7 +249,7 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
                         <li key={m.id} className="unpaid-row">
                           <Avatar name={m.name} size={30} /><span className="unpaid-name">{m.name}</span>
                           {href ? <a className="sms-btn" href={href}>📩 문자</a> : <span className="sms-none">번호 없음</span>}
-                          <button className="paid-chip" onClick={() => setPaid(m.id, true)}>납부 처리</button>
+                          {canEdit && <button className="paid-chip" onClick={() => setPaid(m.id, true)}>납부 처리</button>}
                         </li>
                       );
                     })}

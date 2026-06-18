@@ -9,6 +9,7 @@ import FinanceTabs from "../FinanceTabs";
 import FinanceAxis, { useAxis } from "../FinanceAxis";
 import { FIN_CSS } from "../finCss";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
+import { useCanEdit } from "@/lib/useCanEdit";
 
 const won = (n: number) => "₩" + (n || 0).toLocaleString("ko-KR");
 type Row = {
@@ -32,6 +33,7 @@ function toTxnRows(rows: Row[]) {
 }
 
 export default function TransactionsPage() {
+  const canEdit = useCanEdit();
   const [supabase] = useState(() => createClient());
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ export default function TransactionsPage() {
       ) : (
         <div className="card scroll-card">
           <table className="mtable fin-table">
-            <thead><tr><th className="th-name">날짜</th><th>구분</th><th>금액</th><th>적요</th><th>이름</th><th>트랙</th><th>항목</th><th>확정</th><th></th></tr></thead>
+            <thead><tr><th className="th-name">날짜</th><th>구분</th><th>금액</th><th>적요</th><th>이름</th><th>트랙</th><th>항목</th><th>확정</th>{canEdit && <th></th>}</tr></thead>
             <tbody>
               {shown.map((r) => {
                 const cats = r.track === "B" ? B_CATEGORIES : A_CATEGORIES;
@@ -112,12 +114,12 @@ export default function TransactionsPage() {
                     <td className="td-name mono">{r.txn_date.slice(2, 10).replace(/-/g, ".")}</td>
                     <td><span className={`badge ${r.direction === "입금" ? "b-blue" : "b-gray"}`}>{r.direction}</span></td>
                     <td><span className={`amt ${r.direction === "입금" ? "amt-in" : "amt-out"}`}>{r.direction === "입금" ? "+" : "−"}{won(r.amount).slice(1)}</span></td>
-                    <td><input className="cell-inp" value={r.memo ?? ""} onChange={(e) => setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, memo: e.target.value } : x))} onBlur={(e) => patch(r.id, { memo: e.target.value })} /></td>
-                    <td><input className="cell-inp" style={{ minWidth: 80 }} value={r.counterparty ?? ""} onChange={(e) => setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, counterparty: e.target.value } : x))} onBlur={(e) => patch(r.id, { counterparty: e.target.value })} /></td>
-                    <td><div className="inline-sel"><select className="prog-sel" value={r.track} onChange={(e) => { const t = e.target.value as "A" | "B"; patch(r.id, { track: t, category: (t === "B" ? B_CATEGORIES : A_CATEGORIES)[0] }); }}><option value="A">A 회계</option><option value="B">B 식대</option></select><ChevronDown size={14} /></div></td>
-                    <td><div className="inline-sel"><select className="prog-sel" value={r.category ?? ""} onChange={(e) => patch(r.id, { category: e.target.value })}>{!cats.includes(r.category) && <option value={r.category}>{r.category}</option>}{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select><ChevronDown size={14} /></div></td>
-                    <td><input type="checkbox" className="chk" checked={r.is_confirmed} onChange={(e) => patch(r.id, { is_confirmed: e.target.checked })} /></td>
-                    <td className="td-act"><button className="mini-btn" onClick={() => del(r.id)} title="삭제"><Trash2 size={15} /></button></td>
+                    <td>{canEdit ? <input className="cell-inp" value={r.memo ?? ""} onChange={(e) => setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, memo: e.target.value } : x))} onBlur={(e) => patch(r.id, { memo: e.target.value })} /> : <span>{r.memo || "—"}</span>}</td>
+                    <td>{canEdit ? <input className="cell-inp" style={{ minWidth: 80 }} value={r.counterparty ?? ""} onChange={(e) => setRows((rs) => rs.map((x) => x.id === r.id ? { ...x, counterparty: e.target.value } : x))} onBlur={(e) => patch(r.id, { counterparty: e.target.value })} /> : <span>{r.counterparty || "—"}</span>}</td>
+                    <td>{canEdit ? <div className="inline-sel"><select className="prog-sel" value={r.track} onChange={(e) => { const t = e.target.value as "A" | "B"; patch(r.id, { track: t, category: (t === "B" ? B_CATEGORIES : A_CATEGORIES)[0] }); }}><option value="A">A 회계</option><option value="B">B 식대</option></select><ChevronDown size={14} /></div> : <span>{r.track === "B" ? "B 식대" : "A 회계"}</span>}</td>
+                    <td>{canEdit ? <div className="inline-sel"><select className="prog-sel" value={r.category ?? ""} onChange={(e) => patch(r.id, { category: e.target.value })}>{!cats.includes(r.category) && <option value={r.category}>{r.category}</option>}{cats.map((c) => <option key={c} value={c}>{c}</option>)}</select><ChevronDown size={14} /></div> : <span>{r.category || "—"}</span>}</td>
+                    <td><input type="checkbox" className="chk" checked={r.is_confirmed} disabled={!canEdit} onChange={(e) => patch(r.id, { is_confirmed: e.target.checked })} /></td>
+                    {canEdit && <td className="td-act"><button className="mini-btn" onClick={() => del(r.id)} title="삭제"><Trash2 size={15} /></button></td>}
                   </tr>
                 );
               })}

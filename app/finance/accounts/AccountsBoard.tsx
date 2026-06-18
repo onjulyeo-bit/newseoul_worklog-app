@@ -17,7 +17,7 @@ const maskNo = (no: string | null) => {
 };
 const PURPOSES = ["중앙회비", "남부연합회비", "강사비", "간사급여", "지회운영", "식대", "후원", "기타"];
 
-export default function AccountsBoard({ rows }: { rows: Account[] }) {
+export default function AccountsBoard({ rows, canEdit = true }: { rows: Account[]; canEdit?: boolean }) {
   const router = useRouter();
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -45,11 +45,11 @@ export default function AccountsBoard({ rows }: { rows: Account[] }) {
   return (
     <div className="moim-fin"><style>{FIN_CSS}</style>
       <div className="page-head"><div><h1 className="page-title">계좌관리</h1><p className="page-sub">중앙회·남부연합회·강사·간사·지회 등 송금 계좌. 번호는 가려서 보이고 복사만 돼요(운영진만).</p></div>
-        <button className="ui-btn ui-primary ui-sm" onClick={() => setShow((v) => !v)}><Plus size={16} /> 계좌 추가</button>
+        {canEdit && <button className="ui-btn ui-primary ui-sm" onClick={() => setShow((v) => !v)}><Plus size={16} /> 계좌 추가</button>}
       </div>
       <FinanceTabs />
 
-      {show && (
+      {canEdit && show && (
         <div className="card" style={{ padding: 18, marginBottom: 18, display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
           <label style={{ gridColumn: "1/2" }}><div className="fld-l">용도</div>
             <input style={inp} list="purposes" value={form.purpose} onChange={(e) => set("purpose", e.target.value)} placeholder="중앙회비·강사비 등" />
@@ -85,7 +85,7 @@ export default function AccountsBoard({ rows }: { rows: Account[] }) {
               </div>
               {a.note && <span style={{ fontSize: 12.5, color: "var(--ink-3)", flex: "0 1 auto" }}>{a.note}</span>}
               {a.account_no && <button className="ui-btn ui-soft ui-sm" onClick={() => copy(a.account_no)}><Copy size={15} /> 복사</button>}
-              <button className="acc-mini del" onClick={() => onDelete(a)} title="삭제"><Trash2 size={16} /></button>
+              {canEdit && <button className="acc-mini del" onClick={() => onDelete(a)} title="삭제"><Trash2 size={16} /></button>}
             </div>
           ))}
         </div>
