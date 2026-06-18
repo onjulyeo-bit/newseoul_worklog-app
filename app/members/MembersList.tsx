@@ -56,7 +56,7 @@ const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: 
 const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm" };
 const AV_COLORS = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const PRESET_TAGS = ["증경회장", "지회장", "총무", "간사", "감사", "부총무", "고문", "운영위원", "찬양팀", "봉사팀", "창립멤버", "새가족", "청년부"];
-const INTRO_EXAMPLE = "예) 안녕하세요. ○○에서 △△ 일을 하는 □□□입니다. 새서울 CBMC에서 좋은 분들과 신앙·비즈니스로 함께 성장하길 기대합니다. 잘 부탁드립니다.";
+const INTRO_EXAMPLE = "예) ○○에서 △△ 하는 ○○○입니다. 일도 신앙도 '꾸준함'이 답이라 믿어요. 골프·커피·새벽기도 환영! 편하게 말 걸어 주세요.";
 
 const COLUMNS: { key: string; label: string; field: keyof RawMember }[] = [
   { key: "gender", label: "성별", field: "gender" },

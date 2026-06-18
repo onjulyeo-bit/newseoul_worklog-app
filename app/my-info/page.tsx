@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null; birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null; intro: string | null; business_card_url: string | null };
 
-const INTRO_EXAMPLE = "예) 안녕하세요. ○○에서 △△ 일을 하는 □□□입니다. 새서울 CBMC에서 좋은 분들과 신앙·비즈니스로 함께 성장하길 기대합니다. 잘 부탁드립니다.";
+const INTRO_EXAMPLE = "예) ○○에서 △△ 하는 ○○○입니다. 일도 신앙도 '꾸준함'이 답이라 믿어요. 골프·커피·새벽기도 환영! 편하게 말 걸어 주세요.";
 
 export default function MyInfoPage() {
   const [supabase] = useState(() => createClient());
