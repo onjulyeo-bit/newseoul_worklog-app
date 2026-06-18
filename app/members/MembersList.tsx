@@ -137,7 +137,7 @@ function cellValue(m: RawMember, key: string) {
   return v ? <span>{v}</span> : <span className="fld-empty">—</span>;
 }
 
-export default function MembersList({ members: initial, canEdit = true }: { members: RawMember[]; canEdit?: boolean }) {
+export default function MembersList({ members: initial, canEdit = true, asOf }: { members: RawMember[]; canEdit?: boolean; asOf?: string }) {
   const [members, setMembers] = useState(initial);
   const [grade, setGrade] = useState("");
   const [status, setStatus] = useState("");
@@ -177,7 +177,7 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
       <div className="page-head">
         <div>
           <h1 className="page-title">회원관리</h1>
-          <p className="page-sub">모임 회원 {stat.total}명 (현재 카톡방 명단) · 정회원 {stat.jung}명</p>
+          <p className="page-sub">전체 회원 {stat.total}명 · 정회원 {stat.jung}명{asOf ? ` · ${asOf} 현재 기준` : ""}</p>
         </div>
         <div className="page-acts">
           {canEdit && <button className="ui-btn ui-soft ui-sm" onClick={() => { try { navigator.clipboard.writeText(`${location.origin}/my-info`); showToast("정보요청 링크 복사됨 — 카톡방에 붙여넣으세요"); } catch {} }}><Contact size={16} /> 정보요청 링크</button>}
@@ -188,7 +188,7 @@ export default function MembersList({ members: initial, canEdit = true }: { memb
         </div>
       </div>
 
-      <div className="stat-cap">회원 현황 <span>현재 명단 기준 (오늘)</span></div>
+      <div className="stat-cap">회원 현황 <span>현재 명단 기준</span></div>
       <div className="stat-grid mb">
         <div className="card stat"><div className="stat-ic t-brand"><Users size={20} /></div><div className="stat-body"><div className="stat-label">전체 회원</div><div className="stat-value">{stat.total}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-blue"><BadgeCheck size={20} /></div><div className="stat-body"><div className="stat-label">정회원</div><div className="stat-value">{stat.jung}명</div><div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 1 }}>부부정회원 포함</div></div></div>

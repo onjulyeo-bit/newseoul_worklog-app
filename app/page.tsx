@@ -59,5 +59,6 @@ export default async function MemberListPage() {
 
   // 새 디자인 회원 목록 ③ + 상세 드로어 ④ (헤더의 로그아웃·역할은 앱 셸에 있음)
   // 읽기 운영진(viewer)은 조회만 — 추가/수정/업로드 버튼 숨김.
-  return <MembersList members={members} canEdit={role === "admin"} />;
+  const asOf = new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" });
+  return <MembersList members={members} canEdit={role === "admin"} asOf={asOf} />;
 }
