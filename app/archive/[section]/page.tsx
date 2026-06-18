@@ -16,7 +16,7 @@ export default async function ArchiveSectionPage({ params }: { params: Promise<{
   const { data: p } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   const isAdmin = p?.role === "admin";
 
-  const asc = section.layout === "timeline"; // 연혁은 오래된→최신, 나머지는 최신→오래된
+  const asc = section.layout === "timeline" || section.layout === "people"; // 연혁·역대지회장은 오래된→최신(1대부터), 나머지는 최신→오래된
   const { data } = await supabase
     .from("archive")
     .select("id, category, title, event_date, content, image_url, link")
