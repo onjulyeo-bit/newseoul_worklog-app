@@ -2,7 +2,7 @@
 
 // 회원 자기입력 폼 (로그인 불필요) — 이름+전화 뒷4자리로 본인 확인 → 개인정보만 수정 → 자동 저장.
 // 보안: members 직접 접근 안 함, member_self_lookup / member_self_update RPC(SECURITY DEFINER)만 사용.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null; birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null; intro: string | null; business_card_url: string | null };
@@ -16,7 +16,34 @@ export default function MyInfoPage() {
   const [last4, setLast4] = useState("");
   const [busy, setBusy] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const recRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const [err, setErr] = useState("");
+
+  async function startRec() {
+    setErr("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size) chunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+        setAiBusy(true);
+        const audio: string = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.readAsDataURL(blob); });
+        try {
+          const resp = await fetch("/api/intro-voice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ audio, mime: mr.mimeType || "audio/webm" }) });
+          const j = await resp.json();
+          if (j.text) set("intro", j.text); else setErr(j.error || "정리에 실패했어요.");
+        } catch { setErr("정리 중 오류가 났어요."); } finally { setAiBusy(false); }
+      };
+      mr.start(); recRef.current = mr; setRecording(true);
+    } catch { setErr("마이크 권한을 허용해 주세요."); }
+  }
+  function stopRec() { recRef.current?.stop(); setRecording(false); }
   const [rec, setRec] = useState<Rec | null>(null);
   const set = (k: keyof Rec, v: string) => setRec((r) => (r ? { ...r, [k]: v } : r));
 
@@ -110,6 +137,11 @@ export default function MyInfoPage() {
 
           <label style={label}>자기소개 (한 줄)</label>
           <textarea style={{ ...input, minHeight: 92, resize: "vertical", lineHeight: 1.5 }} value={rec.intro ?? ""} onChange={(e) => set("intro", e.target.value)} placeholder={INTRO_EXAMPLE} />
+          <button type="button" onClick={recording ? stopRec : startRec} disabled={aiBusy}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", marginTop: 8, padding: "11px", borderRadius: 12, border: recording ? "1px solid #c0392b" : "1px solid #c5d6ee", background: recording ? "#fdecea" : "#f3f8fe", color: recording ? "#c0392b" : "#0052a8", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+            {aiBusy ? "✍️ 정리 중…" : recording ? "■ 녹음 중지하고 정리하기" : "🎙 말로 자기소개 (자동 정리)"}
+          </button>
+          <p style={{ fontSize: 12, color: "#9aa0aa", marginTop: 6 }}>※ 버튼을 누르고 한두 문장 말한 뒤 다시 누르면, 자동으로 정리해 위 칸에 채워줘요. (30초 이내)</p>
 
           <label style={label}>명함 이미지</label>
           {rec.business_card_url ? (
