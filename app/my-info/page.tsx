@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null };
+type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null; birth_date: string | null; address: string | null; home_church: string | null };
 
 export default function MyInfoPage() {
   const [supabase] = useState(() => createClient());
@@ -35,6 +35,7 @@ export default function MyInfoPage() {
       p_phone: rec.phone ?? "", p_email: rec.email ?? "", p_company: rec.company ?? "",
       p_position: rec.position ?? "", p_industry: rec.industry ?? "", p_spouse: rec.spouse_name ?? "",
       p_car_model: rec.car_model ?? "", p_car_number: rec.car_number ?? "",
+      p_birth: rec.birth_date ?? "", p_address: rec.address ?? "", p_church: rec.home_church ?? "",
     });
     setBusy(false);
     if (error || data === false) { setErr("저장에 실패했어요. 간사님께 문의해 주세요."); return; }
@@ -70,7 +71,7 @@ export default function MyInfoPage() {
         {step === "edit" && rec && (<>
           <p style={{ fontSize: 15, color: "#0a7d3f", fontWeight: 700, margin: "6px 0 0" }}>{rec.name} 님, 반갑습니다 👋</p>
           <p style={{ fontSize: 13.5, color: "#767d8a", margin: "4px 0 0" }}>바뀐 정보를 채우거나 고쳐 주세요. 등급·상태는 운영진이 관리합니다.</p>
-          {([["phone", "연락처"], ["email", "이메일"], ["company", "회사/직장"], ["position", "직위"], ["industry", "업종"], ["spouse_name", "배우자"], ["car_model", "차종"], ["car_number", "차량번호"]] as [keyof Rec, string][]).map(([k, lbl]) => (
+          {([["phone", "연락처"], ["email", "이메일"], ["birth_date", "생년월일 (예: 1970-03-15)"], ["company", "회사/직장"], ["position", "직위"], ["industry", "업종"], ["address", "주소"], ["home_church", "출석교회"], ["spouse_name", "배우자"], ["car_model", "차종"], ["car_number", "차량번호"]] as [keyof Rec, string][]).map(([k, lbl]) => (
             <div key={k}><label style={label}>{lbl}</label><input style={input} value={(rec[k] as string) ?? ""} onChange={(e) => set(k, e.target.value)} /></div>
           ))}
           {err && <p style={{ color: "#c0392b", fontSize: 14, fontWeight: 600, marginTop: 12 }}>{err}</p>}

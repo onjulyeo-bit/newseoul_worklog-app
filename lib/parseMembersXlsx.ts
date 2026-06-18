@@ -16,6 +16,9 @@ export type ParsedMember = {
   leadership_school: string | null;
   car_model: string | null;
   car_number: string | null;
+  birth_date: string | null;
+  address: string | null;
+  home_church: string | null;
   joined_on: string | null;
   intended_role: string | null;
   tags: string[];
@@ -61,6 +64,9 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
   const iSpouse = find("배우자");
   const iCarModel0 = find("차종");
   const iCarNum0 = find("차량번호");
+  const iBirth = find("생년월일", "생일", "출생");
+  const iAddress = find("주소");
+  const iChurch = find("출석교회", "교회");
   const iJoined = find("등록시기", "가입", "등록일");
   const iIntended = find("운영진");
   const iVision = find("비전");
@@ -119,6 +125,9 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
       leadership_school: lRaw === "O" ? "수료" : lRaw === "X" ? null : lRaw,
       car_model,
       car_number,
+      birth_date: cell(iBirth),
+      address: cell(iAddress),
+      home_church: cell(iChurch),
       joined_on: jRaw
         ? /^\d{4}-\d{2}-\d{2}$/.test(jRaw) ? jRaw            // 전체 날짜(2020-01-01) 그대로
           : /^\d{4}$/.test(jRaw) ? `${jRaw}-01-01`           // 연도만(2020) → 1월1일
