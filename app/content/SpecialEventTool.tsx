@@ -3,6 +3,7 @@
 // 특별행사 안내 — 한국대회·송년회·봄소풍·수련회 등 행사 카톡 공지글 생성기.
 // 포스터는 '주간 포스터' 탭의 편집기를 재사용(여기선 공지글만).
 import { useState } from "react";
+import PosterEditor, { type Seed } from "./PosterEditor";
 import { createClient } from "@/lib/supabase/client";
 import { Sparkles, Calendar, MapPin, Wallet, ClipboardList, Backpack, Bus, Info, Copy, Megaphone, Mountain, PartyPopper, Flower2, Tent } from "lucide-react";
 
@@ -53,6 +54,15 @@ export default function SpecialEventTool() {
   const [pub, setPub] = useState(false);
   const text = build(type, f);
   const t = ETYPE[type];
+  const seed: Seed = {
+    headline: "새서울 CBMC",
+    category: type,
+    title: f.name || `${type}`,
+    verse: f.extra || "",
+    speaker: f.fee ? `참가비 ${f.fee}` : (f.apply || ""),
+    dateLine: f.when || "",
+    modeLabel: f.where || "",
+  };
 
   async function publish() {
     if (!f.name.trim()) { alert("행사명을 먼저 입력해주세요."); return; }
@@ -108,9 +118,14 @@ export default function SpecialEventTool() {
             <pre className="ev-text">{text}</pre>
           </div>
 
-          <p className="sev-note">포스터가 필요하면 <b>주간 포스터</b> 탭의 편집기를 사용하세요.</p>
           <button className="ui-btn ui-primary" style={{ width: "100%", maxWidth: 340, padding: "13px" }} onClick={publish}><Megaphone size={17} /> {pub ? "✓ 공지에 게시됨!" : "공지에 게시"}</button>
         </div>
+      </div>
+
+      {/* 특별행사 포스터 (주간 포스터와 동일한 편집기) */}
+      <div style={{ marginTop: 8 }}>
+        <h3 className="cnt-ct" style={{ marginBottom: 10 }}><Sparkles size={16} /> 특별행사 포스터</h3>
+        <PosterEditor seed={seed} publish={{ title: f.name.trim() || `${type} 안내`, body: text }} />
       </div>
     </div>
   );
