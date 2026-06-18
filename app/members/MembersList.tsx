@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ChevronDown, Check, SlidersHorizontal, Search, X, Upload, UserPlus,
-  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download,
+  Users, UserCheck, BadgeCheck, Heart, Pencil, Phone, Camera, Download, Moon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
@@ -44,9 +44,9 @@ export type RawMember = {
 };
 
 const GRADES = ["정회원", "가족회원", "준회원", "신입회원", "명예회원", "유보회원", "VIP"];
-const STATUSES = ["활동", "휴면", "OB"];
+const STATUSES = ["활동", "휴면"];
 const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: "blue", 가족회원: "green", 준회원: "warm", 신입회원: "gray", 유보회원: "gray", VIP: "purple" };
-const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm", OB: "brand" };
+const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm" };
 const AV_COLORS = ["#0066cc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const PRESET_TAGS = ["증경회장", "지회장", "총무", "간사", "감사", "부총무", "고문", "운영위원", "찬양팀", "봉사팀", "창립멤버", "새가족", "청년부"];
 
@@ -155,9 +155,10 @@ export default function MembersList({ members: initial }: { members: RawMember[]
 
   const stat = {
     total: members.length,
-    active: members.filter((m) => m.status === "활동").length,
     jung: members.filter((m) => m.grade === "정회원").length,
+    jun: members.filter((m) => m.grade === "준회원").length,
     couple: members.filter((m) => m.grade === "가족회원").length,
+    dormant: members.filter((m) => m.status === "휴면").length,
   };
 
   const onSaved = (m: RawMember) => { setMembers((list) => list.map((x) => x.id === m.id ? m : x)); setSelected(m); showToast("저장되었습니다"); };
@@ -170,7 +171,7 @@ export default function MembersList({ members: initial }: { members: RawMember[]
       <div className="page-head">
         <div>
           <h1 className="page-title">회원관리</h1>
-          <p className="page-sub">모임 회원 {stat.total}명 · 활동 {stat.active}명</p>
+          <p className="page-sub">모임 회원 {stat.total}명 (현재 카톡방 명단) · 정회원 {stat.jung}명</p>
         </div>
         <div className="page-acts">
           <button className="ui-btn ui-ghost ui-sm" onClick={() => downloadXlsx(toExportRows(filtered), "회원명단")}><Download size={16} /> 엑셀</button>
@@ -182,9 +183,10 @@ export default function MembersList({ members: initial }: { members: RawMember[]
 
       <div className="stat-grid mb">
         <div className="card stat"><div className="stat-ic t-brand"><Users size={20} /></div><div className="stat-body"><div className="stat-label">전체 회원</div><div className="stat-value">{stat.total}명</div></div></div>
-        <div className="card stat"><div className="stat-ic t-green"><UserCheck size={20} /></div><div className="stat-body"><div className="stat-label">활동 회원</div><div className="stat-value">{stat.active}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-blue"><BadgeCheck size={20} /></div><div className="stat-body"><div className="stat-label">정회원</div><div className="stat-value">{stat.jung}명</div></div></div>
+        <div className="card stat"><div className="stat-ic t-green"><UserCheck size={20} /></div><div className="stat-body"><div className="stat-label">준회원</div><div className="stat-value">{stat.jun}명</div></div></div>
         <div className="card stat"><div className="stat-ic t-warm"><Heart size={20} /></div><div className="stat-body"><div className="stat-label">가족회원</div><div className="stat-value">{stat.couple}명</div></div></div>
+        <div className="card stat"><div className="stat-ic t-gray"><Moon size={20} /></div><div className="stat-body"><div className="stat-label">휴면</div><div className="stat-value">{stat.dormant}명</div></div></div>
       </div>
 
       <div className="filters">
@@ -470,6 +472,7 @@ const MEM_CSS = `
 .moim-mem .stat-ic.t-green{ background:var(--green-soft); color:var(--green); }
 .moim-mem .stat-ic.t-blue{ background:#eaf2fd; color:#0b62c4; }
 .moim-mem .stat-ic.t-warm{ background:#fcefe7; color:#b5562a; }
+.moim-mem .stat-ic.t-gray{ background:#eff0f2; color:#6b717c; }
 .moim-mem .stat-label{ font-size:12.5px; color:var(--ink-3); font-weight:600; }
 .moim-mem .stat-value{ font-size:20px; font-weight:800; letter-spacing:-0.03em; margin-top:3px; }
 
@@ -574,6 +577,7 @@ const MEM_CSS = `
 
 .moim-mem .toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:80; background:var(--ink); color:#fff; font-size:13.5px; font-weight:600; padding:12px 20px; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
 
-@media (min-width:560px){ .moim-mem .stat-grid{ grid-template-columns:repeat(4,1fr); } }
+@media (min-width:560px){ .moim-mem .stat-grid{ grid-template-columns:repeat(3,1fr); } }
+@media (min-width:880px){ .moim-mem .stat-grid{ grid-template-columns:repeat(5,1fr); } }
 @media (min-width:760px){ .moim-mem .table-card{ display:block; } .moim-mem .mcards{ display:none; } }
 `;
