@@ -87,6 +87,7 @@ export default function InstructorsBoard({ rows, canEdit = true }: { rows: Instr
           <p className="mt-1 text-[14px] font-medium text-ink-soft">강사 {nLect}명 · 간사 {nStaff}명 · 회원과 분리된 풀(외부 포함)</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {canEdit && <button onClick={() => { try { navigator.clipboard.writeText(`${location.origin}/instructor-form`); setMsg("✅ 정보요청 링크 복사됨 — 강사·간사님께 보내세요"); } catch {} }} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-primary/40 bg-[rgba(0,102,204,.06)] px-4 text-[14px] font-semibold text-primary hover:bg-[rgba(0,102,204,.12)]"><GraduationCap size={16} /> 정보요청 링크</button>}
           <button onClick={downloadForm} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[14px] font-semibold text-ink-soft hover:bg-surface-soft"><Download size={16} /> 양식 다운로드</button>
           {canEdit && <label className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-line bg-card px-4 text-[14px] font-semibold text-ink-soft hover:bg-surface-soft cursor-pointer"><Upload size={16} /> {busy ? "처리 중…" : "엑셀 업로드"}<input type="file" accept=".xlsx,.xls,.csv" hidden onChange={onUpload} disabled={busy} /></label>}
           {canEdit && <button onClick={openAdd} className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-primary px-5 text-[15px] font-semibold text-white hover:bg-primary-pressed"><Plus size={17} /> 추가</button>}

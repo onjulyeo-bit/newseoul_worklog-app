@@ -3,9 +3,11 @@
 import { NextResponse } from "next/server";
 
 const PROMPT =
-  "다음은 한국 CBMC(기독실업인회) 새서울지회 회원이 자기를 소개하며 말한 음성입니다. " +
-  "말한 내용을 바탕으로 따뜻하고 자연스러운 한국어 자기소개를 한두 문장(80자 내외)으로 정리해 주세요. " +
-  "존댓말, 과장 없이. 설명·따옴표 없이 자기소개 문장만 출력하세요.";
+  "다음은 한국 CBMC(기독실업인회) 새서울지회 조찬모임 회원이 본인을 소개하며 말한 한국어 음성입니다.\n" +
+  "1) 먼저 음성을 정확히 받아쓰고, 2) 한국어 맞춤법과 띄어쓰기를 바르게 교정하세요.\n" +
+  "회사명·직업·이름 등 고유명사는 발음을 신중히 듣고 가장 자연스러운 한국어 표기로 적으세요(불확실하면 일반적인 표기 사용).\n" +
+  "그런 다음 따뜻하고 자연스러운 자기소개 한두 문장(80자 내외, 존댓말)으로 다듬어 주세요.\n" +
+  "말한 내용에 충실하되, 들리지 않은 사실은 절대 지어내지 마세요. 설명·따옴표 없이 완성된 자기소개 문장만 출력하세요.";
 
 export async function POST(req: Request) {
   const key = process.env.GEMINI_API_KEY;
@@ -23,7 +25,7 @@ export async function POST(req: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: mime || "audio/webm", data: b64 } }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 200 },
+        generationConfig: { temperature: 0.2, maxOutputTokens: 220 },
       }),
     });
     const j = await res.json();
