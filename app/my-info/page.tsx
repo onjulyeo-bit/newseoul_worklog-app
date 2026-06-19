@@ -196,7 +196,7 @@ export default function MyInfoPage() {
 }
 
 const MI_CSS = `
-.mi{ --ink:#063d63; --ink2:#3f4a55; --mut:#6b7682; --faint:#9aa6b2; --line:#e3e8ee; --bg:#f3f5f8; --card:#ffffff;
+.mi{ --ink:#18181b; --ink2:#3f3f46; --mut:#71717a; --faint:#a1a1aa; --line:#e6e6e9; --bg:#f4f4f5; --card:#ffffff;
   min-height:100vh; background:var(--bg); display:flex; flex-direction:column; align-items:center; gap:14px;
   padding:28px 16px 40px; font-family:Pretendard,-apple-system,sans-serif; color:var(--ink); letter-spacing:-0.01em; }
 .mi *{ box-sizing:border-box; }
@@ -213,7 +213,7 @@ const MI_CSS = `
 .mi-label{ display:block; font-size:12.5px; font-weight:700; color:var(--mut); margin-bottom:7px; }
 .mi-input{ width:100%; font-family:inherit; font-size:16px; color:var(--ink); padding:13px 14px; border:1px solid var(--line); border-radius:13px; outline:none; background:#fafafa; transition:border-color .15s, box-shadow .15s, background .15s; }
 .mi-input::placeholder{ color:var(--faint); }
-.mi-input:focus{ border-color:var(--ink); background:#fff; box-shadow:0 0 0 3px rgba(6,61,99,.12); }
+.mi-input:focus{ border-color:var(--ink); background:#fff; box-shadow:0 0 0 3px rgba(24,24,27,.08); }
 .mi-ta{ min-height:96px; resize:vertical; line-height:1.55; }
 .mi-hint{ font-size:12px; color:var(--faint); margin:7px 0 0; line-height:1.5; }
 .mi-err{ font-size:13.5px; font-weight:600; color:#b42318; margin:12px 0 0; }
