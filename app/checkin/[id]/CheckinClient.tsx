@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 type Row = { member_id: string; name: string; present: boolean };
 type Meal = { mode: string; fee: number | null; account: string | null; pay_link: string | null };
 
-const AV_COLORS = ["#00559e", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
+const AV_COLORS = ["#0052ff", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 function Avatar({ name, size = 38 }: { name: string; size?: number }) {
   const ch = name.trim().charAt(0) || "?";
   const color = AV_COLORS[(name.charCodeAt(0) || 0) % AV_COLORS.length];
@@ -169,7 +169,7 @@ const CopyIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="non
 
 const CK_CSS = `
 .moim-ck{
-  --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --green:#0a7d3f; --green-soft:#e4f6ec;
   width:100vw; position:relative; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw; margin-top:-24px; margin-bottom:-80px;
@@ -181,7 +181,7 @@ const CK_CSS = `
 .moim-ck .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; }
 .moim-ck .badge-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
 .moim-ck .b-brand{ background:var(--brand-soft); color:var(--brand-strong); }
-.moim-ck .b-blue{ background:#eaf2fd; color:#00559e; }
+.moim-ck .b-blue{ background:#eaf2fd; color:#0052ff; }
 
 .moim-ck .ck-phone{ width:100%; max-width:460px; background:#fff; display:flex; flex-direction:column; min-height:100vh; }
 .moim-ck .ck-head{ padding:18px 22px 18px; }
@@ -232,7 +232,7 @@ const CK_CSS = `
 .moim-ck .ck-copy{ display:inline-flex; align-items:center; gap:5px; background:var(--brand); color:#fff; font-size:13px; font-weight:700; padding:10px 14px; border-radius:11px; flex-shrink:0; border:0; cursor:pointer; }
 .moim-ck .ck-copy:hover{ background:var(--brand-strong); }
 .moim-ck .ck-paylink{ display:flex; align-items:center; justify-content:center; margin-top:10px; background:#0064FF; color:#fff; font-size:15px; font-weight:700; padding:13px; border-radius:12px; text-decoration:none; }
-.moim-ck .ck-nofee{ margin-top:18px; display:flex; align-items:center; justify-content:center; gap:8px; background:#eaf2fd; color:#00559e; font-size:14.5px; font-weight:700; padding:15px; border-radius:14px; }
+.moim-ck .ck-nofee{ margin-top:18px; display:flex; align-items:center; justify-content:center; gap:8px; background:#eaf2fd; color:#0052ff; font-size:14.5px; font-weight:700; padding:15px; border-radius:14px; }
 .moim-ck .ck-modal-ok{ width:100%; margin-top:18px; padding:15px; background:var(--brand); color:#fff; font-size:16px; font-weight:700; border:0; border-radius:14px; cursor:pointer; }
 .moim-ck .ck-modal-ok:hover{ background:var(--brand-strong); }
 

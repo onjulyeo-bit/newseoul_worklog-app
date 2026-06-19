@@ -160,7 +160,7 @@ export default function DashboardView({
 
 const DASH_CSS = `
 .moim-dash{
-  --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --green:#0a7d3f; --green-soft:#e4f6ec;
   --radius-btn:14px; --radius-card:20px;
@@ -180,7 +180,7 @@ const DASH_CSS = `
 .moim-dash .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; letter-spacing:-0.02em; padding:4px 10px; border-radius:999px; white-space:nowrap; }
 .moim-dash .badge-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
 .moim-dash .b-brand{ background:var(--brand-soft); color:var(--brand-strong); }
-.moim-dash .b-blue{ background:#eaf2fd; color:#00559e; }
+.moim-dash .b-blue{ background:#eaf2fd; color:#0052ff; }
 .moim-dash .b-green{ background:var(--green-soft); color:var(--green); }
 .moim-dash .b-warm{ background:#fcefe7; color:#b5562a; }
 .moim-dash .b-gray{ background:#eff0f2; color:#6b717c; }
@@ -201,7 +201,7 @@ const DASH_CSS = `
 .moim-dash .stat-ic{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; flex-shrink:0; }
 .moim-dash .stat-ic.t-brand{ background:var(--brand-soft); color:var(--brand); }
 .moim-dash .stat-ic.t-green{ background:var(--green-soft); color:var(--green); }
-.moim-dash .stat-ic.t-blue{ background:#eaf2fd; color:#00559e; }
+.moim-dash .stat-ic.t-blue{ background:#eaf2fd; color:#0052ff; }
 .moim-dash .stat-ic.t-warm{ background:#fcefe7; color:#b5562a; }
 .moim-dash .stat-body{ min-width:0; }
 .moim-dash .stat-label{ font-size:12.5px; color:var(--ink-3); font-weight:600; }

@@ -13,7 +13,7 @@ const ETYPE: Record<TypeV, { Icon: React.ComponentType<{ size?: number }>; bg: s
   부고: { Icon: Flower2, bg: "linear-gradient(160deg,#f1f3f6,#e7eaef)", accent: "#5a6573" },
   결혼: { Icon: Heart, bg: "linear-gradient(160deg,#fdf1ec,#fbe6dc)", accent: "#c0623a" },
   개업: { Icon: PartyPopper, bg: "linear-gradient(160deg,#e6f6ec,#d6f0e0)", accent: "#0a7d3f" },
-  심방: { Icon: HeartHandshake, bg: "linear-gradient(160deg,#eaf2fd,#dceafb)", accent: "#00559e" },
+  심방: { Icon: HeartHandshake, bg: "linear-gradient(160deg,#eaf2fd,#dceafb)", accent: "#0052ff" },
   기타: { Icon: Sparkles, bg: "linear-gradient(160deg,#efeafe,#e4dbfb)", accent: "#6b46d9" },
 };
 const PH: Record<TypeV, { who: string; when: string; where: string }> = {
@@ -134,8 +134,8 @@ export default function OccasionTool() {
 
 const EV_CSS = `
 .moim-ev{
-  --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
-  --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb; --navy:#063d63;
+  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb; --navy:#1e2353;
   --shadow-sm:0 1px 2px rgba(20,24,34,.04), 0 3px 12px rgba(20,24,34,.045);
   --shadow-md:0 2px 6px rgba(20,24,34,.05), 0 14px 38px rgba(20,40,80,.08);
   color:var(--ink); line-height:1.5; letter-spacing:-0.01em;

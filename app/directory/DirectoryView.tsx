@@ -6,7 +6,7 @@ import { Search, Phone, Mail, CreditCard } from "lucide-react";
 
 export type DirEntry = { id: string; name: string | null; phone: string | null; company: string | null; email: string | null; position: string | null; industry: string | null; intro: string | null; business_card_url: string | null };
 
-const AV = ["#00559e", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
+const AV = ["#0052ff", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 
 export default function DirectoryView({ entries }: { entries: DirEntry[] }) {
   const [q, setQ] = useState("");
@@ -76,7 +76,7 @@ export default function DirectoryView({ entries }: { entries: DirEntry[] }) {
 
 const CSS = `
 .moim-dir{
-  --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc;
+  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --radius-card:20px; --shadow-sm:0 1px 2px rgba(20,24,34,.04), 0 3px 12px rgba(20,24,34,.045);
   color:var(--ink); line-height:1.5; letter-spacing:-0.01em;
@@ -97,7 +97,7 @@ const CSS = `
 .moim-dir .co{ font-size:14px; color:var(--ink-3); font-weight:500; }
 .moim-dir .em{ font-size:13px; color:var(--ink-3); font-weight:500; word-break:break-all; }
 .moim-dir .intro{ font-size:13px; color:var(--ink-2); font-weight:500; line-height:1.5; margin-top:4px; width:100%; }
-.moim-dir .cardbtn{ display:inline-flex; align-items:center; gap:6px; background:#f3f8fe; color:#003f7a; border:1px solid #d6e6fa; font-weight:700; font-size:14px; padding:9px 14px; border-radius:999px; text-decoration:none; white-space:nowrap; }
+.moim-dir .cardbtn{ display:inline-flex; align-items:center; gap:6px; background:#f3f8fe; color:#003ecc; border:1px solid #d6e6fa; font-weight:700; font-size:14px; padding:9px 14px; border-radius:999px; text-decoration:none; white-space:nowrap; }
 .moim-dir .cardbtn:hover{ background:#e8f1fc; }
 .moim-dir .acts{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
 .moim-dir .call{ display:inline-flex; align-items:center; gap:7px; background:var(--brand-soft); color:var(--brand-strong); font-weight:700; font-size:15px; padding:10px 16px; border-radius:999px; text-decoration:none; white-space:nowrap; }

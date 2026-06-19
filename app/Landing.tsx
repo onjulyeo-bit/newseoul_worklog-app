@@ -89,7 +89,7 @@ export default function Landing() {
               </div>
               <div className="mock-rows">
                 <div className="mrow">
-                  <span className="av" style={{ background: "#00559e" }}>김</span>
+                  <span className="av" style={{ background: "#0052ff" }}>김</span>
                   <div><div className="nm">김서연 총무</div><div className="meta">식대 정산 완료 · 회비 납부</div></div>
                   <span className="tag tag-on">참석</span>
                 </div>
@@ -179,7 +179,7 @@ export default function Landing() {
 // 원본(모임온 랜딩.html) CSS를 .moimon 스코프로 이식 (전역 누수 방지).
 const CSS = `
 .moimon {
-  --om-brand:#00559e; --om-brand-strong:#003f7a; --om-brand-soft:#e8f1fc; --om-brand-softer:#f3f8fe;
+  --om-brand:#0052ff; --om-brand-strong:#003ecc; --om-brand-soft:#e8f1fc; --om-brand-softer:#f3f8fe;
   --om-ink:#16181d; --om-ink-2:#3d424d; --om-ink-3:#767d8a; --om-line:#ecedf0;
   --om-bg:#ffffff; --om-bg-warm:#fafafb;
   --om-radius-btn:14px; --om-radius-card:20px;

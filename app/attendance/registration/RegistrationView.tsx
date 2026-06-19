@@ -11,7 +11,7 @@ export type SummaryRow = { year: number; jung_count: number; jun_count: number; 
 export type SuggestRow = { year: number; jung: number; jun: number; newC: number; income: number };
 
 const START_YEAR = 2021;
-const C = { jung: "#00559e", jun: "#0a7d3f", neu: "#e8643c", line: "#ecedf0", ink3: "#767d8a" };
+const C = { jung: "#0052ff", jun: "#0a7d3f", neu: "#e8643c", line: "#ecedf0", ink3: "#767d8a" };
 
 type Row = { year: number; jung_count: number; jun_count: number; new_count: number };
 const FIELDS: { k: keyof Omit<Row, "year">; label: string }[] = [
@@ -173,7 +173,7 @@ const REG_CSS = `
 .moim-reg .rg-table td.b{ font-weight:700; color:var(--ink); }
 .moim-reg .mono{ font-variant-numeric:tabular-nums; }
 .moim-reg .rg-num{ width:84px; text-align:right; font:inherit; font-variant-numeric:tabular-nums; border:1px solid var(--line); border-radius:8px; padding:6px 8px; outline:none; background:#fff; }
-.moim-reg .rg-num:focus{ border-color:#00559e; box-shadow:0 0 0 3px #e8f1fc; }
+.moim-reg .rg-num:focus{ border-color:#0052ff; box-shadow:0 0 0 3px #e8f1fc; }
 .moim-reg .rg-sug{ font-size:12px; font-weight:700; color:#6b46d9; background:#efeafe; border:0; border-radius:8px; padding:6px 10px; cursor:pointer; white-space:nowrap; }
 .moim-reg .rg-note{ font-size:12.5px; color:var(--ink3); margin-top:14px; line-height:1.6; }
 .moim-reg .rg-toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:80; background:#16181d; color:#fff; font-size:13.5px; font-weight:600; padding:11px 18px; border-radius:999px; }
