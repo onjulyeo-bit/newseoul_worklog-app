@@ -134,7 +134,7 @@ export default function SpecialEventTool() {
 const SEV_CSS = `
 .moim-sev{
   --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc;
-  --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --navy:#1a2238;
+  --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --navy:#063d63;
   --shadow-sm:0 1px 2px rgba(20,24,34,.04), 0 3px 12px rgba(20,24,34,.045);
   --shadow-md:0 2px 6px rgba(20,24,34,.05), 0 14px 38px rgba(20,40,80,.08);
   color:var(--ink); line-height:1.5; letter-spacing:-0.01em;

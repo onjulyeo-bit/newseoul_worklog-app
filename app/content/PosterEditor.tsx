@@ -46,7 +46,7 @@ const FONTS = [
 const fontCss = (k: string) => FONTS.find((f) => f.key === k)?.css ?? FONTS[0].css;
 
 const THEMES = [
-  { key: "navy", label: "남색", bg: "linear-gradient(135deg,#1a2238,#243763,#243763)" },
+  { key: "navy", label: "남색", bg: "linear-gradient(135deg,#063d63,#0a4a78,#0a4a78)" },
   { key: "dawn", label: "새벽", bg: "linear-gradient(135deg,#16203c,#46406b,#c98a5e)" },
   { key: "forest", label: "숲", bg: "linear-gradient(135deg,#0f2a22,#163d2f,#21684a)" },
   { key: "sunset", label: "노을", bg: "linear-gradient(135deg,#2a1a3e,#7b3b6e,#e2895a)" },
@@ -105,9 +105,9 @@ function seedEls(s: Seed, layout: string): El[] {
   return out;
 }
 
-const SWATCHES = ["#ffffff", "#1a2238", "#9db8e8", "#2e7d52", "#ffd9a8", "#ecd29a", "#ffe3b3", "#c0392b", "#000000"];
+const SWATCHES = ["#ffffff", "#063d63", "#9db8e8", "#2e7d52", "#ffd9a8", "#ecd29a", "#ffe3b3", "#c0392b", "#000000"];
 // 단색 배경용 팔레트
-const SOLIDS = ["#1a2238", "#243763", "#0f2a22", "#21684a", "#2a1a3e", "#7b3b6e", "#c98a5e", "#ecd29a", "#f5f0e6", "#ffffff", "#2e3440", "#b03a2e"];
+const SOLIDS = ["#063d63", "#0a4a78", "#0f2a22", "#21684a", "#2a1a3e", "#7b3b6e", "#c98a5e", "#ecd29a", "#f5f0e6", "#ffffff", "#2e3440", "#b03a2e"];
 
 export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: { title: string; body: string } }) {
   const [layout, setLayout] = useState("center");
@@ -520,7 +520,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <label className="flex cursor-pointer items-center gap-1 rounded-md border border-line bg-card px-1.5 py-1 text-[11px] font-semibold text-ink-soft">
                     🎨 색선택
-                    <input type="color" value={bgColor || "#1a2238"} onChange={(e) => { setBgColor(e.target.value); setBgImage(""); }} className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0" />
+                    <input type="color" value={bgColor || "#063d63"} onChange={(e) => { setBgColor(e.target.value); setBgImage(""); }} className="h-6 w-7 cursor-pointer border-0 bg-transparent p-0" />
                   </label>
                   {SOLIDS.map((c) => (
                     <button key={c} onClick={() => { setBgColor(c); setBgImage(""); }} className={`h-7 w-7 rounded-full border ${bgColor.toLowerCase() === c.toLowerCase() ? "border-primary ring-2 ring-primary" : "border-line"}`} style={{ background: c }} />

@@ -275,7 +275,7 @@ const ATT_CSS = `
 .moim-att{
   --brand:#00559e; --brand-strong:#003f7a; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
-  --green:#0a7d3f; --green-soft:#e4f6ec; --navy:#1a2238;
+  --green:#0a7d3f; --green-soft:#e4f6ec; --navy:#063d63;
   --radius-btn:14px; --radius-card:20px;
   --shadow-sm:0 1px 2px rgba(20,24,34,.04), 0 3px 12px rgba(20,24,34,.045);
   --shadow-md:0 2px 6px rgba(20,24,34,.05), 0 14px 38px rgba(20,40,80,.08);

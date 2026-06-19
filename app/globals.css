@@ -17,9 +17,9 @@
   --color-primary-focus: #0a64b5;    /* 키보드 포커스 링 */
 
   /* Brand Navy — 배경·헤더용(강조색 아님) */
-  --color-navy: #1a2238;             /* 헤더 밴드·메시지 박스 배경 */
-  --color-navy-deep: #141a2c;
-  --color-deep: #243763;             /* 제목 강조 텍스트(어두운 남색) */
+  --color-navy: #063d63;             /* 헤더 밴드·메시지 박스 배경 */
+  --color-navy-deep: #04304f;
+  --color-deep: #0a4a78;             /* 제목 강조 텍스트(어두운 남색) */
 
   /* Surface — 깨끗한 무채색 */
   --color-paper: #f5f5f7;            /* 페이지 배경(애플식) */

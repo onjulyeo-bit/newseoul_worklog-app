@@ -73,7 +73,7 @@ export const ARC_CSS = `
 /* 행사 갤러리 */
 .moim-arc .arc-gallery{ display:grid; grid-template-columns:repeat(auto-fill,minmax(244px,1fr)); gap:16px; }
 .moim-arc .arc-event{ background:var(--bg); border:1px solid var(--line); border-radius:18px; overflow:hidden; position:relative; box-shadow:0 1px 2px rgba(22,24,29,.04); }
-.moim-arc .arc-event-ph{ height:158px; background:linear-gradient(135deg,#1a2238,#33405e); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.7); }
+.moim-arc .arc-event-ph{ height:158px; background:linear-gradient(135deg,#063d63,#33405e); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.7); }
 .moim-arc .arc-event-img{ height:158px; width:100%; object-fit:cover; display:block; }
 .moim-arc .arc-event-body{ padding:15px 17px 17px; }
 .moim-arc .arc-event-name{ font-size:16px; font-weight:800; color:var(--ink); letter-spacing:-0.3px; margin-bottom:5px; }
