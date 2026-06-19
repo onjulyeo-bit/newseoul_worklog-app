@@ -16,6 +16,13 @@ const maskNo = (no: string | null) => {
   return "•".repeat(Math.max(4, s.length - 4)) + s.slice(-4);
 };
 const PURPOSES = ["중앙회비", "남부연합회비", "강사비", "간사급여", "지회운영", "식대", "후원", "기타"];
+// 국내 은행 — 송금 시 선택. 목록에 없으면 '기타(직접 입력)'.
+const BANKS = [
+  "국민은행", "신한은행", "우리은행", "하나은행", "농협은행", "기업은행",
+  "SC제일은행", "씨티은행", "수협은행", "대구은행", "부산은행", "광주은행",
+  "전북은행", "경남은행", "제주은행", "산업은행", "새마을금고", "신협",
+  "우체국", "카카오뱅크", "케이뱅크", "토스뱅크",
+];
 
 export default function AccountsBoard({ rows, canEdit = true }: { rows: Account[]; canEdit?: boolean }) {
   const router = useRouter();
@@ -31,7 +38,7 @@ export default function AccountsBoard({ rows, canEdit = true }: { rows: Account[
   async function onAdd() {
     if (!form.payee.trim() && !form.account_no.trim()) { setMsg("받는 곳 또는 계좌번호를 입력해 주세요."); return; }
     setBusy(true); setMsg("");
-    const r = await addAccount(form);
+    const r = await addAccount({ ...form, bank: form.bank.trim() });
     setBusy(false);
     if (r.error) { setMsg("❌ " + r.error); return; }
     setForm({ purpose: "", payee: "", bank: "", account_no: "", holder: "", note: "" }); setShow(false);
@@ -55,7 +62,18 @@ export default function AccountsBoard({ rows, canEdit = true }: { rows: Account[
             <input style={inp} list="purposes" value={form.purpose} onChange={(e) => set("purpose", e.target.value)} placeholder="중앙회비·강사비 등" />
             <datalist id="purposes">{PURPOSES.map((p) => <option key={p} value={p} />)}</datalist></label>
           <label><div className="fld-l">받는 곳 / 이름</div><input style={inp} value={form.payee} onChange={(e) => set("payee", e.target.value)} placeholder="중앙회 / 홍길동 강사" /></label>
-          <label><div className="fld-l">은행</div><input style={inp} value={form.bank} onChange={(e) => set("bank", e.target.value)} placeholder="국민·신한 등" /></label>
+          <label><div className="fld-l">은행</div>
+            <select style={inp} value={BANKS.includes(form.bank) ? form.bank : (form.bank ? "__custom" : "")}
+              onChange={(e) => set("bank", e.target.value === "__custom" ? " " : e.target.value === "" ? "" : e.target.value)}>
+              <option value="">은행 선택</option>
+              {BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
+              <option value="__custom">기타 (직접 입력)</option>
+            </select>
+            {form.bank !== "" && !BANKS.includes(form.bank) && (
+              <input style={{ ...inp, marginTop: 8 }} value={form.bank.trim() === "" ? "" : form.bank} autoFocus
+                onChange={(e) => set("bank", e.target.value)} placeholder="은행명 직접 입력" />
+            )}
+          </label>
           <label><div className="fld-l">계좌번호</div><input style={inp} value={form.account_no} onChange={(e) => set("account_no", e.target.value)} placeholder="숫자만 또는 하이픈" /></label>
           <label><div className="fld-l">예금주</div><input style={inp} value={form.holder} onChange={(e) => set("holder", e.target.value)} /></label>
           <label style={{ gridColumn: "1/3" }}><div className="fld-l">메모 (선택)</div><input style={inp} value={form.note} onChange={(e) => set("note", e.target.value)} /></label>
