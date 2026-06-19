@@ -11,8 +11,8 @@
    ========================================================= */
 @theme {
   /* Primary — Coinbase Blue (업로드 팔레트) */
-  --color-primary: #0052ff;          /* 모든 클릭 요소(버튼·링크·선택)·브랜드 워드마크 */
-  --color-primary-pressed: #003ecc;  /* 눌림(press) 상태 */
+  --color-primary: #003ecc;          /* 모든 클릭 요소(버튼·링크·선택)·브랜드 워드마크 */
+  --color-primary-pressed: #0032a8;  /* 눌림(press) 상태 */
   --color-primary-on-dark: #4d7cff;  /* 인디고 배경 위 링크(밝은 파랑) */
   --color-primary-focus: #2563ff;    /* 키보드 포커스 링 */
 
@@ -35,7 +35,7 @@
   --color-on-dark-muted: #b0b4c0;
 
   /* Semantic — 상태(강조색과 별개, 의미 신호) */
-  --color-present: #0052ff;         /* 출석(강조 파랑 계열) */
+  --color-present: #003ecc;         /* 출석(강조 파랑 계열) */
   --color-success: #2e7d52;         /* 납부 완료(녹색) */
   --color-unpaid: #c0392b;          /* 미납·경고(붉은색) */
   --color-warning: #c47d1a;         /* 중간 경고(주황) */

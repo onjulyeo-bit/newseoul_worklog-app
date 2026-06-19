@@ -16,7 +16,7 @@ export default async function Image() {
 
   return new ImageResponse(
     (
-      <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", background: "linear-gradient(135deg,#0052ff 0%,#0a3a86 100%)", color: "#fff", padding: 88, justifyContent: "center", fontFamily: fonts ? "Pretendard" : "sans-serif" }}>
+      <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", background: "linear-gradient(135deg,#003ecc 0%,#0a3a86 100%)", color: "#fff", padding: 88, justifyContent: "center", fontFamily: fonts ? "Pretendard" : "sans-serif" }}>
         <div style={{ fontSize: 36, opacity: 0.85, letterSpacing: -1 }}>CBMC 새서울지회</div>
         <div style={{ fontSize: 110, fontWeight: 700, marginTop: 8, letterSpacing: -3 }}>내 정보 입력</div>
         <div style={{ fontSize: 40, marginTop: 28, opacity: 0.92, letterSpacing: -1 }}>연락처 · 회사 · 생일 등을 직접 입력해 주세요</div>

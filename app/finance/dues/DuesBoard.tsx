@@ -84,7 +84,7 @@ export default function DuesBoard({ rows: initial, canEdit = true }: { rows: Due
             {perYear.map((p) => (
               <div key={p.year} className="card" style={{ padding: 16 }}>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>{p.year}년</div>
-                <div className="dy-row"><Users size={15} color="#0052ff" /><span className="dy-n">{p.payers}</span><span className="dy-l">명 납부</span></div>
+                <div className="dy-row"><Users size={15} color="#003ecc" /><span className="dy-n">{p.payers}</span><span className="dy-l">명 납부</span></div>
                 <div style={{ fontSize: 12.5, color: "var(--ink-3)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}><Wallet size={13} /> {won(p.total)}</div>
               </div>
             ))}
@@ -129,7 +129,7 @@ export default function DuesBoard({ rows: initial, canEdit = true }: { rows: Due
 
 const DUES_CSS = `
 .moim-fin .dy-row{ display:flex; align-items:baseline; gap:4px; margin-top:8px; }
-.moim-fin .dy-n{ font-size:22px; font-weight:800; letter-spacing:-.03em; color:#003ecc; }
+.moim-fin .dy-n{ font-size:22px; font-weight:800; letter-spacing:-.03em; color:#0032a8; }
 .moim-fin .dy-l{ font-size:13px; color:var(--ink-3); }
 .moim-fin .amt-cell{ background:none; border:0; font:inherit; color:var(--ink); cursor:pointer; padding:2px 6px; border-radius:7px; font-variant-numeric:tabular-nums; }
 .moim-fin .amt-cell:hover{ background:var(--brand-softer); box-shadow:inset 0 0 0 1px #cfe0f7; }

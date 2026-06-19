@@ -21,7 +21,7 @@ export type Att = { member_id: string; present: boolean; paid: boolean };
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const fmtDate = (d: string) => { if (!d) return ""; const t = new Date(d + "T00:00"); return `${t.getMonth() + 1}월 ${t.getDate()}일(${DAYS[t.getDay()]})`; };
 const tabDate = (d: string) => { const t = new Date(d + "T00:00"); return { md: `${t.getMonth() + 1}.${t.getDate()}`, day: DAYS[t.getDay()] }; };
-const AV_COLORS = ["#0052ff", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
+const AV_COLORS = ["#003ecc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   const ch = name.trim().charAt(0) || "?";
   const color = AV_COLORS[(name.charCodeAt(0) || 0) % AV_COLORS.length];
@@ -273,7 +273,7 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
 
 const ATT_CSS = `
 .moim-att{
-  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#003ecc; --brand-strong:#0032a8; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --green:#0a7d3f; --green-soft:#e4f6ec; --navy:#1e2353;
   --radius-btn:14px; --radius-card:20px;
@@ -289,7 +289,7 @@ const ATT_CSS = `
 .moim-att .lnk{ color:var(--brand); font-weight:700; text-decoration:none; }
 .moim-att .badge{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px; white-space:nowrap; }
 .moim-att .b-brand{ background:var(--brand-soft); color:var(--brand-strong); }
-.moim-att .b-blue{ background:#eaf2fd; color:#0052ff; }
+.moim-att .b-blue{ background:#eaf2fd; color:#003ecc; }
 .moim-att .ui-btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600; letter-spacing:-0.02em; border-radius:var(--radius-btn); border:0; cursor:pointer; text-decoration:none; transition:background .15s, box-shadow .15s, transform .12s; white-space:nowrap; }
 .moim-att .ui-btn:active{ transform:translateY(1px) scale(.99); }
 .moim-att .ui-sm{ font-size:13px; padding:8px 13px; }

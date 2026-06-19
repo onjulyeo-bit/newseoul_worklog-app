@@ -54,7 +54,7 @@ const GRADES = ["정회원", "부부정회원", "가족회원", "준회원", "�
 const STATUSES = ["활동", "휴면"];
 const GRADE_TONE: Record<string, string> = { 명예회원: "purple", 정회원: "blue", 부부정회원: "blue", 가족회원: "green", 준회원: "warm", 신입회원: "gray", 유보회원: "gray", VIP: "purple" };
 const STATUS_TONE: Record<string, string> = { 활동: "green", 휴면: "warm" };
-const AV_COLORS = ["#0052ff", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
+const AV_COLORS = ["#003ecc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const PRESET_TAGS = ["증경회장", "지회장", "총무", "간사", "감사", "부총무", "고문", "운영위원", "찬양팀", "봉사팀", "창립멤버", "새가족", "청년부"];
 const INTRO_EXAMPLE = "예) 새로운 사람 만나는 게 늘 설렙니다. 먼저 인사 못 드려도 미워하지 마세요.";
 
@@ -524,7 +524,7 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved, onDeleted }: {
 
 const MEM_CSS = `
 .moim-mem{
-  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#003ecc; --brand-strong:#0032a8; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --green:#0a7d3f; --green-soft:#e4f6ec;
   --radius-btn:14px; --radius-card:20px;
@@ -545,7 +545,7 @@ const MEM_CSS = `
 .moim-mem .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; letter-spacing:-0.02em; padding:4px 10px; border-radius:999px; white-space:nowrap; }
 .moim-mem .badge-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
 .moim-mem .b-brand{ background:var(--brand-soft); color:var(--brand-strong); }
-.moim-mem .b-blue{ background:#eaf2fd; color:#0052ff; }
+.moim-mem .b-blue{ background:#eaf2fd; color:#003ecc; }
 .moim-mem .b-green{ background:var(--green-soft); color:var(--green); }
 .moim-mem .b-warm{ background:#fcefe7; color:#b5562a; }
 .moim-mem .b-gray{ background:#eff0f2; color:#6b717c; }
@@ -564,7 +564,7 @@ const MEM_CSS = `
 .moim-mem .page-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
 .moim-mem .page-title{ font-size:clamp(21px,5vw,26px); font-weight:800; letter-spacing:-0.04em; }
 .moim-mem .page-sub{ color:var(--ink-3); font-size:14px; margin-top:5px; font-weight:500; }
-.moim-mem .page-acts{ display:flex; gap:8px; }
+.moim-mem .page-acts{ display:flex; gap:8px; flex-wrap:wrap; }
 
 .moim-mem .stat-cap{ display:flex; align-items:baseline; gap:8px; font-size:13.5px; font-weight:800; color:var(--ink-2); margin-bottom:10px; }
 .moim-mem .stat-cap span{ font-size:12px; font-weight:600; color:var(--ink-3); }
@@ -574,7 +574,7 @@ const MEM_CSS = `
 .moim-mem .stat-ic{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; flex-shrink:0; }
 .moim-mem .stat-ic.t-brand{ background:var(--brand-soft); color:var(--brand); }
 .moim-mem .stat-ic.t-green{ background:var(--green-soft); color:var(--green); }
-.moim-mem .stat-ic.t-blue{ background:#eaf2fd; color:#0052ff; }
+.moim-mem .stat-ic.t-blue{ background:#eaf2fd; color:#003ecc; }
 .moim-mem .stat-ic.t-warm{ background:#fcefe7; color:#b5562a; }
 .moim-mem .stat-ic.t-gray{ background:#eff0f2; color:#6b717c; }
 .moim-mem .stat-label{ font-size:12.5px; color:var(--ink-3); font-weight:600; }
@@ -698,6 +698,13 @@ const MEM_CSS = `
 
 .moim-mem .toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:80; background:var(--ink); color:#fff; font-size:13.5px; font-weight:600; padding:12px 20px; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
 
+@media (max-width:559px){
+  .moim-mem .filters{ flex-direction:column; align-items:stretch; gap:10px; }
+  .moim-mem .filter-right{ width:100%; }
+  .moim-mem .filter-right .search{ flex:1; min-width:0; }
+  .moim-mem .chip-row{ align-items:flex-start; }
+  .moim-mem .chip-lbl{ width:100%; min-width:0; margin-bottom:2px; }
+}
 @media (min-width:560px){ .moim-mem .stat-grid{ grid-template-columns:repeat(3,1fr); } }
 @media (min-width:880px){ .moim-mem .stat-grid{ grid-template-columns:repeat(5,1fr); } }
 @media (min-width:760px){ .moim-mem .table-card{ display:block; } .moim-mem .mcards{ display:none; } }

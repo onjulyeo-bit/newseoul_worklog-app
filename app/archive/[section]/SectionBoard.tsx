@@ -18,7 +18,7 @@ export type ArchiveItem = {
 const fileExt = (url: string) => (url.split("?")[0].split(".").pop() || "FILE").toUpperCase();
 const badgeTone = (ext: string) =>
   ext === "PDF" ? { color: "#c0392b", background: "#fdecea" }
-    : ext.startsWith("HWP") ? { color: "#003ecc", background: "#e8f1fc" }
+    : ext.startsWith("HWP") ? { color: "#0032a8", background: "#e8f1fc" }
       : { color: "#5a6573", background: "#eef0f3" };
 
 export default function SectionBoard({ section, items, isAdmin }: { section: Section; items: ArchiveItem[]; isAdmin: boolean }) {

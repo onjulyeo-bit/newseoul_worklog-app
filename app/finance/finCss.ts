@@ -1,7 +1,7 @@
 // 회계 공유 CSS — .moim-fin 스코프 (거래 가져오기·내역·보고서 공통).
 export const FIN_CSS = `
 .moim-fin{
-  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#003ecc; --brand-strong:#0032a8; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --green:#0a7d3f; --green-soft:#e4f6ec; --warning:#c47d1a;
   --radius-btn:14px; --radius-card:20px;
@@ -18,7 +18,7 @@ export const FIN_CSS = `
 .moim-fin .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; }
 .moim-fin .badge-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
 .moim-fin .b-brand{ background:var(--brand-soft); color:var(--brand-strong); }
-.moim-fin .b-blue{ background:#eaf2fd; color:#0052ff; }
+.moim-fin .b-blue{ background:#eaf2fd; color:#003ecc; }
 .moim-fin .b-green{ background:var(--green-soft); color:var(--green); }
 .moim-fin .b-warm{ background:#fcefe7; color:#b5562a; }
 .moim-fin .b-gray{ background:#eff0f2; color:#6b717c; }
@@ -51,7 +51,7 @@ export const FIN_CSS = `
 .moim-fin .nowrap{ white-space:nowrap; }
 .moim-fin .muted{ color:var(--ink-3); }
 .moim-fin .amt{ font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
-.moim-fin .amt-in{ color:#0052ff; } .moim-fin .amt-out{ color:#c8392c; }
+.moim-fin .amt-in{ color:#003ecc; } .moim-fin .amt-out{ color:#c8392c; }
 .moim-fin .td-act{ text-align:right; white-space:nowrap; }
 .moim-fin .mini-btn{ width:30px; height:30px; border-radius:8px; display:inline-grid; place-items:center; color:var(--ink-3); border:1px solid var(--line); background:#fff; margin-left:4px; cursor:pointer; }
 .moim-fin .mini-btn:hover{ color:var(--brand); border-color:#bcd6f5; }
@@ -87,7 +87,7 @@ export const FIN_CSS = `
 .moim-fin .ls-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:6px; min-width:0; }
 .moim-fin .ls-l{ font-size:12.5px; color:var(--ink-3); font-weight:600; }
 .moim-fin .ls-v{ font-size:17px; font-weight:800; letter-spacing:-0.03em; font-variant-numeric:tabular-nums; }
-.moim-fin .ls-in .ls-v{ color:#0052ff; } .moim-fin .ls-out .ls-v{ color:#c8392c; }
+.moim-fin .ls-in .ls-v{ color:#003ecc; } .moim-fin .ls-out .ls-v{ color:#c8392c; }
 .moim-fin .ls-net{ background:var(--brand-softer); border-color:#cfe0f5; } .moim-fin .ls-net .ls-v{ color:var(--brand-strong); }
 
 .moim-fin .imp{ display:flex; flex-direction:column; }
@@ -105,7 +105,7 @@ export const FIN_CSS = `
 .moim-fin .ist{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; }
 .moim-fin .ist-v{ font-size:17px; font-weight:800; letter-spacing:-0.03em; }
 .moim-fin .ist-l{ font-size:11.5px; color:var(--ink-3); font-weight:700; margin-top:2px; }
-.moim-fin .ist .in{ color:var(--green); } .moim-fin .ist .out{ color:#c8392c; } .moim-fin .ist .pre{ color:#0052ff; } .moim-fin .ist .wr{ color:#c47d1a; }
+.moim-fin .ist .in{ color:var(--green); } .moim-fin .ist .out{ color:#c8392c; } .moim-fin .ist .pre{ color:#003ecc; } .moim-fin .ist .wr{ color:#c47d1a; }
 .moim-fin .imp-summary{ display:flex; flex-wrap:wrap; gap:14px; margin-top:16px; padding:14px 16px; background:var(--bg-warm); border:1px solid var(--line); border-radius:14px; }
 .moim-fin .imp-chip{ display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--ink-2); }
 .moim-fin .saved-msg{ font-size:14px; font-weight:700; color:var(--green); }

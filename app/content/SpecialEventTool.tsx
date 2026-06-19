@@ -12,7 +12,7 @@ const TYPES: TypeV[] = ["한국대회", "송년회", "봄소풍", "수련회", "
 type Form = { name: string; when: string; where: string; fee: string; apply: string; bring: string; transport: string; extra: string };
 
 const ETYPE: Record<TypeV, { Icon: React.ComponentType<{ size?: number }>; bg: string; accent: string; emoji: string; intro: string; close: string }> = {
-  한국대회: { Icon: Mountain, bg: "linear-gradient(160deg,#eaf2fd,#dceafb)", accent: "#0052ff", emoji: "🏔️", intro: "전국 CBMC가 함께 모이는 한국대회를 안내드립니다. 많은 참여 바랍니다.", close: "은혜로운 자리에 함께해 주세요. 🙏" },
+  한국대회: { Icon: Mountain, bg: "linear-gradient(160deg,#eaf2fd,#dceafb)", accent: "#003ecc", emoji: "🏔️", intro: "전국 CBMC가 함께 모이는 한국대회를 안내드립니다. 많은 참여 바랍니다.", close: "은혜로운 자리에 함께해 주세요. 🙏" },
   송년회: { Icon: PartyPopper, bg: "linear-gradient(160deg,#fdf1ec,#fbe6dc)", accent: "#c0623a", emoji: "🎄", intro: "한 해를 감사로 마무리하는 송년회를 안내드립니다. 함께해 주세요.", close: "한 해 동안 함께해 주셔서 감사합니다. 🤍" },
   봄소풍: { Icon: Flower2, bg: "linear-gradient(160deg,#e6f6ec,#d6f0e0)", accent: "#0a7d3f", emoji: "🌸", intro: "회원과 가족이 함께하는 봄소풍을 안내드립니다. 함께 친교의 시간을 가져요.", close: "가족과 함께 오셔서 좋은 추억 만드세요. 🌿" },
   수련회: { Icon: Tent, bg: "linear-gradient(160deg,#efeafe,#e4dbfb)", accent: "#6b46d9", emoji: "⛺", intro: "말씀과 교제로 재충전하는 수련회를 안내드립니다. 함께 참여해 주세요.", close: "주님 안에서 새 힘을 얻는 시간 되시길 바랍니다. 🙏" },
@@ -133,7 +133,7 @@ export default function SpecialEventTool() {
 
 const SEV_CSS = `
 .moim-sev{
-  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc;
+  --brand:#003ecc; --brand-strong:#0032a8; --brand-soft:#e8f1fc;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --navy:#1e2353;
   --shadow-sm:0 1px 2px rgba(20,24,34,.04), 0 3px 12px rgba(20,24,34,.045);
   --shadow-md:0 2px 6px rgba(20,24,34,.05), 0 14px 38px rgba(20,40,80,.08);

@@ -100,7 +100,7 @@ export default function StatsView({
 
 const STATS_CSS = `
 .moim-stats{
-  --brand:#0052ff; --brand-strong:#003ecc; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
+  --brand:#003ecc; --brand-strong:#0032a8; --brand-soft:#e8f1fc; --brand-softer:#f3f8fe;
   --ink:#16181d; --ink-2:#3d424d; --ink-3:#767d8a; --line:#ecedf0; --bg:#ffffff; --bg-warm:#fafafb;
   --green:#0a7d3f; --green-soft:#e4f6ec;
   --radius-card:20px; --shadow-sm:0 1px 2px rgba(20,24,34,.04), 0 3px 12px rgba(20,24,34,.045);
