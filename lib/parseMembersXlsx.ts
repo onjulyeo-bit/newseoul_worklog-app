@@ -72,7 +72,7 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
   const iAddress = headers.findIndex((hh) => hh === "주소"); // '주소구분'과 구분 위해 정확히 일치
   const iChurch = find("출석교회", "교회");
   const iJoined = find("등록시기", "가입", "등록일");
-  const iIntended = find("운영진");
+  const iIntended = find("예정권한", "운영진");
   const iVision = find("비전");
   const iLeader = find("리더십");
 
@@ -139,7 +139,7 @@ export function parseMembersXlsx(buf: ArrayBuffer): ParsedMember[] {
           : /^\d{4}$/.test(jRaw) ? `${jRaw}-01-01`           // 연도만(2020) → 1월1일
             : null
         : null,
-      intended_role: (() => { const v = cell(iIntended); return v === "O" || v === "운영진" || v === "운영진예정" ? "admin" : null; })(),
+      intended_role: (() => { const v = (cell(iIntended) ?? "").replace(/\s/g, ""); if (v.includes("읽기")) return "viewer"; if (v === "O" || v.includes("운영진")) return "admin"; return null; })(),
       tags: role ? [role] : [],
     });
   }

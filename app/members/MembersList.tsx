@@ -35,7 +35,7 @@ function toExportRows(members: RawMember[]) {
     주소구분: m.address_type ?? "",
     출석교회: m.home_church ?? "",
     회원등록일: m.joined_on ?? "",
-    운영진예정: m.intended_role === "admin" ? "O" : "",
+    예정권한: m.intended_role === "admin" ? "운영진" : m.intended_role === "viewer" ? "읽기운영진" : "",
     기타: (m.tags ?? []).join(", "),
   }));
 }
@@ -430,6 +430,7 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved, onDeleted }: {
                 {m.grade && <Badge tone={GRADE_TONE[m.grade] || "gray"}>{m.grade}</Badge>}
                 {m.status && <Badge tone={STATUS_TONE[m.status] || "gray"} dot>{m.status}</Badge>}
                 {m.intended_role === "admin" && <Badge tone="brand">운영진 예정</Badge>}
+                {m.intended_role === "viewer" && <Badge tone="warm">읽기 운영진 예정</Badge>}
               </div>
               {m.phone && <a className="dm-phone" href={`tel:${m.phone}`}><Phone size={14} /> {m.phone}</a>}
             </div>
@@ -475,8 +476,12 @@ function MemberDetail({ member, canEdit = true, onClose, onSaved, onDeleted }: {
                 <EditText label="생일 (예: 03-15 또는 1970-03-15)" value={m.birth_date || ""} onChange={(v) => set("birth_date", v)} />
                 <EditSelect label="양/음력" value={m.birth_calendar || ""} options={["양력", "음력"]} onChange={(v) => set("birth_calendar", v)} />
                 <EditText label="배우자" value={m.spouse_name || ""} onChange={(v) => set("spouse_name", v)} />
-                <label className="fld-edit toggle-row"><span className="fld-label">운영진 예정 <span style={{ color: "#767d8a", fontWeight: 500 }}>(로그인 시 자동 운영진)</span></span>
-                  <button className={`switch ${m.intended_role === "admin" ? "on" : ""}`} onClick={() => setM((p) => ({ ...p, intended_role: p.intended_role === "admin" ? null : "admin" }))} type="button"><span className="switch-knob" /></button>
+                <label className="fld-edit"><span className="fld-label">예정 권한 <span style={{ color: "#767d8a", fontWeight: 500 }}>(로그인·연결 시 자동 적용)</span></span>
+                  <div className="tag-presets">
+                    {([["", "없음(회원)"], ["admin", "운영진"], ["viewer", "읽기 운영진"]] as [string, string][]).map(([v, l]) => (
+                      <button key={v} type="button" className={`tag-chip ${(m.intended_role ?? "") === v ? "on" : ""}`} onClick={() => setM((p) => ({ ...p, intended_role: v || null }))}>{l}</button>
+                    ))}
+                  </div>
                 </label></section>
               <section className="dm-sec"><h3 className="dm-sec-t">직업</h3>
                 <EditText label="업종" value={m.industry || ""} onChange={(v) => set("industry", v)} />
