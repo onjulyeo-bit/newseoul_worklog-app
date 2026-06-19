@@ -16,13 +16,13 @@ const mdNum = (iso: string) => { const t = new Date(iso); return `${t.getMonth()
 const noticeTone = (c: string) => (c === "공지" ? "b-blue" : c === "포럼" ? "b-brand" : c === "경조사" ? "b-warm" : "b-gray");
 
 const SHORTCUTS = [
-  { href: "/", label: "회원관리", Icon: Users, desc: "명단·회원구분" },
-  { href: "/schedule", label: "연간일정", Icon: CalendarDays, desc: "금요 모임" },
-  { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, desc: "체크·정산" },
-  { href: "/finance", label: "회계", Icon: ReceiptText, desc: "수입·지출" },
-  { href: "/content", label: "콘텐츠 생성", Icon: ImageIcon, desc: "포스터·안내" },
-  { href: "/notices", label: "공지", Icon: Megaphone, desc: "게시·전달" },
-  { href: "/attendance/stats", label: "체크인 통계", Icon: BarChart3, desc: "출석률" },
+  { href: "/", label: "회원관리", Icon: Users, desc: "명단·회원구분", tone: "blue" },
+  { href: "/schedule", label: "연간일정", Icon: CalendarDays, desc: "금요 모임", tone: "indigo" },
+  { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, desc: "체크·정산", tone: "teal" },
+  { href: "/finance", label: "회계", Icon: ReceiptText, desc: "수입·지출", tone: "onyx" },
+  { href: "/content", label: "콘텐츠 생성", Icon: ImageIcon, desc: "포스터·안내", tone: "indigo" },
+  { href: "/notices", label: "공지", Icon: Megaphone, desc: "게시·전달", tone: "blue" },
+  { href: "/attendance/stats", label: "체크인 통계", Icon: BarChart3, desc: "출석률", tone: "teal" },
 ];
 
 function Stat({ Icon, tone, label, value, sub }: { Icon: React.ComponentType<{ size?: number }>; tone: string; label: string; value: string; sub?: string }) {
@@ -93,9 +93,9 @@ export default function DashboardView({
           <div className="sec-row"><h2 className="sec-title">요약</h2></div>
           <div className="stat-grid">
             <Stat Icon={Users} tone="t-brand" label="전체 회원" value={`${mTotal}명`} />
-            <Stat Icon={UserCheck} tone="t-green" label="활동 회원" value={`${mActive}명`} />
-            <Stat Icon={TrendingUp} tone="t-blue" label="이번 달 수입" value={won(income)} sub={`지출 ${won(expense)} · 순 ${won(income - expense)}`} />
-            <Stat Icon={CalendarClock} tone="t-warm" label="다가오는 일정" value={`${meetingsCount}건`} />
+            <Stat Icon={UserCheck} tone="t-teal" label="활동 회원" value={`${mActive}명`} />
+            <Stat Icon={TrendingUp} tone="t-indigo" label="이번 달 수입" value={won(income)} sub={`지출 ${won(expense)} · 순 ${won(income - expense)}`} />
+            <Stat Icon={CalendarClock} tone="t-onyx" label="다가오는 일정" value={`${meetingsCount}건`} />
           </div>
         </section>
       </div>
@@ -104,9 +104,9 @@ export default function DashboardView({
       <section className="dash-sec">
         <div className="sec-row"><div><h2 className="sec-title">바로가기</h2><p className="sec-sub">자주 쓰는 메뉴로 빠르게 이동</p></div></div>
         <div className="quick-grid">
-          {SHORTCUTS.map(({ href, label, Icon, desc }) => (
+          {SHORTCUTS.map(({ href, label, Icon, desc, tone }) => (
             <Link key={href} href={href} className="quick">
-              <span className="quick-ic"><Icon size={22} /></span>
+              <span className={`quick-ic qi-${tone}`}><Icon size={22} /></span>
               <span className="quick-label">{label}</span>
               <span className="quick-desc">{desc}</span>
             </Link>
@@ -203,6 +203,9 @@ const DASH_CSS = `
 .moim-dash .stat-ic.t-green{ background:var(--green-soft); color:var(--green); }
 .moim-dash .stat-ic.t-blue{ background:#eaf2fd; color:#003ecc; }
 .moim-dash .stat-ic.t-warm{ background:#fcefe7; color:#b5562a; }
+.moim-dash .stat-ic.t-teal{ background:#d7efeb; color:#0f766e; }
+.moim-dash .stat-ic.t-indigo{ background:#e7e9f5; color:#1e2353; }
+.moim-dash .stat-ic.t-onyx{ background:#ececef; color:#23272a; }
 .moim-dash .stat-body{ min-width:0; }
 .moim-dash .stat-label{ font-size:12.5px; color:var(--ink-3); font-weight:600; }
 .moim-dash .stat-value{ font-size:20px; font-weight:800; letter-spacing:-0.03em; margin-top:3px; }
@@ -234,6 +237,10 @@ const DASH_CSS = `
 .moim-dash .quick{ background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:18px 14px; display:flex; flex-direction:column; align-items:flex-start; gap:4px; box-shadow:var(--shadow-sm); transition:transform .15s, box-shadow .15s, border-color .15s; text-align:left; min-width:0; text-decoration:none; color:var(--ink); }
 .moim-dash .quick:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:#dde7f3; }
 .moim-dash .quick-ic{ width:42px; height:42px; border-radius:12px; display:grid; place-items:center; background:var(--brand-soft); color:var(--brand); margin-bottom:8px; }
+.moim-dash .quick-ic.qi-blue{ background:#e4ebff; color:#003ecc; }
+.moim-dash .quick-ic.qi-indigo{ background:#e7e9f5; color:#1e2353; }
+.moim-dash .quick-ic.qi-teal{ background:#d7efeb; color:#0f766e; }
+.moim-dash .quick-ic.qi-onyx{ background:#ececef; color:#23272a; }
 .moim-dash .quick-label{ font-weight:700; font-size:15px; letter-spacing:-0.03em; }
 .moim-dash .quick-desc{ font-size:12px; color:var(--ink-3); font-weight:500; }
 
