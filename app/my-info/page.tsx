@@ -4,6 +4,7 @@
 // 보안: members 직접 접근 안 함, member_self_lookup / member_self_update RPC(SECURITY DEFINER)만 사용.
 // 디자인: 잉크(차콜) 모노톤 단색. 로직 동일, 비주얼만.
 import { useRef, useState } from "react";
+import { Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null; birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null; intro: string | null; business_card_url: string | null };
@@ -103,13 +104,14 @@ export default function MyInfoPage() {
       <div className="mi-card">
         {/* 브랜드 + 단계 */}
         <div className="mi-top">
-          <div className="mi-brand"><span className="mi-mark">C</span><span className="mi-bname">CBMC <span className="mi-dim">새서울지회</span></span></div>
+          <div className="mi-brand"><span className="mi-mark">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/cbmc-symbol.webp" alt="CBMC" /></span><span className="mi-bname">CBMC <span className="mi-dim">새서울지회</span></span></div>
           {step !== "done" && <span className="mi-step">{step === "verify" ? "1 / 2" : "2 / 2"}</span>}
         </div>
 
         {step === "verify" && (<>
           <h1 className="mi-h1">내 정보 입력</h1>
-          <p className="mi-sub">본인 확인 후 연락처·회사 등 정보를 직접 입력·수정할 수 있어요.</p>
+          <p className="mi-sub">입력한 정보는 회원 명부에 등록되어 교제와 소식 전달에 사용됩니다.</p>
+          <span className="mi-priv"><Lock size={13} /> 지회 회원에게만 공개됩니다</span>
           <div className="mi-field">
             <label className="mi-label">이름</label>
             <input className="mi-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="홍길동" />
@@ -203,12 +205,15 @@ const MI_CSS = `
 .mi-card{ width:100%; max-width:480px; background:var(--card); border:1px solid var(--line); border-radius:24px; padding:28px 24px; box-shadow:0 1px 2px rgba(0,0,0,.03), 0 12px 32px rgba(20,20,28,.06); }
 .mi-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
 .mi-brand{ display:flex; align-items:center; gap:9px; }
-.mi-mark{ width:30px; height:30px; border-radius:9px; background:var(--ink); color:#fff; display:grid; place-items:center; font-weight:800; font-size:15px; }
-.mi-bname{ font-size:15px; font-weight:800; }
+.mi-mark{ width:32px; height:32px; border-radius:9px; background:#f1f2f5; display:grid; place-items:center; overflow:hidden; }
+.mi-mark img{ width:22px; height:22px; object-fit:contain; }
+.mi-bname{ font-size:14.5px; font-weight:800; }
 .mi-dim{ color:var(--faint); font-weight:700; }
 .mi-step{ font-size:12px; font-weight:700; color:var(--faint); font-variant-numeric:tabular-nums; }
-.mi-h1{ font-size:25px; font-weight:800; letter-spacing:-0.04em; margin:0; }
-.mi-sub{ font-size:14.5px; color:var(--mut); line-height:1.6; margin:8px 0 18px; }
+.mi-h1{ font-size:20px; font-weight:800; letter-spacing:-0.03em; margin:0; }
+.mi-sub{ font-size:14px; color:var(--mut); line-height:1.6; margin:7px 0 12px; }
+.mi-priv{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:700; color:var(--ink); background:#eef1fb; border-radius:999px; padding:6px 12px; margin-bottom:18px; }
+.mi-priv svg{ color:var(--mut); }
 .mi-field{ margin-bottom:14px; }
 .mi-label{ display:block; font-size:12.5px; font-weight:700; color:var(--mut); margin-bottom:7px; }
 .mi-input{ width:100%; font-family:inherit; font-size:16px; color:var(--ink); padding:13px 14px; border:1px solid var(--line); border-radius:13px; outline:none; background:#fafafa; transition:border-color .15s, box-shadow .15s, background .15s; }

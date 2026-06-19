@@ -5,6 +5,9 @@
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Megaphone, Heart, Presentation, X, Plus, Send, ArrowLeft, Trash2, ChevronDown, MapPin, QrCode } from "lucide-react";
+import JoinContent from "../join/JoinContent";
+
+const JOIN_TAB = "입회안내"; // 공지 안의 특수 탭(공지가 아닌 안내 콘텐츠)
 
 export type Announcement = { id: string; category: string; title: string; body: string; created_at: string; image_url?: string | null };
 export type MemberHero = { name: string; meeting: { date: string; program: string | null; title: string | null; place: string | null; time: string | null; checkinHref: string | null } | null };
@@ -28,6 +31,7 @@ export default function NoticesBoard({ isAdmin, initial, memberHero }: { isAdmin
   const showToast = (t: string) => { setToast(t); setTimeout(() => setToast(""), 2000); };
 
   const cats = useMemo(() => Array.from(new Set(list.map((n) => n.category))).filter(Boolean), [list]);
+  const joinActive = filter === JOIN_TAB;
   const filtered = list.filter((n) => !filter || n.category === filter);
 
   async function publish(category: string, title: string, body: string) {
@@ -71,7 +75,7 @@ export default function NoticesBoard({ isAdmin, initial, memberHero }: { isAdmin
         <div className="mh-hero">
           <h1 className="mh-greet">반가워요, {memberHero.name} 회원님</h1>
           <p className="mh-sub">이번 주 모임 소식을 확인하세요.</p>
-          {memberHero.meeting && (
+          {!joinActive && memberHero.meeting && (
             <div className="mh-meet">
               <div className="mh-meet-l">
                 <span className="mh-meet-when">{mdOf(memberHero.meeting.date)} ({dayOf(memberHero.meeting.date)}){memberHero.meeting.time ? ` · ${memberHero.meeting.time}` : ""}</span>
@@ -82,7 +86,7 @@ export default function NoticesBoard({ isAdmin, initial, memberHero }: { isAdmin
               {memberHero.meeting.checkinHref && <a className="mh-meet-cta" href={memberHero.meeting.checkinHref}><QrCode size={18} /> 출석 체크인</a>}
             </div>
           )}
-          <h2 className="mh-feed-t">이번 주 소식</h2>
+          <h2 className="mh-feed-t">{joinActive ? "입회 안내" : "이번 주 소식"}</h2>
         </div>
       ) : isAdmin ? (
         <div className="page-head">
@@ -93,13 +97,15 @@ export default function NoticesBoard({ isAdmin, initial, memberHero }: { isAdmin
         <div className="page-head"><div><h1 className="page-title">공지</h1><p className="page-sub">모임 소식을 확인하세요.</p></div></div>
       )}
 
-      {cats.length > 0 && (
-        <div className="nt-filters">
-          <button className={`chip-f ${!filter ? "on" : ""}`} onClick={() => setFilter("")}>전체</button>
-          {cats.map((c) => <button key={c} className={`chip-f ${filter === c ? "on" : ""}`} onClick={() => setFilter(c)}>{c}</button>)}
-        </div>
-      )}
+      <div className="nt-filters">
+        <button className={`chip-f ${!filter ? "on" : ""}`} onClick={() => setFilter("")}>전체</button>
+        {cats.map((c) => <button key={c} className={`chip-f ${filter === c ? "on" : ""}`} onClick={() => setFilter(c)}>{c}</button>)}
+        <button className={`chip-f ${joinActive ? "on" : ""}`} onClick={() => setFilter(JOIN_TAB)}>입회안내</button>
+      </div>
 
+      {joinActive ? (
+        <JoinContent embedded />
+      ) : (
       <div className="nt-feed">
         {filtered.length === 0 ? (
           <div className="empty">{list.length === 0 ? "아직 공지가 없어요." : "해당 카테고리의 공지가 없습니다."}</div>
@@ -116,6 +122,7 @@ export default function NoticesBoard({ isAdmin, initial, memberHero }: { isAdmin
           </button>
         ))}
       </div>
+      )}
 
       {composing && <Compose onClose={() => setComposing(false)} onSubmit={publish} />}
       {toast && <div className="toast">{toast}</div>}

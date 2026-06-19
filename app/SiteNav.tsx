@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, CalendarDays, ClipboardCheck, ReceiptText,
-  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap, DoorOpen,
+  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap,
 } from "lucide-react";
 
 type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string };
@@ -30,12 +30,10 @@ const MEMBER: Item[] = [
   { href: "/", label: "공지", Icon: Megaphone },
   { href: "/directory", label: "회원명단", Icon: Contact },
   { href: "/archive", label: "아카이브", Icon: Archive },
-  { href: "/join", label: "입회안내", Icon: DoorOpen },
 ];
 const GUEST: Item[] = [
   { href: "/", label: "공지", Icon: Megaphone },
   { href: "/archive", label: "아카이브", Icon: Archive },
-  { href: "/join", label: "입회안내", Icon: DoorOpen },
 ];
 
 // 현재 경로에 가장 잘 맞는(가장 긴) href 하나만 active
