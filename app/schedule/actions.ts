@@ -10,6 +10,7 @@ type SaveRow = {
   session: number | null;
   title: string;
   speaker: string;
+  host: string;
   note: string;
   program: string;
 };
@@ -27,6 +28,7 @@ export async function saveSchedule(
     mode: r.mode,
     title: r.title || null,
     speaker: r.speaker || null,
+    host: r.host || null,
     program: r.program || null,
     fee,
     account_info: account,

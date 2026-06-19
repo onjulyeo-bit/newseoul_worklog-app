@@ -35,7 +35,8 @@ export function parseScheduleXlsx(buf: ArrayBuffer): Row[] {
   const headers: string[] = [];
   for (let i = 0; i < raw.length; i++) headers[i] = clean(raw[i]) ?? "";
   const find = (...kw: string[]) => headers.findIndex((x) => x !== "" && kw.some((k) => x.includes(k)));
-  const iDate = find("날짜"), iSession = find("회차"), iMode = find("모드"), iTitle = find("주제"), iSpeaker = find("강사", "발제");
+  const iDate = find("날짜"), iSession = find("회차"), iMode = find("모드"), iTitle = find("주제"),
+    iSpeaker = find("강사", "발제"), iHost = find("사회자", "사회"), iProgram = find("형식", "프로그램", "구분"), iNote = find("비고");
 
   const out: Row[] = [];
   for (let r = h + 1; r < rows.length; r++) {
@@ -48,7 +49,7 @@ export function parseScheduleXlsx(buf: ArrayBuffer): Row[] {
     const session = sRaw ? parseInt(String(sRaw).replace(/[^0-9]/g, ""), 10) || null : null;
     const modeRaw = clean(cell(iMode));
     const mode: Mode = (modeRaw && MODE_MAP[modeRaw]) || "pending";
-    out.push({ date, nth, mode, session, title: clean(cell(iTitle)) ?? "", speaker: clean(cell(iSpeaker)) ?? "", note: "", program: "" });
+    out.push({ date, nth, mode, session, title: clean(cell(iTitle)) ?? "", speaker: clean(cell(iSpeaker)) ?? "", host: clean(cell(iHost)) ?? "", note: clean(cell(iNote)) ?? "", program: clean(cell(iProgram)) ?? "" });
   }
   out.sort((a, b) => a.date.localeCompare(b.date));
   return out;

@@ -10,11 +10,11 @@ import { saveSchedule, createEvent, deleteEvent } from "./actions";
 import { ChevronDown, Sparkles, Save, Upload, Download, Calendar, Star, Trash2, MapPin } from "lucide-react";
 import { useCanEdit } from "@/lib/useCanEdit";
 
-export type ExistingRow = { date: string; session: number | null; mode: string; title: string; speaker: string; note: string; program: string };
+export type ExistingRow = { date: string; session: number | null; mode: string; title: string; speaker: string; host: string; note: string; program: string };
 export type EventRow = { id: string; title: string; date: string; end_date: string | null; type: string | null; location: string | null; link: string | null };
 
 const EVENT_TYPES = ["한국대회", "송년회", "봄소풍", "수련회", "총회", "기타"];
-const PROGRAMS = ["", "예배", "포럼", "회만시", "특강", "기타행사"];
+const PROGRAMS = ["", "예배", "포럼", "특강", "기타"];
 const MODES: { v: Mode; label: string }[] = [
   { v: "online", label: "온라인" }, { v: "offline", label: "오프라인" },
   { v: "recess", label: "휴회" }, { v: "pending", label: "미정" },
@@ -34,7 +34,7 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
   const [anchorSession, setAnchorSession] = useState(1385);
   const [feeV, setFeeV] = useState(fee != null ? String(fee) : "");
   const [accountV, setAccountV] = useState(account ?? "");
-  const [rows, setRows] = useState<Row[]>(existing.map((e) => ({ date: e.date, nth: nthOf(e.date), mode: e.mode as Mode, session: e.session, title: e.title, speaker: e.speaker, note: e.note, program: e.program })));
+  const [rows, setRows] = useState<Row[]>(existing.map((e) => ({ date: e.date, nth: nthOf(e.date), mode: e.mode as Mode, session: e.session, title: e.title, speaker: e.speaker, host: e.host, note: e.note, program: e.program })));
   const [genOpen, setGenOpen] = useState(existing.length === 0);
   const [result, setResult] = useState("");
   const [pending, startTransition] = useTransition();
@@ -54,13 +54,13 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
     setRows(generateSchedule(year, anchorDate, anchorSession)); setResult("자동 생성됨 — 미정(5번째·공휴일)을 정하고 저장하세요"); setGenOpen(false);
   };
   const setMode = (date: string, mode: Mode) => setRows((prev) => renumber(prev.map((r) => (r.date === date ? { ...r, mode } : r)), anchorDate, anchorSession));
-  const setField = (date: string, k: "title" | "speaker" | "program", v: string) => setRows((prev) => prev.map((r) => (r.date === date ? { ...r, [k]: v } : r)));
+  const setField = (date: string, k: "title" | "speaker" | "host" | "program", v: string) => setRows((prev) => prev.map((r) => (r.date === date ? { ...r, [k]: v } : r)));
   const recompute = () => setRows((prev) => renumber([...prev], anchorDate, anchorSession));
   const onSave = () => startTransition(async () => {
-    const res = await saveSchedule(rows.map((r) => ({ date: r.date, mode: r.mode, session: r.session, title: r.title, speaker: r.speaker, note: r.note, program: r.program })), feeV ? Number(feeV) : null, accountV || null);
+    const res = await saveSchedule(rows.map((r) => ({ date: r.date, mode: r.mode, session: r.session, title: r.title, speaker: r.speaker, host: r.host, note: r.note, program: r.program })), feeV ? Number(feeV) : null, accountV || null);
     setResult(res.error ? "❌ " + res.error : `✅ 저장 완료 — ${res.count}개 일정`);
   });
-  const exportRows = () => rows.map((r) => ({ 회차: r.session ?? "", 날짜: r.date, 요일: wd(r.date), 모드: modeLabelOf(r.mode), 주제: r.title, 강사: r.speaker, 비고: r.note }));
+  const exportRows = () => rows.map((r) => ({ 회차: r.session ?? "", 날짜: r.date, 요일: wd(r.date), 모드: modeLabelOf(r.mode), 형식: r.program, 주제: r.title, 강사: r.speaker, 사회자: r.host, 비고: r.note }));
   async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
     try { setRows(parseScheduleXlsx(await file.arrayBuffer())); setResult("파일에서 불러옴 — 확인 후 저장하세요"); }
@@ -141,7 +141,7 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
         <div className="card table-card">
           <div className="table-scroll">
             <table className="mtable sched-table">
-              <thead><tr><th className="th-name">날짜</th><th>회차</th><th>N째</th><th>형태</th><th>프로그램</th><th>주제</th><th>강사</th><th>비고</th></tr></thead>
+              <thead><tr><th className="th-name">날짜</th><th>회차</th><th>모드</th><th>형식</th><th>주제</th><th>강사</th><th>사회자</th><th>비고</th></tr></thead>
               <tbody>
                 {items.map((it) => {
                   const m = monthOf(it.date);
@@ -166,11 +166,11 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
                       <tr className={`${past ? "row-past" : ""} ${r.mode === "recess" ? "row-recess" : ""}`}>
                         <td className="td-name"><span className="sc-date">{wd(r.date)}</span>{r.date === today && <span className="today-tag">오늘</span>}</td>
                         <td>{r.session != null ? <span className="mono sc-round">{r.session}회</span> : <span className="fld-empty">—</span>}</td>
-                        <td className="muted">{r.nth}</td>
                         <td><div className="inline-sel"><select className="prog-sel mode-sel" value={r.mode} onChange={(e) => setMode(r.date, e.target.value as Mode)}>{MODES.map((mm) => <option key={mm.v} value={mm.v}>{mm.label}</option>)}</select><ChevronDown size={14} /></div></td>
                         <td><div className="inline-sel"><select className="prog-sel" value={r.program} onChange={(e) => setField(r.date, "program", e.target.value)}>{PROGRAMS.map((p) => <option key={p} value={p}>{p || "—"}</option>)}</select><ChevronDown size={14} /></div></td>
                         <td><input className="cell-inp w-topic" value={r.title} onChange={(e) => setField(r.date, "title", e.target.value)} placeholder={past ? "—" : "주제"} /></td>
                         <td><input className="cell-inp w-spk" value={r.speaker} onChange={(e) => setField(r.date, "speaker", e.target.value)} placeholder="강사" /></td>
+                        <td><input className="cell-inp w-spk" value={r.host} onChange={(e) => setField(r.date, "host", e.target.value)} placeholder="사회자" /></td>
                         <td className="nowrap sc-note">{r.note}</td>
                       </tr>
                     </Fragment>

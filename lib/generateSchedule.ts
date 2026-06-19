@@ -10,8 +10,9 @@ export type Row = {
   session: number | null;
   title: string;
   speaker: string;
+  host: string;        // 사회자
   note: string;
-  program: string;     // 예배/포럼/회만시/특강/기타행사
+  program: string;     // 형식: 예배/포럼/특강/기타
 };
 
 // 2026 대한민국 공휴일(빨간날) — 금요일에 걸리면 '미정'으로 표시(임원이 휴회 확정)
@@ -51,7 +52,7 @@ export function generateSchedule(year: number, anchorDate: string, anchorSession
     else if (nth === 5) { mode = "pending"; note = "5번째 금요일"; }
     else if (nth === 1 || nth === 3) { mode = "online"; }
     else { mode = "offline"; }
-    return { date, nth, mode, session: null, title: "", speaker: "", note, program: "" };
+    return { date, nth, mode, session: null, title: "", speaker: "", host: "", note, program: "" };
   });
   return renumber(rows, anchorDate, anchorSession);
 }
