@@ -3,8 +3,9 @@
 // 새서울 CBMC 첫 화면 ⑰ — 환영 + 매직링크 로그인. 클로드디자인 시안 이식.
 // 익명 방문자가 "/"에서 봄. signInWithOtp 실연결(비밀번호 없음).
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Mail, AtSign, Send, ShieldCheck, MailCheck, RotateCw, UserPlus, QrCode } from "lucide-react";
+import { Mail, AtSign, Send, ShieldCheck, MailCheck, RotateCw, UserPlus, QrCode, ChevronRight } from "lucide-react";
 
 // 카카오 말풍선 로고 (lucide에 없어 인라인 SVG). currentColor로 버튼 글자색 따라감.
 function KakaoIcon() {
@@ -115,10 +116,11 @@ export default function Welcome() {
           )}
 
           <div className="helps">
-            <div className="help">
+            <Link href="/join" className="help help-link">
               <div className="help-ic"><UserPlus size={19} /></div>
-              <div className="help-body"><div className="t">처음이신가요?</div><div className="d">카카오로 바로 로그인하면 됩니다. 이메일 등록은 필요 없어요.</div></div>
-            </div>
+              <div className="help-body"><div className="t">처음이신가요? 입회 안내 보기</div><div className="d">새서울지회 입회 절차와 CBMC 중앙회 등록 방법을 확인하세요.</div></div>
+              <ChevronRight size={18} className="help-arrow" />
+            </Link>
             <div className="help">
               <div className="help-ic"><QrCode size={19} /></div>
               <div className="help-body"><div className="t">체크인은 현장에서</div><div className="d">체크인은 모임 현장 QR로 진행돼요.</div></div>
@@ -199,6 +201,9 @@ const WELCOME_CSS = `
 .moim-welcome .help-body{ min-width:0; }
 .moim-welcome .help-body .t{ font-size:14px; font-weight:700; letter-spacing:-0.02em; }
 .moim-welcome .help-body .d{ font-size:13px; color:var(--ink-3); font-weight:500; margin-top:3px; line-height:1.5; }
+.moim-welcome .help-link{ align-items:center; text-decoration:none; color:inherit; transition:border-color .15s, background .15s; cursor:pointer; }
+.moim-welcome .help-link:hover{ border-color:var(--brand); background:var(--brand-softer, #f3f8fe); }
+.moim-welcome .help-link .help-arrow{ margin-left:auto; flex-shrink:0; color:var(--brand); }
 .moim-welcome footer{ text-align:center; padding:30px 0; margin-top:auto; }
 .moim-welcome .foot-brand{ font-size:14px; font-weight:700; color:var(--ink-2); letter-spacing:-0.02em; }
 .moim-welcome .foot-brand .sep{ color:var(--ink-3); font-weight:500; margin:0 6px; }
