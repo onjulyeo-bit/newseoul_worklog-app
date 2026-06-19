@@ -75,28 +75,28 @@ export default function Welcome() {
             <section className="login-card">
               <div className="login-head">
                 <h2>로그인</h2>
-                <p>비밀번호 없이, 등록된 메일로 안전하게 로그인해요.</p>
+                <p>카카오로 간편하게 로그인하세요.</p>
               </div>
+              <button type="button" className="btn btn-kakao btn-submit" onClick={signInKakao}>
+                <KakaoIcon /> 카카오로 로그인
+              </button>
+              <div className="login-divider"><span>또는 이메일로</span></div>
               <form className="field" onSubmit={onSubmit} noValidate>
                 <label htmlFor="email"><Mail size={16} /> 이메일 주소</label>
                 <div className="input-wrap">
                   <AtSign size={19} />
                   <input type="email" id="email" inputMode="email" autoComplete="email" required
                     value={email} onChange={(e) => { setEmail(e.target.value); if (status === "error") setStatus("idle"); }}
-                    placeholder="등록된 이메일을 입력하세요" autoFocus />
+                    placeholder="이메일 주소" />
                 </div>
                 <button type="submit" className="btn btn-primary btn-submit" disabled={status === "sending"}>
                   <Send size={19} /> {status === "sending" ? "보내는 중…" : "로그인 링크 받기"}
                 </button>
                 {status === "error" && <p className="login-err">⚠️ {errMsg}</p>}
               </form>
-              <div className="login-divider"><span>또는</span></div>
-              <button type="button" className="btn btn-kakao" onClick={signInKakao}>
-                <KakaoIcon /> 카카오로 로그인
-              </button>
               <div className="login-note">
                 <ShieldCheck size={16} />
-                <span>입력하신 메일로 로그인 링크를 보내드려요. 링크를 누르면 바로 로그인돼요.</span>
+                <span>카카오로 바로 로그인하셔도 돼요(이메일 등록 불필요). 이메일은 본인 메일이 있거나 운영진이 등록한 경우에 쓰세요.</span>
               </div>
             </section>
           ) : (
@@ -117,7 +117,7 @@ export default function Welcome() {
           <div className="helps">
             <div className="help">
               <div className="help-ic"><UserPlus size={19} /></div>
-              <div className="help-body"><div className="t">처음이신가요?</div><div className="d">간사(운영진)가 등록한 이메일로 로그인하세요.</div></div>
+              <div className="help-body"><div className="t">처음이신가요?</div><div className="d">카카오로 바로 로그인하면 됩니다. 이메일 등록은 필요 없어요.</div></div>
             </div>
             <div className="help">
               <div className="help-ic"><QrCode size={19} /></div>
