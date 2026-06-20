@@ -1,7 +1,10 @@
-// 앱 링크(/) 미리보기 카드 — 정보링크(/my-info, 파랑 "내 정보 입력")와 구분되게 남색 "회원 앱".
+// 앱 링크(/) 미리보기 카드 — 노션/줌처럼 심플하게: CBMC 심볼 + "새서울 CBMC" 중앙 배치.
+//   설명("사랑하고 축복합니다…")은 og:description(layout.tsx)에서 카드 아래에 표시됨.
 import { ImageResponse } from "next/og";
+import { readFile } from "fs/promises";
+import path from "path";
 
-export const alt = "새서울 CBMC · 아름다운 만남 (회원 앱)";
+export const alt = "새서울 CBMC";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -14,15 +17,18 @@ export default async function Image() {
     fonts = [{ name: "Pretendard", data, weight: 700, style: "normal" }];
   } catch { fonts = undefined; }
 
+  let logo = "";
+  try {
+    const buf = await readFile(path.join(process.cwd(), "public/cbmc-symbol.png"));
+    logo = `data:image/png;base64,${buf.toString("base64")}`;
+  } catch { logo = ""; }
+
   return new ImageResponse(
     (
-      <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", background: "linear-gradient(135deg,#1e2353 0%,#0a0d3a 100%)", color: "#fff", padding: 88, justifyContent: "center", fontFamily: fonts ? "Pretendard" : "sans-serif" }}>
-        <div style={{ fontSize: 34, opacity: 0.85, letterSpacing: -1 }}>새서울 CBMC</div>
-        <div style={{ fontSize: 96, fontWeight: 700, marginTop: 6, letterSpacing: -3 }}>아름다운 만남</div>
-        <div style={{ fontSize: 38, marginTop: 26, opacity: 0.92, letterSpacing: -1 }}>공지 · 연간일정 · 회원명단 · 아카이브</div>
-        <div style={{ display: "flex", marginTop: 40 }}>
-          <div style={{ fontSize: 30, background: "#fee500", color: "#191600", borderRadius: 999, padding: "12px 30px", fontWeight: 700 }}>카카오로 로그인</div>
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", background: "#ffffff", fontFamily: fonts ? "Pretendard" : "sans-serif", gap: 36 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {logo && <img src={logo} alt="CBMC" width={300} style={{ objectFit: "contain" }} />}
+        <div style={{ fontSize: 70, fontWeight: 700, color: "#16181d", letterSpacing: -2 }}>새서울 CBMC</div>
       </div>
     ),
     { ...size, fonts },
