@@ -4,8 +4,12 @@ import SiteNav from "./SiteNav";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "새서울 CBMC 아름다운 만남",
-  description: "새서울 CBMC 조찬모임 운영 — 회원관리",
+  title: "새서울 CBMC · 아름다운 만남",
+  description: "회원 앱 — 공지·연간일정·회원명단·아카이브. 카카오로 로그인하세요.",
+  openGraph: {
+    title: "새서울 CBMC · 아름다운 만남",
+    description: "회원 앱 — 공지·연간일정·회원명단·아카이브. 카카오로 로그인하세요.",
+  },
 };
 
 export default async function RootLayout({
