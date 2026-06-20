@@ -7,14 +7,14 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { X, UploadCloud, Check, Loader2, Trash2 } from "lucide-react";
 import { createArchive, setArchiveImage } from "../actions";
-import { processPhoto, nameFromFile } from "@/lib/photoProcess";
+import { processPhoto, aiStudioPhoto, nameFromFile } from "@/lib/photoProcess";
 
 type Target = { id: string; title: string };
 type Row = { file: File; preview: string; target: string; name: string; status: "idle" | "busy" | "done" | "error"; err?: string };
 const BGS = [
-  { key: "#23304a", label: "어두운 남색" },
-  { key: "#c4a373", label: "브라운" },
-  { key: "#eef0f3", label: "밝은 회색" },
+  { key: "#23304a", label: "어두운 남색", ai: "navy" },
+  { key: "#c4a373", label: "브라운", ai: "brown" },
+  { key: "#eef0f3", label: "밝은 회색", ai: "gray" },
 ];
 
 export default function BulkPhotoUpload({ category, targets = [], onClose }: { category: string; targets?: Target[]; onClose: () => void }) {
@@ -23,6 +23,7 @@ export default function BulkPhotoUpload({ category, targets = [], onClose }: { c
   const [rows, setRows] = useState<Row[]>([]);
   const [bg, setBg] = useState(BGS[0].key);
   const [removeBg, setRemoveBg] = useState(true);
+  const [useAi, setUseAi] = useState(false);
   const [running, setRunning] = useState(false);
   const [doneCount, setDoneCount] = useState(0);
 
@@ -52,7 +53,8 @@ export default function BulkPhotoUpload({ category, targets = [], onClose }: { c
       if ((attach ? !row.target : !row.name.trim()) || row.status === "done") continue;
       setRows((r) => r.map((x, j) => (j === i ? { ...x, status: "busy", err: undefined } : x)));
       try {
-        const blob = await processPhoto(row.file, { bg, removeBg });
+        const aiColor = BGS.find((b) => b.key === bg)?.ai ?? "navy";
+        const blob = useAi ? await aiStudioPhoto(row.file, aiColor) : await processPhoto(row.file, { bg, removeBg });
         const path = `people-${Date.now()}-${i}.jpg`; // ASCII만(한글 키는 Storage 거부)
         const up = await sb.storage.from("archive").upload(path, blob, { contentType: "image/jpeg" });
         if (up.error) throw new Error(up.error.message);
@@ -88,13 +90,14 @@ export default function BulkPhotoUpload({ category, targets = [], onClose }: { c
             : "사람별 사진을 한 번에 선택하세요. 파일명이 이름으로 자동 입력됩니다(수정 가능). 등록 시 사진관 느낌 배경으로 통일하고 자동 보정합니다."}</p>
 
           <div className="bpu-opts">
-            <label className="bpu-toggle"><input type="checkbox" checked={removeBg} onChange={(e) => setRemoveBg(e.target.checked)} /> 배경 자동 제거·통일</label>
+            <label className="bpu-toggle"><input type="checkbox" checked={removeBg} onChange={(e) => setRemoveBg(e.target.checked)} disabled={useAi} /> 배경 자동 제거·통일</label>
             <div className="bpu-bgs">
               {BGS.map((b) => (
                 <button key={b.key} className={`bpu-sw ${bg === b.key ? "on" : ""}`} style={{ background: b.key }} onClick={() => setBg(b.key)} title={b.label} aria-label={b.label} />
               ))}
             </div>
           </div>
+          <label className="bpu-toggle bpu-ai"><input type="checkbox" checked={useAi} onChange={(e) => setUseAi(e.target.checked)} /> ✨ AI 고급 배경 (나노바나나) <span className="bpu-ai-note">— 엣지가 깔끔해요. Gemini 결제 활성화 필요</span></label>
 
           <label className="bpu-drop">
             <UploadCloud size={22} /> 사진 선택 (여러 장)
@@ -153,6 +156,8 @@ const CSS = `
 .bpu-help{ font-size:13px; color:#767d8a; line-height:1.6; margin:0 0 14px; }
 .bpu-opts{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
 .bpu-toggle{ font-size:13.5px; font-weight:600; color:#3d424d; display:inline-flex; align-items:center; gap:7px; cursor:pointer; }
+.bpu-ai{ margin-top:10px; flex-wrap:wrap; }
+.bpu-ai-note{ font-size:11.5px; color:#9a9fa8; font-weight:500; }
 .bpu-bgs{ display:flex; gap:7px; }
 .bpu-sw{ width:26px; height:26px; border-radius:8px; border:1px solid #d6d9df; cursor:pointer; }
 .bpu-sw.on{ outline:2px solid #003ecc; outline-offset:1px; }

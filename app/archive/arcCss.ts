@@ -67,6 +67,14 @@ export const ARC_CSS = `
 .moim-arc .arc-people{ display:grid; grid-template-columns:repeat(auto-fill,minmax(156px,1fr)); gap:14px; }
 .moim-arc .arc-person{ background:var(--bg); border:1px solid var(--line); border-radius:18px; padding:22px 16px; text-align:center; position:relative; box-shadow:0 1px 2px rgba(22,24,29,.04); }
 .moim-arc .arc-avatar{ width:104px; height:124px; border-radius:14px; background:linear-gradient(135deg,#e8f1fc,#dbe6f5); color:var(--b); font-size:30px; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; object-fit:cover; }
+.moim-arc .arc-avatar-clk{ cursor:zoom-in; transition:transform .12s; }
+.moim-arc .arc-avatar-clk:hover{ transform:scale(1.03); }
+.moim-arc .arc-viewer{ position:fixed; inset:0; z-index:80; background:rgba(15,18,28,.72); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:20px; }
+.moim-arc .arc-viewer-card{ background:#fff; border-radius:20px; padding:18px; max-width:360px; width:100%; text-align:center; position:relative; box-shadow:0 24px 70px rgba(0,0,0,.4); }
+.moim-arc .arc-viewer-x{ position:absolute; top:10px; right:12px; width:34px; height:34px; border:0; background:#f1f2f4; color:#3d424d; border-radius:9px; cursor:pointer; font-size:15px; }
+.moim-arc .arc-viewer-img{ width:100%; max-height:64vh; object-fit:contain; border-radius:14px; background:#f5f6f8; }
+.moim-arc .arc-viewer-name{ font-size:20px; font-weight:800; color:var(--ink); margin-top:14px; letter-spacing:-0.02em; }
+.moim-arc .arc-viewer-term{ font-size:14px; color:var(--ink-3); margin-top:4px; }
 .moim-arc .arc-name{ font-size:16.5px; font-weight:800; color:var(--ink); letter-spacing:-0.3px; margin-bottom:4px; }
 .moim-arc .arc-term{ font-size:13.5px; color:var(--ink-3); line-height:1.45; }
 

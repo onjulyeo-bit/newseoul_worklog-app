@@ -30,6 +30,7 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
   const [form, setForm] = useState({ title: "", event_date: "", content: "", link: "" });
   const [file, setFile] = useState<File | null>(null);
   const [bulk, setBulk] = useState(false);
+  const [viewer, setViewer] = useState<ArchiveItem | null>(null);
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
   const L = section.layout;
@@ -86,6 +87,18 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
 
         {isAdmin && bulk && <BulkPhotoUpload category={section.category} targets={items.map((it) => ({ id: it.id, title: it.title }))} onClose={() => { setBulk(false); router.refresh(); }} />}
 
+        {viewer && (
+          <div className="arc-viewer" onClick={() => setViewer(null)}>
+            <div className="arc-viewer-card" onClick={(e) => e.stopPropagation()}>
+              <button className="arc-viewer-x" onClick={() => setViewer(null)} aria-label="닫기">✕</button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {viewer.image_url && <img className="arc-viewer-img" src={viewer.image_url} alt={viewer.title} />}
+              <div className="arc-viewer-name">{viewer.title}</div>
+              {viewer.content && <div className="arc-viewer-term">{viewer.content}</div>}
+            </div>
+          </div>
+        )}
+
         {isAdmin && show && (
           <div className="arc-form">
             <div className="arc-form-t">새 항목 추가</div>
@@ -129,7 +142,7 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
               <div key={it.id} className="arc-person">
                 {isAdmin && <Del it={it} cls="arc-del arc-del-abs" />}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {it.image_url ? <img className="arc-avatar" src={it.image_url} alt={it.title} /> : <div className="arc-avatar">{it.title.charAt(0)}</div>}
+                {it.image_url ? <img className="arc-avatar arc-avatar-clk" src={it.image_url} alt={it.title} onClick={() => setViewer(it)} /> : <div className="arc-avatar">{it.title.charAt(0)}</div>}
                 <div className="arc-name">{it.title}</div>
                 {it.content && <div className="arc-term">{it.content}</div>}
               </div>

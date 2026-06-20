@@ -69,6 +69,31 @@ export async function processPhoto(file: File, opts: ProcessOpts = {}): Promise<
   }
 }
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result as string);
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
+
+// AI(나노바나나) 배경 교체 — 서버 /api/photo-bg 호출 → 정사각 크롭. 실패 시 throw(호출부에서 처리).
+export async function aiStudioPhoto(file: File, color: string, size = 640): Promise<Blob> {
+  const dataUrl = await fileToDataUrl(file);
+  const r = await fetch("/api/photo-bg", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: dataUrl, color }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.image) { const e = new Error(j.error || "AI 처리 실패"); (e as { billing?: boolean }).billing = j.billing; throw e; }
+  const img = await loadImage(j.image);
+  const canvas = document.createElement("canvas");
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const scale = Math.max(size / img.width, size / img.height);
+  const w = img.width * scale, h = img.height * scale;
+  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+  return await new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("canvas"))), "image/jpeg", 0.92));
+}
+
 // 파일명에서 이름 추출 (확장자·번호 제거)
 export function nameFromFile(filename: string): string {
   return filename.replace(/\.[^.]+$/, "").replace(/[_-]?\d+$/, "").replace(/[_-]+/g, " ").trim();
