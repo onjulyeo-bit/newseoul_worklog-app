@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, CalendarDays, ClipboardCheck, ReceiptText,
-  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap,
+  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap, BookText,
 } from "lucide-react";
 
 type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string };
@@ -23,6 +23,7 @@ const ADMIN: Item[] = [
   { href: "/finance", label: "회계", Icon: ReceiptText, group: "main" },
   { href: "/attendance/stats", label: "통계", Icon: BarChart3, group: "main" },
   { href: "/archive", label: "아카이브", Icon: Archive, group: "main" },
+  { href: "/manual", label: "운영매뉴얼", Icon: BookText, group: "settings" },
   { href: "/roles", label: "권한설정", Icon: UserCog, group: "settings" },
 ];
 // 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지·아카이브(개인정보 명단 제외).
