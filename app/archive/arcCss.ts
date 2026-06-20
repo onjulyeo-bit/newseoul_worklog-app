@@ -66,7 +66,7 @@ export const ARC_CSS = `
 /* 역대 지회장 */
 .moim-arc .arc-people{ display:grid; grid-template-columns:repeat(auto-fill,minmax(156px,1fr)); gap:14px; }
 .moim-arc .arc-person{ background:var(--bg); border:1px solid var(--line); border-radius:18px; padding:22px 16px; text-align:center; position:relative; box-shadow:0 1px 2px rgba(22,24,29,.04); }
-.moim-arc .arc-avatar{ width:72px; height:72px; border-radius:999px; background:linear-gradient(135deg,#e8f1fc,#dbe6f5); color:var(--b); font-size:26px; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; object-fit:cover; }
+.moim-arc .arc-avatar{ width:104px; height:124px; border-radius:14px; background:linear-gradient(135deg,#e8f1fc,#dbe6f5); color:var(--b); font-size:30px; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; object-fit:cover; }
 .moim-arc .arc-name{ font-size:16.5px; font-weight:800; color:var(--ink); letter-spacing:-0.3px; margin-bottom:4px; }
 .moim-arc .arc-term{ font-size:13.5px; color:var(--ink-3); line-height:1.45; }
 

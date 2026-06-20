@@ -24,6 +24,15 @@ export async function createArchive(data: {
   return { ok: true };
 }
 
+// 기존 아카이브 항목에 사진만 연결(역대지회장 등 사진 일괄 등록용)
+export async function setArchiveImage(id: string, image_url: string): Promise<{ ok?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("archive").update({ image_url }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/archive");
+  return { ok: true };
+}
+
 export async function deleteArchive(id: string): Promise<{ ok?: boolean; error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase.from("archive").delete().eq("id", id);

@@ -84,7 +84,7 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
           )}
         </div>
 
-        {isAdmin && bulk && <BulkPhotoUpload category={section.category} onClose={() => { setBulk(false); router.refresh(); }} />}
+        {isAdmin && bulk && <BulkPhotoUpload category={section.category} targets={items.map((it) => ({ id: it.id, title: it.title }))} onClose={() => { setBulk(false); router.refresh(); }} />}
 
         {isAdmin && show && (
           <div className="arc-form">

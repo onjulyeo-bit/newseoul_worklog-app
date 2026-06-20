@@ -1,23 +1,25 @@
 "use client";
 
-// 사진 일괄 등록 — 사람별 사진 여러 장 선택 → 파일명=이름 자동(수정 가능) → 배경 통일 → 일괄 등록.
-//   배경 처리는 브라우저 안(@imgly)에서, 업로드는 archive 버킷 + createArchive.
+// 사진 일괄 등록 — 사진 여러 장 선택 → 각 사진을 '기존 인물'에 연결(드롭다운) → 배경 통일·보정 → 일괄 저장.
+//   기존 항목(targets)이 있으면 attach 모드(사진만 연결). 없으면 create 모드(파일명=이름으로 새로 추가).
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { X, UploadCloud, Check, Loader2, Trash2 } from "lucide-react";
-import { createArchive } from "../actions";
+import { createArchive, setArchiveImage } from "../actions";
 import { processPhoto, nameFromFile } from "@/lib/photoProcess";
 
-type Row = { file: File; name: string; preview: string; status: "idle" | "busy" | "done" | "error"; err?: string };
+type Target = { id: string; title: string };
+type Row = { file: File; preview: string; target: string; name: string; status: "idle" | "busy" | "done" | "error"; err?: string };
 const BGS = [
-  { key: "#c4a373", label: "브라운" },   // 업로드 사진 배경 톤(따뜻한 탄)
   { key: "#23304a", label: "어두운 남색" },
+  { key: "#c4a373", label: "브라운" },
   { key: "#eef0f3", label: "밝은 회색" },
 ];
 
-export default function BulkPhotoUpload({ category, onClose }: { category: string; onClose: () => void }) {
+export default function BulkPhotoUpload({ category, targets = [], onClose }: { category: string; targets?: Target[]; onClose: () => void }) {
   const router = useRouter();
+  const attach = targets.length > 0; // 기존 인물에 사진 연결 모드
   const [rows, setRows] = useState<Row[]>([]);
   const [bg, setBg] = useState(BGS[0].key);
   const [removeBg, setRemoveBg] = useState(true);
@@ -28,21 +30,26 @@ export default function BulkPhotoUpload({ category, onClose }: { category: strin
     const files = Array.from(e.target.files ?? []);
     setRows((prev) => [
       ...prev,
-      ...files.map((f) => ({ file: f, name: nameFromFile(f.name), preview: URL.createObjectURL(f), status: "idle" as const })),
+      ...files.map((f) => {
+        const nm = nameFromFile(f.name);
+        const match = targets.find((t) => t.title === nm); // 파일명이 이름과 같으면 자동 선택
+        return { file: f, preview: URL.createObjectURL(f), target: match?.id ?? "", name: nm, status: "idle" as const };
+      }),
     ]);
     e.target.value = "";
   }
+  const setTarget = (i: number, v: string) => setRows((r) => r.map((row, j) => (j === i ? { ...row, target: v } : row)));
   const setName = (i: number, v: string) => setRows((r) => r.map((row, j) => (j === i ? { ...row, name: v } : row)));
   const removeRow = (i: number) => setRows((r) => r.filter((_, j) => j !== i));
 
   async function runAll() {
-    const valid = rows.filter((r) => r.name.trim());
-    if (!valid.length) { alert("이름이 있는 사진이 없어요."); return; }
+    const ready = rows.filter((r) => (attach ? r.target : r.name.trim()));
+    if (!ready.length) { alert(attach ? "연결할 인물을 선택해 주세요." : "이름이 있는 사진이 없어요."); return; }
     setRunning(true); setDoneCount(0);
     const sb = createClient();
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      if (!row.name.trim() || row.status === "done") continue;
+      if ((attach ? !row.target : !row.name.trim()) || row.status === "done") continue;
       setRows((r) => r.map((x, j) => (j === i ? { ...x, status: "busy", err: undefined } : x)));
       try {
         const blob = await processPhoto(row.file, { bg, removeBg });
@@ -50,7 +57,9 @@ export default function BulkPhotoUpload({ category, onClose }: { category: strin
         const up = await sb.storage.from("archive").upload(path, blob, { contentType: "image/jpeg" });
         if (up.error) throw new Error(up.error.message);
         const url = sb.storage.from("archive").getPublicUrl(path).data.publicUrl;
-        const res = await createArchive({ category, title: row.name.trim(), event_date: null, content: null, image_url: url, link: null });
+        const res = attach
+          ? await setArchiveImage(row.target, url)
+          : await createArchive({ category, title: row.name.trim(), event_date: null, content: null, image_url: url, link: null });
         if (res.error) throw new Error(res.error);
         setRows((r) => r.map((x, j) => (j === i ? { ...x, status: "done" } : x)));
         setDoneCount((c) => c + 1);
@@ -74,7 +83,9 @@ export default function BulkPhotoUpload({ category, onClose }: { category: strin
         </div>
 
         <div className="bpu-body">
-          <p className="bpu-help">사람별 사진을 한 번에 선택하세요. 파일명이 이름으로 자동 입력됩니다(수정 가능). 등록 시 사진관 느낌의 은은한 그라데이션 배경으로 통일하고 자동 보정합니다.</p>
+          <p className="bpu-help">{attach
+            ? "사진을 여러 장 선택한 뒤, 각 사진을 해당 인물에 연결하세요. 파일명이 이름과 같으면 자동 연결됩니다. 등록 시 사진관 느낌 배경으로 통일하고 자동 보정합니다."
+            : "사람별 사진을 한 번에 선택하세요. 파일명이 이름으로 자동 입력됩니다(수정 가능). 등록 시 사진관 느낌 배경으로 통일하고 자동 보정합니다."}</p>
 
           <div className="bpu-opts">
             <label className="bpu-toggle"><input type="checkbox" checked={removeBg} onChange={(e) => setRemoveBg(e.target.checked)} /> 배경 자동 제거·통일</label>
@@ -96,7 +107,14 @@ export default function BulkPhotoUpload({ category, onClose }: { category: strin
                 <div key={i} className="bpu-row">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img className="bpu-thumb" src={row.preview} alt="" />
-                  <input className="bpu-name" value={row.name} onChange={(e) => setName(i, e.target.value)} placeholder="이름" disabled={running} />
+                  {attach ? (
+                    <select className="bpu-name" value={row.target} onChange={(e) => setTarget(i, e.target.value)} disabled={running}>
+                      <option value="">— 인물 선택 —</option>
+                      {targets.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                    </select>
+                  ) : (
+                    <input className="bpu-name" value={row.name} onChange={(e) => setName(i, e.target.value)} placeholder="이름" disabled={running} />
+                  )}
                   <span className="bpu-st">
                     {row.status === "busy" && <Loader2 size={17} className="bpu-spin" />}
                     {row.status === "done" && <Check size={17} color="#0a7d3f" />}
@@ -115,7 +133,7 @@ export default function BulkPhotoUpload({ category, onClose }: { category: strin
             <button className="bpu-btn bpu-primary" onClick={onClose}>완료</button>
           ) : (
             <button className="bpu-btn bpu-primary" onClick={runAll} disabled={running || rows.length === 0}>
-              {running ? "등록 중…" : "모두 등록"}
+              {running ? "등록 중…" : attach ? "사진 연결" : "모두 등록"}
             </button>
           )}
         </div>
@@ -143,7 +161,7 @@ const CSS = `
 .bpu-list{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
 .bpu-row{ display:flex; align-items:center; gap:10px; }
 .bpu-thumb{ width:44px; height:44px; border-radius:10px; object-fit:cover; flex:none; border:1px solid #ecedf0; }
-.bpu-name{ flex:1; min-width:0; font-family:inherit; font-size:14px; color:#16181d; border:1px solid #e0e0e0; border-radius:10px; padding:8px 11px; outline:none; }
+.bpu-name{ flex:1; min-width:0; font-family:inherit; font-size:14px; color:#16181d; border:1px solid #e0e0e0; border-radius:10px; padding:8px 11px; outline:none; background:#fff; }
 .bpu-name:focus{ border-color:#003ecc; box-shadow:0 0 0 3px #e8f1fc; }
 .bpu-st{ width:24px; display:grid; place-items:center; flex:none; }
 .bpu-errt{ font-size:11px; font-weight:700; color:#c0392b; }
