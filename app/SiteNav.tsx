@@ -15,7 +15,7 @@ type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: nu
 const ADMIN: Item[] = [
   { href: "/dashboard", label: "대시보드", Icon: LayoutDashboard, group: "main" },
   { href: "/", label: "회원관리", Icon: Users, group: "main" },
-  { href: "/instructors", label: "강사·간사", Icon: GraduationCap, group: "main" },
+  { href: "/instructors", label: "강사풀", Icon: GraduationCap, group: "main" },
   { href: "/schedule", label: "연간일정", Icon: CalendarDays, group: "main" },
   { href: "/content", label: "콘텐츠", Icon: ImageIcon, group: "main" },
   { href: "/notices", label: "공지", Icon: Megaphone, group: "main" },

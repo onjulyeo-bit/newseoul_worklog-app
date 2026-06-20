@@ -1,17 +1,21 @@
 "use client";
 
-// 강사·간사 자기입력 폼 (로그인 불필요) — 본인이 작성하면 강사·간사 목록에 자동 저장.
-// 보안: instructors 직접 접근 안 함, instructor_self_upsert RPC(SECURITY DEFINER)만 사용. 이름 기준 upsert.
+// 강사 자기입력 폼 (로그인 불필요) — 회원 폼과 동일한 항목. 본인이 작성하면 강사풀에 자동 저장.
+//   보안: instructors 직접 접근 안 함, instructor_self_upsert RPC(SECURITY DEFINER)만 사용. 이름 기준 upsert.
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { processPhoto } from "@/lib/photoProcess";
 
-type Form = { name: string; kind: "강사" | "간사"; is_external: boolean; org: string; phone: string; field: string; fee_note: string; note: string };
-const BLANK: Form = { name: "", kind: "강사", is_external: true, org: "", phone: "", field: "", fee_note: "", note: "" };
+type Form = { name: string; phone: string; email: string; company: string; position: string; field: string; intro: string; business_card_url: string; photo_url: string };
+const BLANK: Form = { name: "", phone: "", email: "", company: "", position: "", field: "", intro: "", business_card_url: "", photo_url: "" };
+const INTRO_EXAMPLE = "예) 일터에서 만난 분들과 깊이 나누는 시간을 좋아합니다.";
 
 export default function InstructorFormPage() {
   const [supabase] = useState(() => createClient());
   const [f, setF] = useState<Form>(BLANK);
   const [busy, setBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [cardBusy, setCardBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState(false);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
@@ -20,62 +24,141 @@ export default function InstructorFormPage() {
     if (!f.name.trim()) { setErr("성함을 입력해 주세요."); return; }
     setBusy(true); setErr("");
     const { data, error } = await supabase.rpc("instructor_self_upsert", {
-      p_name: f.name.trim(), p_kind: f.kind, p_external: f.is_external,
-      p_org: f.org, p_phone: f.phone, p_field: f.field, p_fee: f.fee_note, p_note: f.note,
+      p_name: f.name.trim(), p_phone: f.phone, p_email: f.email, p_company: f.company,
+      p_position: f.position, p_field: f.field, p_intro: f.intro, p_card: f.business_card_url, p_photo: f.photo_url,
     });
     setBusy(false);
     if (error || data === false) { setErr("저장에 실패했어요. 간사님께 문의해 주세요."); return; }
     setDone(true);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   }
 
-  const wrap: React.CSSProperties = { minHeight: "100vh", background: "#fafafb", display: "flex", justifyContent: "center", padding: "24px 16px", fontFamily: "Pretendard, -apple-system, sans-serif", color: "#16181d" };
-  const card: React.CSSProperties = { width: "100%", maxWidth: 460, background: "#fff", border: "1px solid #ecedf0", borderRadius: 20, padding: 24, boxShadow: "0 4px 20px rgba(20,30,60,.06)", alignSelf: "flex-start" };
-  const label: React.CSSProperties = { display: "block", fontSize: 14, fontWeight: 700, color: "#3d424d", margin: "14px 0 6px" };
-  const input: React.CSSProperties = { width: "100%", fontSize: 17, padding: "13px 14px", border: "1px solid #ecedf0", borderRadius: 12, outline: "none", background: "#fafafb", fontFamily: "inherit" };
-  const btn: React.CSSProperties = { width: "100%", fontSize: 17, fontWeight: 700, padding: "14px", borderRadius: 999, border: 0, background: "#0a7d3f", color: "#fff", cursor: "pointer", marginTop: 20 };
-  const seg = (on: boolean): React.CSSProperties => ({ flex: 1, fontSize: 15, fontWeight: 700, padding: "11px", borderRadius: 10, border: on ? "1px solid #0a7d3f" : "1px solid #ecedf0", background: on ? "#e4f6ec" : "#fff", color: on ? "#0a7d3f" : "#767d8a", cursor: "pointer" });
+  async function uploadPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; e.target.value = "";
+    if (!file) return;
+    if (file.size > 12 * 1024 * 1024) { setErr("사진은 12MB 이하만 올릴 수 있어요."); return; }
+    setPhotoBusy(true); setErr("");
+    try {
+      const blob = await processPhoto(file, { removeBg: false, enhance: true, size: 640 });
+      const up = await supabase.storage.from("member-cards").upload(`lect-photo-${Date.now()}.jpg`, blob, { upsert: true, contentType: "image/jpeg" });
+      if (up.error) throw new Error(up.error.message);
+      set("photo_url", supabase.storage.from("member-cards").getPublicUrl(up.data.path).data.publicUrl);
+    } catch (e) { setErr("사진 업로드 실패: " + (e instanceof Error ? e.message : "오류")); }
+    finally { setPhotoBusy(false); }
+  }
+  async function uploadCard(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; e.target.value = "";
+    if (!file) return;
+    if (file.size > 12 * 1024 * 1024) { setErr("명함은 12MB 이하만 올릴 수 있어요."); return; }
+    setCardBusy(true); setErr("");
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const up = await supabase.storage.from("member-cards").upload(`lect-card-${Date.now()}.${ext}`, file, { upsert: true, contentType: file.type });
+    setCardBusy(false);
+    if (up.error) { setErr("명함 업로드 실패: " + up.error.message); return; }
+    set("business_card_url", supabase.storage.from("member-cards").getPublicUrl(up.data.path).data.publicUrl);
+  }
+
+  const FIELDS: [keyof Form, string, string][] = [
+    ["phone", "연락처", "010-0000-0000"],
+    ["email", "이메일", ""],
+    ["company", "소속 / 회사", "○○대 / ○○회사"],
+    ["position", "직위 / 직함", "교수 / 대표"],
+    ["field", "전문분야 · 강의 주제", "리더십 / 신앙간증"],
+  ];
 
   return (
-    <div style={wrap}>
-      <div style={card}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 4 }}>
-          <span style={{ width: 32, height: 32, borderRadius: 9, background: "#1e2353", color: "#fff", display: "grid", placeItems: "center", fontWeight: 800 }}>C</span>
-          <b style={{ fontSize: 16 }}>CBMC <span style={{ color: "#003ecc" }}>새서울지회</span></b>
+    <div className="lf">
+      <style>{CSS}</style>
+      <div className="lf-card">
+        <div className="lf-top">
+          <span className="lf-mark">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/cbmc-symbol.webp" alt="CBMC" /></span>
+          <span className="lf-bname">CBMC <span className="lf-dim">새서울지회</span></span>
         </div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, margin: "12px 0 4px", letterSpacing: "-0.5px" }}>강사·간사 정보 입력</h1>
+        <h1 className="lf-h1">내 정보 입력</h1>
+        <span className="lf-badge">강사 전용</span>
 
         {done ? (
-          <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <div style={{ fontSize: 48 }}>✅</div>
-            <p style={{ fontSize: 18, fontWeight: 800, marginTop: 10 }}>등록되었습니다!</p>
-            <p style={{ fontSize: 14.5, color: "#767d8a", marginTop: 6, lineHeight: 1.6 }}>작성해 주셔서 감사합니다.<br />수정할 게 있으면 같은 성함으로 다시 작성하시면 갱신돼요.</p>
-            <button style={{ ...btn, background: "#eef0f3", color: "#3d424d" }} onClick={() => { setF(BLANK); setDone(false); }}>다시 작성</button>
+          <div className="lf-done">
+            <div style={{ fontSize: 46 }}>✅</div>
+            <p className="lf-done-t">등록되었습니다!</p>
+            <p className="lf-done-d">작성해 주셔서 감사합니다.<br />수정할 게 있으면 같은 성함으로 다시 작성하시면 갱신돼요.</p>
+            <button className="lf-ghost" onClick={() => { setF(BLANK); setDone(false); }}>다시 작성</button>
           </div>
         ) : (<>
-          <p style={{ fontSize: 15, color: "#767d8a", lineHeight: 1.6, margin: 0 }}>강사·간사님 정보를 직접 입력해 주세요. 새서울 CBMC 운영에 소중히 쓰입니다.</p>
+          <p className="lf-sub">강사님 정보를 직접 입력해 주세요. 새서울 CBMC 운영에 소중히 쓰입니다.</p>
 
-          <label style={label}>성함 *</label>
-          <input style={input} value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="홍길동" />
-
-          <label style={label}>구분</label>
-          <div style={{ display: "flex", gap: 8 }}>
-            {(["강사", "간사"] as const).map((k) => <button key={k} type="button" style={seg(f.kind === k)} onClick={() => set("kind", k)}>{k}</button>)}
+          <div className="lf-photo-sec">
+            {f.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={f.photo_url} alt="프로필" className="lf-photo" />
+            ) : <div className="lf-photo lf-photo-ph">{f.name.charAt(0) || "?"}</div>}
+            <div className="lf-photo-acts">
+              <label className="lf-ghost">{photoBusy ? "올리는 중…" : f.photo_url ? "사진 변경" : "프로필 사진 올리기"}<input type="file" accept="image/*" hidden onChange={uploadPhoto} /></label>
+              {f.photo_url && <button type="button" className="lf-ghost lf-danger" onClick={() => set("photo_url", "")}>삭제</button>}
+            </div>
           </div>
 
-          <label style={label}>소속</label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" style={seg(!f.is_external)} onClick={() => set("is_external", false)}>내부</button>
-            <button type="button" style={seg(f.is_external)} onClick={() => set("is_external", true)}>외부</button>
-          </div>
+          <label className="lf-l">성함 *</label>
+          <input className="lf-inp" value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="홍길동" />
 
-          {([["org", "소속·직함 (예: ○○대 교수 / ○○회사 대표)"], ["phone", "연락처"], ["field", "전문분야·강의 주제"], ["fee_note", "강사비·급여 메모 (예: 30만원/회)"], ["note", "비고 (선택)"]] as [keyof Form, string][]).map(([k, lbl]) => (
-            <div key={k}><label style={label}>{lbl}</label><input style={input} value={f[k] as string} onChange={(e) => set(k, e.target.value as never)} /></div>
+          {FIELDS.map(([k, lbl, ph]) => (
+            <div key={k}><label className="lf-l">{lbl}</label><input className="lf-inp" value={f[k] as string} onChange={(e) => set(k, e.target.value as never)} placeholder={ph} /></div>
           ))}
 
-          {err && <p style={{ color: "#c0392b", fontSize: 14, fontWeight: 600, marginTop: 12 }}>{err}</p>}
-          <button style={{ ...btn, opacity: busy ? 0.6 : 1 }} onClick={submit} disabled={busy}>{busy ? "저장 중…" : "등록하기"}</button>
+          <label className="lf-l">자기소개</label>
+          <textarea className="lf-inp lf-ta" value={f.intro} onChange={(e) => set("intro", e.target.value)} placeholder={INTRO_EXAMPLE} />
+
+          <label className="lf-l">명함 이미지</label>
+          {f.business_card_url ? (
+            <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={f.business_card_url} alt="명함" className="lf-cardimg" />
+              <div className="lf-photo-acts" style={{ marginTop: 8 }}>
+                <label className="lf-ghost">{cardBusy ? "올리는 중…" : "명함 변경"}<input type="file" accept="image/*" hidden onChange={uploadCard} /></label>
+                <button type="button" className="lf-ghost lf-danger" onClick={() => set("business_card_url", "")}>삭제</button>
+              </div>
+            </div>
+          ) : (
+            <label className="lf-drop">📇 {cardBusy ? "올리는 중…" : "명함 사진 올리기"}<input type="file" accept="image/*" hidden onChange={uploadCard} /></label>
+          )}
+
+          {err && <p className="lf-err">{err}</p>}
+          <button className="lf-btn" onClick={submit} disabled={busy}>{busy ? "저장 중…" : "등록하기"}</button>
         </>)}
       </div>
     </div>
   );
 }
+
+const CSS = `
+.lf{ min-height:100vh; background:#fafafb; display:flex; justify-content:center; padding:24px 16px; font-family:Pretendard,-apple-system,sans-serif; color:#16181d; }
+.lf *{ box-sizing:border-box; }
+.lf-card{ width:100%; max-width:460px; background:#fff; border:1px solid #ecedf0; border-radius:22px; padding:24px; box-shadow:0 4px 20px rgba(20,30,60,.06); align-self:flex-start; }
+.lf-top{ display:flex; align-items:center; gap:9px; margin-bottom:14px; }
+.lf-mark{ width:32px; height:32px; border-radius:9px; background:#f1f2f5; display:grid; place-items:center; overflow:hidden; }
+.lf-mark img{ width:22px; height:22px; object-fit:contain; }
+.lf-bname{ font-size:14.5px; font-weight:800; }
+.lf-dim{ color:#86868b; font-weight:700; }
+.lf-h1{ font-size:20px; font-weight:800; letter-spacing:-0.03em; margin:0; }
+.lf-badge{ display:inline-flex; align-items:center; font-size:12.5px; font-weight:700; color:#003ecc; background:#eef1fb; border-radius:999px; padding:4px 11px; margin-top:8px; }
+.lf-sub{ font-size:14px; color:#767d8a; line-height:1.6; margin:12px 0 4px; }
+.lf-photo-sec{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:18px 0 6px; }
+.lf-photo{ width:116px; height:116px; border-radius:18px; object-fit:cover; border:1px solid #ecedf0; }
+.lf-photo-ph{ display:grid; place-items:center; background:#f1f2f4; color:#86868b; font-size:38px; font-weight:800; }
+.lf-photo-acts{ display:flex; gap:8px; justify-content:center; }
+.lf-l{ display:block; font-size:14px; font-weight:700; color:#3d424d; margin:14px 0 6px; }
+.lf-inp{ width:100%; font-size:17px; padding:13px 14px; border:1px solid #ecedf0; border-radius:12px; outline:none; background:#fafafb; font-family:inherit; }
+.lf-inp:focus{ border-color:#003ecc; background:#fff; }
+.lf-ta{ min-height:88px; resize:vertical; line-height:1.6; }
+.lf-cardimg{ width:100%; border:1px solid #ecedf0; border-radius:13px; display:block; }
+.lf-drop{ display:flex; align-items:center; justify-content:center; gap:8px; padding:20px; border:1.5px dashed #d6d9df; border-radius:13px; background:#fafafa; color:#3d424d; font-weight:700; font-size:14.5px; cursor:pointer; }
+.lf-drop:hover{ border-color:#003ecc; color:#003ecc; }
+.lf-ghost{ display:inline-flex; align-items:center; font-size:13.5px; font-weight:700; color:#003ecc; background:#f5f9ff; border:1px solid #cdddf7; border-radius:10px; padding:8px 14px; cursor:pointer; }
+.lf-danger{ color:#c0392b; background:#fdecea; border-color:#f3c6c0; }
+.lf-btn{ width:100%; font-size:17px; font-weight:700; padding:14px; border-radius:999px; border:0; background:#003ecc; color:#fff; cursor:pointer; margin-top:20px; }
+.lf-btn:disabled{ opacity:.6; }
+.lf-err{ color:#c0392b; font-size:14px; font-weight:600; margin-top:12px; }
+.lf-done{ text-align:center; padding:20px 0; }
+.lf-done-t{ font-size:18px; font-weight:800; margin-top:10px; }
+.lf-done-d{ font-size:14.5px; color:#767d8a; margin-top:6px; line-height:1.6; }
+`;
