@@ -11,9 +11,9 @@ import { processPhoto, nameFromFile } from "@/lib/photoProcess";
 
 type Row = { file: File; name: string; preview: string; status: "idle" | "busy" | "done" | "error"; err?: string };
 const BGS = [
-  { key: "#eef0f3", label: "연회색" },
-  { key: "#ffffff", label: "흰색" },
-  { key: "#e8f1fc", label: "연파랑" },
+  { key: "#c4a373", label: "브라운" },   // 업로드 사진 배경 톤(따뜻한 탄)
+  { key: "#23304a", label: "어두운 남색" },
+  { key: "#eef0f3", label: "밝은 회색" },
 ];
 
 export default function BulkPhotoUpload({ category, onClose }: { category: string; onClose: () => void }) {
