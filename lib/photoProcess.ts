@@ -4,6 +4,26 @@
 
 export type ProcessOpts = { bg?: string; size?: number; removeBg?: boolean; enhance?: boolean };
 
+// hex 색을 밝게(pct>0)/어둡게(pct<0) — 그라데이션 색 계산용
+function shade(hex: string, pct: number): string {
+  const c = hex.replace("#", "");
+  const n = c.length === 3 ? c.split("").map((x) => x + x).join("") : c;
+  const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16);
+  const f = (v: number) => Math.max(0, Math.min(255, Math.round(pct >= 0 ? v + (255 - v) * pct : v * (1 + pct))));
+  const h = (v: number) => f(v).toString(16).padStart(2, "0");
+  return `#${h(r)}${h(g)}${h(b)}`;
+}
+
+// 사진관 배경 — 인물 뒤(위쪽 중앙)가 밝고 가장자리로 어두워지는 방사형 그라데이션
+function paintStudioBg(ctx: CanvasRenderingContext2D, size: number, bg: string) {
+  const grad = ctx.createRadialGradient(size * 0.5, size * 0.40, size * 0.04, size * 0.5, size * 0.58, size * 0.82);
+  grad.addColorStop(0, shade(bg, 0.13));
+  grad.addColorStop(0.55, bg);
+  grad.addColorStop(1, shade(bg, -0.16));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+}
+
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -33,8 +53,7 @@ export async function processPhoto(file: File, opts: ProcessOpts = {}): Promise<
     const canvas = document.createElement("canvas");
     canvas.width = size; canvas.height = size;
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, size, size);
+    paintStudioBg(ctx, size, bg); // 사진관 느낌의 은은한 방사형 그라데이션
     // 자동 보정(밝기·대비·채도) — 인물 사진 가독성 향상. 배경은 이미 채워져 영향 없음.
     if (enhance) ctx.filter = "brightness(1.04) contrast(1.06) saturate(1.06)";
     // cover: 정사각을 꽉 채우고 가운데 정렬

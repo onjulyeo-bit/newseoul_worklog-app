@@ -74,7 +74,7 @@ export default function BulkPhotoUpload({ category, onClose }: { category: strin
         </div>
 
         <div className="bpu-body">
-          <p className="bpu-help">사람별 사진을 한 번에 선택하세요. 파일명이 이름으로 자동 입력됩니다(수정 가능). 등록 시 배경을 한 가지 색으로 통일합니다.</p>
+          <p className="bpu-help">사람별 사진을 한 번에 선택하세요. 파일명이 이름으로 자동 입력됩니다(수정 가능). 등록 시 사진관 느낌의 은은한 그라데이션 배경으로 통일하고 자동 보정합니다.</p>
 
           <div className="bpu-opts">
             <label className="bpu-toggle"><input type="checkbox" checked={removeBg} onChange={(e) => setRemoveBg(e.target.checked)} /> 배경 자동 제거·통일</label>
