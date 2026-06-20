@@ -46,7 +46,7 @@ export default function BulkPhotoUpload({ category, onClose }: { category: strin
       setRows((r) => r.map((x, j) => (j === i ? { ...x, status: "busy", err: undefined } : x)));
       try {
         const blob = await processPhoto(row.file, { bg, removeBg });
-        const path = `${category}-${Date.now()}-${i}.jpg`;
+        const path = `people-${Date.now()}-${i}.jpg`; // ASCII만(한글 키는 Storage 거부)
         const up = await sb.storage.from("archive").upload(path, blob, { contentType: "image/jpeg" });
         if (up.error) throw new Error(up.error.message);
         const url = sb.storage.from("archive").getPublicUrl(path).data.publicUrl;
