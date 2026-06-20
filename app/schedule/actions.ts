@@ -63,6 +63,20 @@ export async function createEvent(data: {
   return { ok: true };
 }
 
+// 회차별 자료(포스터 직접지정·영상 링크) 저장 — RLS상 임원만.
+export async function setMeetingMedia(
+  date: string, posterUrl: string | null, recordingUrl: string | null,
+): Promise<{ ok?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("meetings")
+    .update({ poster_url: posterUrl || null, recording_url: recordingUrl || null })
+    .eq("chapter_id", "새서울").eq("date", date);
+  if (error) return { error: error.message };
+  revalidatePath("/schedule");
+  return { ok: true };
+}
+
 export async function deleteEvent(id: string): Promise<{ ok?: boolean; error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase.from("events").delete().eq("id", id);

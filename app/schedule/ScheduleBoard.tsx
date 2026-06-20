@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { generateSchedule, renumber, type Row, type Mode } from "@/lib/generateSchedule";
 import { parseScheduleXlsx } from "@/lib/parseScheduleXlsx";
 import { downloadXlsx, downloadCsv } from "@/lib/exportTable";
-import { saveSchedule, createEvent, deleteEvent } from "./actions";
-import { ChevronDown, Sparkles, Save, Upload, Download, Calendar, Star, Trash2, MapPin } from "lucide-react";
+import { saveSchedule, createEvent, deleteEvent, setMeetingMedia } from "./actions";
+import { createClient } from "@/lib/supabase/client";
+import { ChevronDown, Sparkles, Save, Upload, Download, Calendar, Star, Trash2, MapPin, Image as ImageIcon, Film, X, Paperclip } from "lucide-react";
 import { useCanEdit } from "@/lib/useCanEdit";
 
 export type ExistingRow = { date: string; session: number | null; mode: string; title: string; speaker: string; host: string; note: string; program: string };
 export type EventRow = { id: string; title: string; date: string; end_date: string | null; type: string | null; location: string | null; link: string | null };
+export type MediaMap = Record<string, { poster: string | null; posterManual: string | null; recording: string | null }>;
 
 const EVENT_TYPES = ["한국대회", "송년회", "봄소풍", "수련회", "총회", "기타"];
 const PROGRAMS = ["", "예배", "포럼", "특강", "기타"];
@@ -26,9 +28,31 @@ const nthOf = (date: string) => Math.ceil(new Date(date + "T00:00").getDate() / 
 const modeTone = (m: string) => (m === "offline" ? "brand" : m === "online" ? "blue" : "gray");
 const modeLabelOf = (m: string) => MODES.find((x) => x.v === m)?.label ?? m;
 
-export default function ScheduleBoard({ existing, events, fee, account }: { existing: ExistingRow[]; events: EventRow[]; fee: number | null; account: string | null }) {
+export default function ScheduleBoard({ existing, events, fee, account, media = {} }: { existing: ExistingRow[]; events: EventRow[]; fee: number | null; account: string | null; media?: MediaMap }) {
   const canEdit = useCanEdit();
   const router = useRouter();
+  // 회차별 자료 편집(포스터 직접지정·영상 링크)
+  const [mediaDate, setMediaDate] = useState<string | null>(null);
+  const [mPoster, setMPoster] = useState("");
+  const [mRec, setMRec] = useState("");
+  const [mBusy, setMBusy] = useState(false);
+  const openMedia = (date: string) => { const md = media[date]; setMediaDate(date); setMPoster(md?.posterManual ?? ""); setMRec(md?.recording ?? ""); };
+  async function uploadPoster(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return;
+    setMBusy(true);
+    const sb = createClient();
+    const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+    const path = `poster-${mediaDate}-${Date.now()}.${ext}`;
+    const up = await sb.storage.from("posters").upload(path, f, { upsert: true, contentType: f.type });
+    if (!up.error) setMPoster(sb.storage.from("posters").getPublicUrl(path).data.publicUrl);
+    setMBusy(false);
+  }
+  async function saveMedia() {
+    if (!mediaDate) return;
+    setMBusy(true);
+    await setMeetingMedia(mediaDate, mPoster || null, mRec || null);
+    setMBusy(false); setMediaDate(null); router.refresh();
+  }
   const [year, setYear] = useState(2026);
   const [anchorDate, setAnchorDate] = useState("2026-05-29");
   const [anchorSession, setAnchorSession] = useState(1385);
@@ -188,6 +212,12 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
                                 </div>
                                 <div className="sc-card-title">{r.title || (past ? "—" : "주제 미정")}</div>
                                 {(r.speaker || r.host) && <div className="sc-card-sub">{r.speaker && `강사 ${r.speaker}`}{r.speaker && r.host ? " · " : ""}{r.host && `사회 ${r.host}`}</div>}
+                                {(media[r.date]?.poster || media[r.date]?.recording) && (
+                                  <div className="sc-media">
+                                    {media[r.date]?.poster && <a className="sc-mbtn" href={media[r.date]!.poster!} target="_blank" rel="noreferrer"><ImageIcon size={13} /> 포스터</a>}
+                                    {media[r.date]?.recording && <a className="sc-mbtn sc-mbtn-vid" href={media[r.date]!.recording!} target="_blank" rel="noreferrer"><Film size={13} /> 영상 보기</a>}
+                                  </div>
+                                )}
                               </>
                             )}
                           </div>
@@ -238,7 +268,15 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
                         <td><input className="cell-inp w-topic" value={r.title} onChange={(e) => setField(r.date, "title", e.target.value)} placeholder={past ? "—" : "주제"} /></td>
                         <td><input className="cell-inp w-spk" value={r.speaker} onChange={(e) => setField(r.date, "speaker", e.target.value)} placeholder="강사" /></td>
                         <td><input className="cell-inp w-spk" value={r.host} onChange={(e) => setField(r.date, "host", e.target.value)} placeholder="사회자" /></td>
-                        <td className="nowrap sc-note">{r.note}</td>
+                        <td className="nowrap sc-note">
+                          <div className="sc-note-cell">
+                            <span>{r.note}</span>
+                            <button className="sc-media-btn" onClick={() => openMedia(r.date)} title="포스터·영상 자료">
+                              <Paperclip size={12} /> 자료
+                              {(media[r.date]?.poster || media[r.date]?.recording) && <span className="sc-media-dot" />}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     </Fragment>
                   );
@@ -250,6 +288,38 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
       ) : (
         <div className="card empty-card">아직 일정이 없어요. <b>자동 생성</b>으로 1년치를 만들거나 <b>이벤트 추가</b>로 행사를 넣어 보세요.</div>
       ))}
+
+      {/* 회차 자료 편집 모달 */}
+      {canEdit && mediaDate && (
+        <div className="sc-modal-root" onClick={mBusy ? undefined : () => setMediaDate(null)}>
+          <div className="sc-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sc-modal-head">
+              <div className="sc-modal-t">{wd(mediaDate)} 자료</div>
+              <button className="sc-modal-x" onClick={() => setMediaDate(null)} disabled={mBusy}><X size={19} /></button>
+            </div>
+            <div className="sc-modal-body">
+              <label className="sc-f-l">포스터</label>
+              {mPoster ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <div className="sc-poster-prev"><img src={mPoster} alt="포스터" /><button className="link-act" onClick={() => setMPoster("")}>제거</button></div>
+              ) : media[mediaDate]?.poster ? (
+                <p className="sc-f-hint">공지 포스터가 자동으로 표시됩니다. 직접 지정하려면 아래에서 업로드하세요.</p>
+              ) : (
+                <p className="sc-f-hint">해당 주차 공지에 포스터가 있으면 자동 표시됩니다. 없으면 직접 업로드하세요.</p>
+              )}
+              <label className="ui-btn ui-ghost ui-sm" style={{ cursor: "pointer", marginTop: 6 }}><ImageIcon size={15} /> 포스터 업로드(직접 지정)<input type="file" accept="image/*" hidden onChange={uploadPoster} /></label>
+
+              <label className="sc-f-l" style={{ marginTop: 16 }}>영상 링크 (유튜브 미등록 등)</label>
+              <input className="inp" value={mRec} onChange={(e) => setMRec(e.target.value)} placeholder="https://youtu.be/..." />
+              <p className="sc-f-hint">녹화 영상은 유튜브에 ‘미등록’으로 올린 뒤 링크만 붙여넣으세요(용량 0).</p>
+            </div>
+            <div className="sc-modal-foot">
+              <button className="ui-btn ui-ghost ui-sm" onClick={() => setMediaDate(null)} disabled={mBusy}>취소</button>
+              <button className="ui-btn ui-primary ui-sm" onClick={saveMedia} disabled={mBusy}>{mBusy ? "저장 중…" : "저장"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -348,6 +418,29 @@ const SCHED_CSS = `
 .moim-sched .sc-ev{ background:#fffaf2; border-color:#f3e2c4; }
 .moim-sched .sc-ev-star{ color:#d99a17; font-size:15px; font-weight:800; }
 .moim-sched .sc-today-tag{ position:absolute; top:11px; right:13px; font-size:10.5px; font-weight:800; color:#fff; background:var(--brand); padding:2px 8px; border-radius:999px; }
+.moim-sched .sc-media{ display:flex; gap:7px; margin-top:9px; flex-wrap:wrap; }
+.moim-sched .sc-mbtn{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:5px 11px; border-radius:999px; text-decoration:none; background:var(--brand-soft); color:var(--brand-strong); }
+.moim-sched .sc-mbtn-vid{ background:#fdeeee; color:#c0392b; }
+
+/* 관리자 자료 버튼 */
+.moim-sched .sc-note-cell{ display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.moim-sched .sc-media-btn{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:var(--ink-3); background:#f5f6f8; border:1px solid var(--line); border-radius:8px; padding:4px 8px; cursor:pointer; white-space:nowrap; position:relative; }
+.moim-sched .sc-media-btn:hover{ color:var(--brand); border-color:#cdddf7; background:#f5f9ff; }
+.moim-sched .sc-media-dot{ width:6px; height:6px; border-radius:50%; background:var(--green); }
+
+/* 자료 모달 */
+.moim-sched .sc-modal-root{ position:fixed; inset:0; z-index:70; background:rgba(20,24,34,.4); backdrop-filter:blur(2px); display:flex; align-items:center; justify-content:center; padding:16px; }
+.moim-sched .sc-modal{ width:100%; max-width:420px; max-height:90vh; display:flex; flex-direction:column; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 20px 60px rgba(20,30,60,.3); }
+.moim-sched .sc-modal-head{ display:flex; align-items:center; justify-content:space-between; padding:15px 18px; border-bottom:1px solid var(--line); }
+.moim-sched .sc-modal-t{ font-size:16px; font-weight:800; letter-spacing:-0.02em; }
+.moim-sched .sc-modal-x{ width:32px; height:32px; border:0; background:none; color:var(--ink-3); border-radius:9px; cursor:pointer; display:grid; place-items:center; }
+.moim-sched .sc-modal-x:hover{ background:#f1f2f4; }
+.moim-sched .sc-modal-body{ padding:18px; overflow-y:auto; }
+.moim-sched .sc-f-l{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-2); margin-bottom:6px; }
+.moim-sched .sc-f-hint{ font-size:12px; color:var(--ink-3); margin-top:7px; line-height:1.5; }
+.moim-sched .sc-poster-prev{ display:flex; align-items:flex-start; gap:10px; }
+.moim-sched .sc-poster-prev img{ width:90px; border-radius:10px; border:1px solid var(--line); }
+.moim-sched .sc-modal-foot{ display:flex; justify-content:flex-end; gap:8px; padding:14px 18px; border-top:1px solid var(--line); }
 .moim-sched .inline-sel{ position:relative; display:inline-flex; align-items:center; }
 .moim-sched .prog-sel{ appearance:none; -webkit-appearance:none; font-family:inherit; font-size:13px; font-weight:700; color:var(--ink-2); background:var(--bg-warm); border:1px solid var(--line); border-radius:9px; padding:6px 26px 6px 11px; cursor:pointer; }
 .moim-sched .prog-sel:hover{ border-color:#cdd3db; }
