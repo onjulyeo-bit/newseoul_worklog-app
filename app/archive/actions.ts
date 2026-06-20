@@ -24,6 +24,21 @@ export async function createArchive(data: {
   return { ok: true };
 }
 
+// 아카이브 항목 수정(이름·내용·사진). 빈 값은 변경하지 않음(undefined는 건너뜀).
+export async function updateArchive(
+  id: string, data: { title?: string; content?: string | null; image_url?: string | null },
+): Promise<{ ok?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const patch: Record<string, unknown> = {};
+  if (data.title !== undefined) { if (!data.title.trim()) return { error: "이름은 필수예요." }; patch.title = data.title.trim(); }
+  if (data.content !== undefined) patch.content = data.content || null;
+  if (data.image_url !== undefined) patch.image_url = data.image_url || null;
+  const { error } = await supabase.from("archive").update(patch).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/archive");
+  return { ok: true };
+}
+
 // 기존 아카이브 항목에 사진만 연결(역대지회장 등 사진 일괄 등록용)
 export async function setArchiveImage(id: string, image_url: string): Promise<{ ok?: boolean; error?: string }> {
   const supabase = await createClient();

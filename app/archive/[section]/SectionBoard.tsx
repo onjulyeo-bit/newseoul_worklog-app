@@ -5,11 +5,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ChevronLeft, Plus, Download, ExternalLink, PlayCircle, Trash2, Image as ImageIcon, Images } from "lucide-react";
+import { ChevronLeft, Plus, Download, ExternalLink, PlayCircle, Trash2, Image as ImageIcon, Images, Pencil } from "lucide-react";
 import { createArchive, deleteArchive } from "../actions";
 import { ARC_CSS } from "../arcCss";
 import type { Section } from "../sections";
 import BulkPhotoUpload from "./BulkPhotoUpload";
+import PersonEditor from "./PersonEditor";
 
 export type ArchiveItem = {
   id: string; category: string | null; title: string; event_date: string | null;
@@ -31,6 +32,7 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
   const [file, setFile] = useState<File | null>(null);
   const [bulk, setBulk] = useState(false);
   const [viewer, setViewer] = useState<ArchiveItem | null>(null);
+  const [editPerson, setEditPerson] = useState<ArchiveItem | null>(null);
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
   const L = section.layout;
@@ -86,6 +88,7 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
         </div>
 
         {isAdmin && bulk && <BulkPhotoUpload category={section.category} targets={items.map((it) => ({ id: it.id, title: it.title }))} onClose={() => { setBulk(false); router.refresh(); }} />}
+        {isAdmin && editPerson && <PersonEditor item={{ id: editPerson.id, title: editPerson.title, content: editPerson.content, image_url: editPerson.image_url }} onClose={() => setEditPerson(null)} />}
 
         {viewer && (
           <div className="arc-viewer" onClick={() => setViewer(null)}>
@@ -140,9 +143,10 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
           <div className="arc-people">
             {items.map((it) => (
               <div key={it.id} className="arc-person">
+                {isAdmin && <button className="arc-edit arc-edit-abs" onClick={() => setEditPerson(it)} aria-label="편집"><Pencil size={14} /></button>}
                 {isAdmin && <Del it={it} cls="arc-del arc-del-abs" />}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {it.image_url ? <img className="arc-avatar arc-avatar-clk" src={it.image_url} alt={it.title} onClick={() => setViewer(it)} /> : <div className="arc-avatar">{it.title.charAt(0)}</div>}
+                {it.image_url ? <img className="arc-avatar arc-avatar-clk" src={it.image_url} alt={it.title} onClick={() => setViewer(it)} /> : <div className="arc-avatar arc-avatar-clk" onClick={() => isAdmin ? setEditPerson(it) : undefined}>{it.title.charAt(0)}</div>}
                 <div className="arc-name">{it.title}</div>
                 {it.content && <div className="arc-term">{it.content}</div>}
               </div>

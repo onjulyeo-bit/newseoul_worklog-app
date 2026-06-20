@@ -67,6 +67,8 @@ export const ARC_CSS = `
 .moim-arc .arc-people{ display:grid; grid-template-columns:repeat(auto-fill,minmax(156px,1fr)); gap:14px; }
 .moim-arc .arc-person{ background:var(--bg); border:1px solid var(--line); border-radius:18px; padding:22px 16px; text-align:center; position:relative; box-shadow:0 1px 2px rgba(22,24,29,.04); }
 .moim-arc .arc-avatar{ width:104px; height:124px; border-radius:14px; background:linear-gradient(135deg,#e8f1fc,#dbe6f5); color:var(--b); font-size:30px; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; object-fit:cover; }
+.moim-arc .arc-edit-abs{ position:absolute; top:10px; left:10px; width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink-3); cursor:pointer; display:grid; place-items:center; z-index:2; }
+.moim-arc .arc-edit-abs:hover{ color:var(--b); border-color:#cdddf7; background:#f5f9ff; }
 .moim-arc .arc-avatar-clk{ cursor:zoom-in; transition:transform .12s; }
 .moim-arc .arc-avatar-clk:hover{ transform:scale(1.03); }
 .moim-arc .arc-viewer{ position:fixed; inset:0; z-index:80; background:rgba(15,18,28,.72); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:20px; }
