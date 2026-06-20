@@ -16,7 +16,7 @@ export type EventRow = { id: string; title: string; date: string; end_date: stri
 export type MediaMap = Record<string, { poster: string | null; posterManual: string | null; recording: string | null }>;
 
 const EVENT_TYPES = ["한국대회", "송년회", "봄소풍", "수련회", "총회", "기타"];
-const PROGRAMS = ["", "예배", "포럼", "특강", "기타"];
+const PROGRAMS = ["", "예배", "포럼", "특강", "회만시", "기도회", "특별행사", "기타"];
 const MODES: { v: Mode; label: string }[] = [
   { v: "online", label: "온라인" }, { v: "offline", label: "오프라인" },
   { v: "recess", label: "휴회" }, { v: "pending", label: "미정" },
