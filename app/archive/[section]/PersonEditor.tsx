@@ -21,6 +21,7 @@ export default function PersonEditor({ item, onClose }: { item: PersonItem; onCl
   const [content, setContent] = useState(item.content ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(item.image_url);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const [bg, setBg] = useState(BGS[0].key);
   const [removeBg, setRemoveBg] = useState(true);
   const [useAi, setUseAi] = useState(false);
@@ -29,8 +30,9 @@ export default function PersonEditor({ item, onClose }: { item: PersonItem; onCl
 
   function pick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
-    setFile(f); setPreview(URL.createObjectURL(f));
+    setFile(f); setPreview(URL.createObjectURL(f)); setRemovePhoto(false);
   }
+  function clearPhoto() { setFile(null); setPreview(null); setRemovePhoto(true); }
 
   async function save() {
     setBusy(true); setErr("");
@@ -45,7 +47,8 @@ export default function PersonEditor({ item, onClose }: { item: PersonItem; onCl
         if (up.error) throw new Error(up.error.message);
         image_url = sb.storage.from("archive").getPublicUrl(path).data.publicUrl;
       }
-      const res = await updateArchive(item.id, { title, content, ...(image_url ? { image_url } : {}) });
+      const imagePatch = image_url ? { image_url } : removePhoto ? { image_url: null } : {};
+      const res = await updateArchive(item.id, { title, content, ...imagePatch });
       if (res.error) throw new Error(res.error);
       onClose(); router.refresh();
     } catch (e) {
@@ -62,7 +65,10 @@ export default function PersonEditor({ item, onClose }: { item: PersonItem; onCl
           <div className="pe-photo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {preview ? <img src={preview} alt="" /> : <div className="pe-ph">{title.charAt(0) || "?"}</div>}
-            <label className="pe-pick"><ImagePlus size={15} /> {preview ? "사진 변경" : "사진 추가"}<input type="file" accept="image/*" hidden onChange={pick} /></label>
+            <div className="pe-photo-acts">
+              <label className="pe-pick"><ImagePlus size={15} /> {preview ? "사진 변경" : "사진 추가"}<input type="file" accept="image/*" hidden onChange={pick} /></label>
+              {preview && <button type="button" className="pe-pick pe-pick-del" onClick={clearPhoto}>사진 삭제</button>}
+            </div>
           </div>
 
           {file && (<>
@@ -99,7 +105,9 @@ const CSS = `
 .pe-photo{ display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:16px; }
 .pe-photo img{ width:120px; height:144px; object-fit:cover; border-radius:14px; border:1px solid #ecedf0; }
 .pe-ph{ width:120px; height:144px; border-radius:14px; background:linear-gradient(135deg,#e8f1fc,#dbe6f5); color:#003ecc; font-size:34px; font-weight:800; display:grid; place-items:center; }
+.pe-photo-acts{ display:flex; gap:8px; }
 .pe-pick{ display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#003ecc; background:#f5f9ff; border:1px solid #cdddf7; border-radius:10px; padding:8px 14px; cursor:pointer; }
+.pe-pick-del{ color:#c0392b; background:#fdecea; border-color:#f3c6c0; }
 .pe-opts{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
 .pe-tg{ font-size:13px; font-weight:600; color:#3d424d; display:inline-flex; align-items:center; gap:7px; cursor:pointer; }
 .pe-ai{ margin-bottom:14px; }

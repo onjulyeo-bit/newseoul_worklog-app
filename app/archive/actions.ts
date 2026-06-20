@@ -48,6 +48,17 @@ export async function setArchiveImage(id: string, image_url: string): Promise<{ 
   return { ok: true };
 }
 
+// 순서 저장 — 화면에 보이는 순서대로 id 배열을 받아 sort_order 갱신.
+export async function saveArchiveOrder(ids: string[]): Promise<{ ok?: boolean; error?: string }> {
+  const supabase = await createClient();
+  for (let i = 0; i < ids.length; i++) {
+    const { error } = await supabase.from("archive").update({ sort_order: i + 1 }).eq("id", ids[i]);
+    if (error) return { error: error.message };
+  }
+  revalidatePath("/archive");
+  return { ok: true };
+}
+
 export async function deleteArchive(id: string): Promise<{ ok?: boolean; error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase.from("archive").delete().eq("id", id);

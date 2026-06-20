@@ -19,9 +19,10 @@ export default async function ArchiveSectionPage({ params }: { params: Promise<{
   const asc = section.layout === "timeline" || section.layout === "people"; // 연혁·역대지회장은 오래된→최신(1대부터), 나머지는 최신→오래된
   const { data } = await supabase
     .from("archive")
-    .select("id, category, title, event_date, content, image_url, link")
+    .select("id, category, title, event_date, content, image_url, link, sort_order")
     .eq("chapter_id", "새서울")
     .eq("category", section.category)
+    .order("sort_order", { ascending: true, nullsFirst: false })
     .order("event_date", { ascending: asc, nullsFirst: false });
 
   return <SectionBoard section={section} items={(data as ArchiveItem[]) ?? []} isAdmin={isAdmin} />;

@@ -1,12 +1,12 @@
 "use client";
 
 // 아카이브 섹션 화면 — 클로드디자인(아카이브.dc.html) 비주얼 + 실제 CRUD·업로드(기존 archive 테이블·버킷).
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ChevronLeft, Plus, Download, ExternalLink, PlayCircle, Trash2, Image as ImageIcon, Images, Pencil } from "lucide-react";
-import { createArchive, deleteArchive } from "../actions";
+import { ChevronLeft, ChevronRight, Plus, Download, ExternalLink, PlayCircle, Trash2, Image as ImageIcon, Images, Pencil, ArrowLeftRight } from "lucide-react";
+import { createArchive, deleteArchive, saveArchiveOrder } from "../actions";
 import { ARC_CSS } from "../arcCss";
 import type { Section } from "../sections";
 import BulkPhotoUpload from "./BulkPhotoUpload";
@@ -33,6 +33,17 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
   const [bulk, setBulk] = useState(false);
   const [viewer, setViewer] = useState<ArchiveItem | null>(null);
   const [editPerson, setEditPerson] = useState<ArchiveItem | null>(null);
+  const [reorder, setReorder] = useState(false);
+  const [order, setOrder] = useState<ArchiveItem[]>(items);
+  useEffect(() => { setOrder(items); }, [items]);
+  function move(idx: number, dir: -1 | 1) {
+    const j = idx + dir;
+    if (j < 0 || j >= order.length) return;
+    const next = [...order];
+    [next[idx], next[j]] = [next[j], next[idx]];
+    setOrder(next);
+    saveArchiveOrder(next.map((x) => x.id));
+  }
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
   const L = section.layout;
@@ -81,6 +92,7 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
           </div>
           {isAdmin && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {L === "people" && <button className="arc-add" style={{ background: reorder ? "#003ecc" : "#fff", color: reorder ? "#fff" : "#003ecc", border: "1px solid #cdddf7", boxShadow: "none" }} onClick={() => setReorder((v) => !v)}><ArrowLeftRight size={17} strokeWidth={2.2} /> {reorder ? "순서 완료" : "순서 변경"}</button>}
               {L === "people" && <button className="arc-add" style={{ background: "#fff", color: "#003ecc", border: "1px solid #cdddf7", boxShadow: "none" }} onClick={() => setBulk(true)}><Images size={18} strokeWidth={2.2} /> 사진 일괄 등록</button>}
               <button className="arc-add" onClick={() => setShow((v) => !v)}><Plus size={19} strokeWidth={2.4} /> 추가</button>
             </div>
@@ -141,12 +153,20 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
           </div>
         ) : L === "people" ? (
           <div className="arc-people">
-            {items.map((it) => (
-              <div key={it.id} className="arc-person">
-                {isAdmin && <button className="arc-edit arc-edit-abs" onClick={() => setEditPerson(it)} aria-label="편집"><Pencil size={14} /></button>}
-                {isAdmin && <Del it={it} cls="arc-del arc-del-abs" />}
+            {order.map((it, idx) => (
+              <div key={it.id} className={`arc-person ${reorder ? "is-reorder" : ""}`}>
+                {isAdmin && reorder ? (
+                  <div className="arc-move">
+                    <button className="arc-move-btn" onClick={() => move(idx, -1)} disabled={idx === 0} aria-label="앞으로"><ChevronLeft size={16} /></button>
+                    <span className="arc-move-no">{idx + 1}</span>
+                    <button className="arc-move-btn" onClick={() => move(idx, 1)} disabled={idx === order.length - 1} aria-label="뒤로"><ChevronRight size={16} /></button>
+                  </div>
+                ) : isAdmin && (<>
+                  <button className="arc-edit arc-edit-abs" onClick={() => setEditPerson(it)} aria-label="편집"><Pencil size={14} /></button>
+                  <Del it={it} cls="arc-del arc-del-abs" />
+                </>)}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {it.image_url ? <img className="arc-avatar arc-avatar-clk" src={it.image_url} alt={it.title} onClick={() => setViewer(it)} /> : <div className="arc-avatar arc-avatar-clk" onClick={() => isAdmin ? setEditPerson(it) : undefined}>{it.title.charAt(0)}</div>}
+                {it.image_url ? <img className="arc-avatar arc-avatar-clk" src={it.image_url} alt={it.title} onClick={() => !reorder && setViewer(it)} /> : <div className="arc-avatar arc-avatar-clk" onClick={() => isAdmin && !reorder ? setEditPerson(it) : undefined}>{it.title.charAt(0)}</div>}
                 <div className="arc-name">{it.title}</div>
                 {it.content && <div className="arc-term">{it.content}</div>}
               </div>
