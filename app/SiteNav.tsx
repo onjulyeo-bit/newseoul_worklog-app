@@ -29,11 +29,13 @@ const ADMIN: Item[] = [
 // 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지·아카이브(개인정보 명단 제외).
 const MEMBER: Item[] = [
   { href: "/", label: "공지", Icon: Megaphone },
+  { href: "/schedule", label: "연간일정", Icon: CalendarDays },
   { href: "/directory", label: "회원명단", Icon: Contact },
   { href: "/archive", label: "아카이브", Icon: Archive },
 ];
 const GUEST: Item[] = [
   { href: "/", label: "공지", Icon: Megaphone },
+  { href: "/schedule", label: "연간일정", Icon: CalendarDays },
   { href: "/archive", label: "아카이브", Icon: Archive },
 ];
 

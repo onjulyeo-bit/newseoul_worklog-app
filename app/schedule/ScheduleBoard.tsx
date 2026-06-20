@@ -77,6 +77,15 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
   ].sort((a, b) => a.date.localeCompare(b.date) || (a.k === "e" ? 1 : -1));
   let lastMonth = "";
 
+  // 회원용 읽기뷰 — 월별 그룹 + 월별 모임 횟수
+  type Item = (typeof items)[number];
+  const monthGroups: { month: string; list: Item[] }[] = [];
+  for (const it of items) {
+    const m = monthOf(it.date);
+    if (!monthGroups.length || monthGroups[monthGroups.length - 1].month !== m) monthGroups.push({ month: m, list: [] });
+    monthGroups[monthGroups.length - 1].list.push(it);
+  }
+
   return (
     <div className="moim-sched">
       <style>{SCHED_CSS}</style>
@@ -136,8 +145,66 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
         </div>
       )}
 
-      {/* 표 */}
-      {items.length > 0 ? (
+      {/* 회원용 읽기뷰 — 월별 카드 */}
+      {!canEdit && (
+        items.length === 0 ? (
+          <div className="card empty-card">아직 등록된 일정이 없어요.</div>
+        ) : (
+          <div className="sc-ro">
+            {monthGroups.map(({ month, list }) => {
+              const meets = list.filter((x) => x.k === "m" && (x.row.mode === "online" || x.row.mode === "offline")).length;
+              return (
+                <section key={month} className="sc-mo">
+                  <div className="sc-mo-h"><span className="sc-mo-name">{month}</span>{meets > 0 && <span className="sc-mo-cnt">모임 {meets}회</span>}</div>
+                  <div className="sc-mo-list">
+                    {list.map((it) => {
+                      if (it.k === "e") {
+                        const e = it.ev;
+                        return (
+                          <div key={"e" + e.id} className="sc-card sc-ev">
+                            <div className="sc-card-date"><span className="sc-ev-star">★</span><span className="sc-d-md">{wd(e.date)}{e.end_date ? `~${wd(e.end_date)}` : ""}</span></div>
+                            <div className="sc-card-body">
+                              <div className="sc-card-title">{e.title}</div>
+                              <div className="sc-card-sub">{[e.type, e.location].filter(Boolean).join(" · ") || "특별행사"}{e.link && <> · <a className="sc-card-link" href={e.link} target="_blank" rel="noreferrer">링크</a></>}</div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      const r = it.row; const past = r.date < today; const recess = r.mode === "recess"; const pending = r.mode === "pending";
+                      return (
+                        <div key={r.date} className={`sc-card ${past ? "is-past" : ""} ${r.date === today ? "is-today" : ""}`}>
+                          <div className="sc-card-date">
+                            <span className="sc-d-md">{wd(r.date)}</span>
+                            {r.session != null && <span className="sc-d-no">{r.session}회</span>}
+                          </div>
+                          <div className="sc-card-body">
+                            {recess || pending ? (
+                              <div className="sc-card-title sc-muted">{recess ? "휴회" : "미정"}{r.title ? ` · ${r.title}` : ""}{r.note ? ` · ${r.note}` : ""}</div>
+                            ) : (
+                              <>
+                                <div className="sc-tags">
+                                  <span className={`sc-tag t-${modeTone(r.mode)}`}>{modeLabelOf(r.mode)}</span>
+                                  {r.program && <span className="sc-tag t-prog">{r.program}</span>}
+                                </div>
+                                <div className="sc-card-title">{r.title || (past ? "—" : "주제 미정")}</div>
+                                {(r.speaker || r.host) && <div className="sc-card-sub">{r.speaker && `강사 ${r.speaker}`}{r.speaker && r.host ? " · " : ""}{r.host && `사회 ${r.host}`}</div>}
+                              </>
+                            )}
+                          </div>
+                          {r.date === today && <span className="sc-today-tag">오늘</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      {/* 표 (운영진 편집용) */}
+      {canEdit && (items.length > 0 ? (
         <div className="card table-card">
           <div className="table-scroll">
             <table className="mtable sched-table">
@@ -182,7 +249,7 @@ export default function ScheduleBoard({ existing, events, fee, account }: { exis
         </div>
       ) : (
         <div className="card empty-card">아직 일정이 없어요. <b>자동 생성</b>으로 1년치를 만들거나 <b>이벤트 추가</b>로 행사를 넣어 보세요.</div>
-      )}
+      ))}
     </div>
   );
 }
@@ -254,6 +321,33 @@ const SCHED_CSS = `
 .moim-sched .row-recess td{ background:var(--bg-warm); }
 .moim-sched .today-tag{ font-size:11px; font-weight:800; color:#fff; background:var(--brand); padding:2px 8px; border-radius:999px; margin-left:8px; }
 .moim-sched .month-row td{ background:var(--brand-softer); color:var(--brand-strong); font-size:12px; font-weight:800; padding:6px 16px; }
+
+/* 회원용 읽기뷰 — 월별 카드 */
+.moim-sched .sc-ro{ display:flex; flex-direction:column; gap:22px; }
+.moim-sched .sc-mo-h{ display:flex; align-items:baseline; gap:10px; margin-bottom:11px; padding-bottom:8px; border-bottom:2px solid var(--brand-soft); position:sticky; top:0; background:var(--bg-warm,#fafafb); z-index:1; }
+.moim-sched .sc-mo-name{ font-size:18px; font-weight:800; letter-spacing:-0.03em; color:var(--ink); }
+.moim-sched .sc-mo-cnt{ font-size:12.5px; font-weight:700; color:var(--brand); }
+.moim-sched .sc-mo-list{ display:flex; flex-direction:column; gap:9px; }
+.moim-sched .sc-card{ display:flex; gap:14px; align-items:flex-start; background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:13px 15px; box-shadow:var(--shadow-sm); position:relative; }
+.moim-sched .sc-card.is-past{ opacity:.62; }
+.moim-sched .sc-card.is-today{ border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft); opacity:1; }
+.moim-sched .sc-card-date{ flex:none; width:74px; display:flex; flex-direction:column; gap:3px; }
+.moim-sched .sc-d-md{ font-size:14px; font-weight:800; color:var(--ink); white-space:nowrap; }
+.moim-sched .sc-d-no{ font-size:11.5px; font-weight:700; color:var(--ink-3); }
+.moim-sched .sc-card-body{ flex:1; min-width:0; }
+.moim-sched .sc-tags{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:5px; }
+.moim-sched .sc-tag{ font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; }
+.moim-sched .sc-tag.t-brand{ background:var(--brand-soft); color:var(--brand-strong); }
+.moim-sched .sc-tag.t-blue{ background:#e9f0ff; color:#1e40af; }
+.moim-sched .sc-tag.t-gray{ background:#eff0f2; color:#6b717c; }
+.moim-sched .sc-tag.t-prog{ background:#f0eefb; color:#5b3da8; }
+.moim-sched .sc-card-title{ font-size:15px; font-weight:700; color:var(--ink); letter-spacing:-0.02em; line-height:1.4; }
+.moim-sched .sc-card-title.sc-muted{ color:var(--ink-3); font-weight:600; }
+.moim-sched .sc-card-sub{ font-size:12.5px; color:var(--ink-3); margin-top:3px; font-weight:500; }
+.moim-sched .sc-card-link{ color:var(--brand); font-weight:700; text-decoration:none; }
+.moim-sched .sc-ev{ background:#fffaf2; border-color:#f3e2c4; }
+.moim-sched .sc-ev-star{ color:#d99a17; font-size:15px; font-weight:800; }
+.moim-sched .sc-today-tag{ position:absolute; top:11px; right:13px; font-size:10.5px; font-weight:800; color:#fff; background:var(--brand); padding:2px 8px; border-radius:999px; }
 .moim-sched .inline-sel{ position:relative; display:inline-flex; align-items:center; }
 .moim-sched .prog-sel{ appearance:none; -webkit-appearance:none; font-family:inherit; font-size:13px; font-weight:700; color:var(--ink-2); background:var(--bg-warm); border:1px solid var(--line); border-radius:9px; padding:6px 26px 6px 11px; cursor:pointer; }
 .moim-sched .prog-sel:hover{ border-color:#cdd3db; }
