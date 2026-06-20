@@ -5,10 +5,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ChevronLeft, Plus, Download, ExternalLink, PlayCircle, Trash2, Image as ImageIcon } from "lucide-react";
+import { ChevronLeft, Plus, Download, ExternalLink, PlayCircle, Trash2, Image as ImageIcon, Images } from "lucide-react";
 import { createArchive, deleteArchive } from "../actions";
 import { ARC_CSS } from "../arcCss";
 import type { Section } from "../sections";
+import BulkPhotoUpload from "./BulkPhotoUpload";
 
 export type ArchiveItem = {
   id: string; category: string | null; title: string; event_date: string | null;
@@ -28,6 +29,7 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState({ title: "", event_date: "", content: "", link: "" });
   const [file, setFile] = useState<File | null>(null);
+  const [bulk, setBulk] = useState(false);
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
   const L = section.layout;
@@ -74,8 +76,15 @@ export default function SectionBoard({ section, items, isAdmin }: { section: Sec
             <h1 className="arc-stitle">{section.label}</h1>
             <p className="arc-sdesc">{section.desc}</p>
           </div>
-          {isAdmin && <button className="arc-add" onClick={() => setShow((v) => !v)}><Plus size={19} strokeWidth={2.4} /> 추가</button>}
+          {isAdmin && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {L === "people" && <button className="arc-add" style={{ background: "#fff", color: "#003ecc", border: "1px solid #cdddf7", boxShadow: "none" }} onClick={() => setBulk(true)}><Images size={18} strokeWidth={2.2} /> 사진 일괄 등록</button>}
+              <button className="arc-add" onClick={() => setShow((v) => !v)}><Plus size={19} strokeWidth={2.4} /> 추가</button>
+            </div>
+          )}
         </div>
+
+        {isAdmin && bulk && <BulkPhotoUpload category={section.category} onClose={() => { setBulk(false); router.refresh(); }} />}
 
         {isAdmin && show && (
           <div className="arc-form">
