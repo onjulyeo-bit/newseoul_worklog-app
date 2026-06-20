@@ -35,7 +35,6 @@ const MEMBER: Item[] = [
 ];
 const GUEST: Item[] = [
   { href: "/", label: "공지", Icon: Megaphone },
-  { href: "/schedule", label: "연간일정", Icon: CalendarDays },
   { href: "/archive", label: "아카이브", Icon: Archive },
 ];
 

@@ -6,8 +6,9 @@
 import { useRef, useState } from "react";
 import { Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { processPhoto } from "@/lib/photoProcess";
 
-type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null; birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null; intro: string | null; business_card_url: string | null };
+type Rec = { id: string; name: string; phone: string | null; email: string | null; company: string | null; position: string | null; industry: string | null; spouse_name: string | null; car_model: string | null; car_number: string | null; birth_date: string | null; birth_calendar: string | null; address: string | null; address_type: string | null; home_church: string | null; intro: string | null; business_card_url: string | null; photo_url: string | null };
 
 const INTRO_EXAMPLE = "예) 새로운 사람 만나는 게 늘 설렙니다. 먼저 인사 못 드려도 미워하지 마세요.";
 
@@ -27,6 +28,7 @@ export default function MyInfoPage() {
   const [last4, setLast4] = useState("");
   const [busy, setBusy] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [recording, setRecording] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const recRef = useRef<MediaRecorder | null>(null);
@@ -79,11 +81,26 @@ export default function MyInfoPage() {
       p_car_model: rec.car_model ?? "", p_car_number: rec.car_number ?? "",
       p_birth: rec.birth_date ?? "", p_birth_cal: rec.birth_calendar ?? "",
       p_address: rec.address ?? "", p_addr_type: rec.address_type ?? "", p_church: rec.home_church ?? "",
-      p_intro: rec.intro ?? "", p_card: rec.business_card_url ?? "",
+      p_intro: rec.intro ?? "", p_card: rec.business_card_url ?? "", p_photo: rec.photo_url ?? "",
     });
     setBusy(false);
     if (error || data === false) { setErr("저장에 실패했어요. 간사님께 문의해 주세요."); return; }
     setStep("done");
+  }
+  async function uploadPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; e.target.value = "";
+    if (!f || !rec) return;
+    if (f.size > 12 * 1024 * 1024) { setErr("사진은 12MB 이하 이미지만 올릴 수 있어요."); return; }
+    setPhotoBusy(true); setErr("");
+    try {
+      // 정사각 + 자동 보정(밝기·대비). 배경 제거는 안 함(모바일 안정성).
+      const blob = await processPhoto(f, { removeBg: false, enhance: true, size: 640 });
+      const up = await supabase.storage.from("member-cards").upload(`photo-${rec.id}-${Date.now()}.jpg`, blob, { upsert: true, contentType: "image/jpeg" });
+      if (up.error) throw new Error(up.error.message);
+      const { data } = supabase.storage.from("member-cards").getPublicUrl(up.data.path);
+      set("photo_url", data.publicUrl);
+    } catch (err) { setErr("사진 업로드 실패: " + (err instanceof Error ? err.message : "오류")); }
+    finally { setPhotoBusy(false); }
   }
   async function uploadCard(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; e.target.value = "";
@@ -128,6 +145,23 @@ export default function MyInfoPage() {
         {step === "edit" && rec && (<>
           <h1 className="mi-h1">{rec.name} 님, 반갑습니다</h1>
           <p className="mi-sub">바뀐 정보를 채우거나 고쳐 주세요. 등급·상태는 운영진이 관리합니다.</p>
+
+          {/* 프로필 사진 */}
+          <section className="mi-sec mi-photo-sec">
+            <div className="mi-photo-wrap">
+              {rec.photo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={rec.photo_url} alt="프로필" className="mi-photo" />
+              ) : (
+                <div className="mi-photo mi-photo-ph">{rec.name.charAt(0)}</div>
+              )}
+            </div>
+            <div className="mi-photo-acts">
+              <label className="mi-ghost">{photoBusy ? "올리는 중…" : rec.photo_url ? "사진 변경" : "프로필 사진 올리기"}<input type="file" accept="image/*" hidden onChange={uploadPhoto} /></label>
+              {rec.photo_url && <button type="button" className="mi-ghost mi-danger" onClick={() => set("photo_url", "")}>삭제</button>}
+            </div>
+            <p className="mi-hint" style={{ textAlign: "center" }}>정사각으로 자동 보정돼 명단에 표시됩니다.</p>
+          </section>
 
           {GROUPS.map((g) => (
             <section key={g.title} className="mi-sec">
@@ -233,6 +267,11 @@ const MI_CSS = `
 .mi-voice:hover{ background:#fafafa; }
 .mi-voice.rec{ border-color:#b42318; color:#b42318; background:#fdf3f2; }
 .mi-voice:disabled{ opacity:.6; cursor:default; }
+.mi-photo-sec{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+.mi-photo-wrap{ display:flex; justify-content:center; }
+.mi-photo{ width:120px; height:120px; border-radius:18px; object-fit:cover; border:1px solid var(--line); }
+.mi-photo-ph{ display:grid; place-items:center; background:#f1f2f4; color:var(--ink2); font-size:40px; font-weight:800; }
+.mi-photo-acts{ display:flex; gap:8px; justify-content:center; }
 .mi-cardimg{ width:100%; border:1px solid var(--line); border-radius:13px; display:block; }
 .mi-cardacts{ display:flex; gap:8px; margin-top:8px; }
 .mi-ghost{ flex:1; text-align:center; font-family:inherit; font-size:14.5px; font-weight:700; color:var(--ink2); padding:11px; border:1px solid var(--line); border-radius:11px; background:#fff; cursor:pointer; }
