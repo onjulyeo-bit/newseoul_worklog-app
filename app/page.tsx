@@ -1,6 +1,7 @@
 // 홈 — 익명:랜딩 / 회원:공지 / 임원:회원 목록(새 디자인).
 import { createClient } from "@/lib/supabase/server";
 import NoticesBoard, { type Announcement, type MemberHero } from "./notices/NoticesBoard";
+import MemberClaim from "./MemberClaim";
 import Welcome from "./Welcome";
 import MembersList, { type RawMember } from "./members/MembersList";
 
@@ -16,13 +17,15 @@ export default async function MemberListPage() {
   if (!user) return <Welcome />;
 
   let role: string | null = null;
+  let memberId: string | null = null;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, member_id")
       .eq("id", user.id)
       .single();
     role = profile?.role ?? null;
+    memberId = profile?.member_id ?? null;
   }
 
   // 회원(비운영진) 로그인 → 회원 전용 홈. 읽기 운영진(viewer)은 운영진과 같은 회원관리 화면(읽기 전용)으로.
@@ -43,7 +46,14 @@ export default async function MemberListPage() {
         checkinHref: nx.checkin_token ? `/checkin/${nx.id}?t=${nx.checkin_token}` : null,
       } : null,
     };
-    return <NoticesBoard isAdmin={false} initial={(annR.data as Announcement[]) ?? []} memberHero={memberHero} />;
+    // 미연결(관심) — 본인 확인 카드 먼저, 그 아래 공지.
+    const needsClaim = role === "guest" && !memberId;
+    return (
+      <>
+        {needsClaim && <MemberClaim />}
+        <NoticesBoard isAdmin={false} initial={(annR.data as Announcement[]) ?? []} memberHero={memberHero} />
+      </>
+    );
   }
 
   // 회원 전체 (RLS: 임원만 조회 가능). 표에서 정렬·필터·검색은 화면에서 처리.
