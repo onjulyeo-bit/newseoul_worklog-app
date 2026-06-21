@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Mail, AtSign, Send, ShieldCheck, MailCheck, RotateCw, UserPlus, QrCode, ChevronRight } from "lucide-react";
+import { Mail, AtSign, Send, ShieldCheck, MailCheck, RotateCw, UserPlus, ChevronRight } from "lucide-react";
 
 // 카카오 말풍선 로고 (lucide에 없어 인라인 SVG). currentColor로 버튼 글자색 따라감.
 function KakaoIcon() {
@@ -121,10 +121,6 @@ export default function Welcome() {
               <div className="help-body"><div className="t">처음이신가요? 입회 안내 보기</div><div className="d">새서울지회 입회 절차와 CBMC 중앙회 등록 방법을 확인하세요.</div></div>
               <ChevronRight size={18} className="help-arrow" />
             </Link>
-            <div className="help">
-              <div className="help-ic"><QrCode size={19} /></div>
-              <div className="help-body"><div className="t">체크인은 현장에서</div><div className="d">체크인은 모임 현장 QR로 진행돼요.</div></div>
-            </div>
           </div>
 
           <footer>
