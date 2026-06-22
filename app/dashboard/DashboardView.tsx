@@ -53,6 +53,20 @@ export default function DashboardView({
         <p className="dash-greet-sub">이번 주 모임 현황을 한눈에 확인하세요.</p>
       </div>
 
+      {(() => {
+        if (!next) return null;
+        const days = Math.ceil((new Date(next.date + "T00:00").getTime() - new Date(new Date().toISOString().slice(0, 10) + "T00:00").getTime()) / 86400000);
+        if (days < 0 || days > 8) return null; // 모임 전 한 주(전주 금요일 무렵)에만
+        const f = fmtFull(next.date);
+        return (
+          <Link href="/content" className="dash-remind">
+            <span className="dash-remind-ic">📨</span>
+            <span className="dash-remind-txt"><b>{next.session_no != null ? `${next.session_no}회 ` : ""}{f.md} 모임 자료요청</b> — 강사·목사님께 제목·본문·찬양을 요청하셨나요?</span>
+            <span className="dash-remind-go">작성하기 →</span>
+          </Link>
+        );
+      })()}
+
       <div className="dash-grid">
         {/* 이번 주 모임 */}
         <section>
@@ -214,6 +228,13 @@ const DASH_CSS = `
 .moim-dash .dash-hi{ margin-bottom:22px; }
 .moim-dash .dash-greet{ font-size:clamp(21px,5.5vw,26px); font-weight:800; letter-spacing:-0.04em; }
 .moim-dash .dash-greet-sub{ color:var(--ink-3); font-size:14.5px; margin-top:5px; font-weight:500; }
+.moim-dash .dash-remind{ display:flex; align-items:center; gap:11px; margin-bottom:18px; padding:14px 16px; border-radius:14px; background:#fff7e6; border:1px solid #f3e1b8; text-decoration:none; transition:background .15s; }
+.moim-dash .dash-remind:hover{ background:#fdf1d6; }
+.moim-dash .dash-remind-ic{ font-size:20px; flex:none; }
+.moim-dash .dash-remind-txt{ flex:1; font-size:14px; color:#7a5a12; line-height:1.5; }
+.moim-dash .dash-remind-txt b{ color:#5c4310; font-weight:800; }
+.moim-dash .dash-remind-go{ flex:none; font-size:13px; font-weight:800; color:#b5790f; white-space:nowrap; }
+@media (max-width:559px){ .moim-dash .dash-remind-go{ display:none; } }
 .moim-dash .dash-grid{ display:flex; flex-direction:column; gap:26px; }
 .moim-dash .dash-grid2{ display:grid; grid-template-columns:1fr; gap:26px; margin-top:26px; }
 .moim-dash .dash-sec{ margin-top:26px; }

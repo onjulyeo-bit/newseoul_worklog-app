@@ -232,6 +232,9 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
           <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
             <div className="mb-2"><label className={lab}>보내는 사람 (간사)</label><input value={f.sender} onChange={(e) => set("sender", e.target.value)} placeholder="박정윤" className={inp} /></div>
             <CopyBox label="✉️ 강사·목사·회원 자료 요청 메시지" text={buildRequest(f, f.sender)} />
+            <button onClick={async () => { const text = buildRequest(f, f.sender); try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); alert("복사됐어요. 카톡에서 강사님께 붙여넣어 보내세요."); } } catch {} }}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#fee500] px-4 py-2 text-[13.5px] font-bold text-[#191600] hover:opacity-90">📲 카톡 등으로 공유 (받는 사람 선택)</button>
+            <p className="mt-1.5 text-[12px] text-ink-soft">공유를 누르면 휴대폰 공유창에서 <b>카카오톡</b>을 골라 강사님께 바로 보낼 수 있어요. (PC는 복사됩니다)</p>
           </div>
         </div>
       </div>
