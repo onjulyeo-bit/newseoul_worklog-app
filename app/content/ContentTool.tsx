@@ -27,6 +27,7 @@ type Form = {
   title: string; verse: string; speaker: string; praiseTitle: string; praiseVerse: string; discussion: string;
   place: string; fee: string; account: string; zoomLink: string; zoomId: string; zoomPw: string;
   sender: string;
+  host: string; praiseLink: string; scripture: string; ads: string;
 };
 
 function downloadMd(name: string, text: string) {
@@ -139,6 +140,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
     praiseTitle: "", praiseVerse: "", discussion: "", place: "충현교회 제3교육관 2층", fee: "", account: "",
     zoomLink: "https://us06web.zoom.us/j/3226796758?pwd=cy8yMCtHOXVjaDFpaTFxZDVNNGh2QT09", zoomId: "322 679 6758", zoomPw: "newseoul",
     sender: "박정윤",
+    host: "", praiseLink: "", scripture: "", ads: "",
   });
   const set = (k: keyof Form, v: string) => setF((s) => ({ ...s, [k]: v }));
 
@@ -147,6 +149,24 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   const [orderEdit, setOrderEdit] = useState<string | null>(null);
   const [requestEdit, setRequestEdit] = useState<string | null>(null);
   const [mdCopied, setMdCopied] = useState(false);
+  // 노션 주보 생성
+  const [notionBusy, setNotionBusy] = useState(false);
+  const [notionMsg, setNotionMsg] = useState<{ url?: string; err?: string } | null>(null);
+  async function publishNotion() {
+    setNotionBusy(true); setNotionMsg(null);
+    try {
+      const body = {
+        title: `${f.session || ""}회_${secOf(f.program)}`,
+        date: f.date, mode: f.mode, program: f.program, topic: f.title, verse: f.verse,
+        speaker: f.speaker, host: f.host, praiseTitle: f.praiseTitle, praiseLink: f.praiseLink,
+        scripture: f.scripture, discussion: f.discussion, ads: f.ads, whoLabel: whoOf(f.program),
+      };
+      const r = await fetch("/api/notion-publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const j = await r.json();
+      if (!r.ok) { setNotionMsg({ err: j.needToken ? "노션 토큰 설정이 필요해요." : (j.error || "생성 실패") + (j.detail ? ` (${j.detail})` : "") }); return; }
+      setNotionMsg({ url: j.url });
+    } catch { setNotionMsg({ err: "노션 생성 중 오류가 났어요." }); } finally { setNotionBusy(false); }
+  }
   // 찬양 유튜브 추천
   const [ytItems, setYtItems] = useState<{ title: string; channel: string; url: string }[] | null>(null);
   const [ytBusy, setYtBusy] = useState(false);
@@ -260,6 +280,22 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
                 <div><label className={lab}>입금</label><input value={f.account} onChange={(e) => set("account", e.target.value)} className={inp} /></div>
               </div>
             )}
+
+            {/* 주보(노션)용 추가 입력 */}
+            <div className="mt-1 rounded-lg border border-dashed border-line p-3">
+              <div className="mb-2 text-[13px] font-extrabold text-ink-soft">📝 주보(노션)용 추가</div>
+              <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className={lab}>사회자</label><input value={f.host} onChange={(e) => set("host", e.target.value)} placeholder="김용태 대표" className={inp} /></div>
+                  <div><label className={lab}>찬양 유튜브 링크</label><input value={f.praiseLink} onChange={(e) => set("praiseLink", e.target.value)} placeholder="https://youtu.be/…" className={inp} /></div>
+                </div>
+                <div><label className={lab}>설교/발제 본문 (붙여넣기 · 선택)</label><textarea value={f.scripture} onChange={(e) => set("scripture", e.target.value)} placeholder="대한성서공회 등에서 본문을 복사해 붙여넣으세요" className={`${inp} min-h-[70px] py-2`} /></div>
+                <div><label className={lab}>광고 (한 줄에 하나)</label><textarea value={f.ads} onChange={(e) => set("ads", e.target.value)} placeholder={"VIP 소개 (인당 30초)\n6/30(화) 중앙회비 납부 예정\n회비 계좌 …"} className={`${inp} min-h-[70px] py-2`} /></div>
+                <button onClick={publishNotion} disabled={notionBusy} className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#16181d] px-4 py-2.5 text-[14px] font-bold text-white hover:opacity-90 disabled:opacity-50">{notionBusy ? "노션에 만드는 중…" : "📝 노션에 주보 만들기"}</button>
+                {notionMsg?.url && <a href={notionMsg.url} target="_blank" rel="noreferrer" className="text-[13px] font-semibold text-primary hover:underline">✅ 노션에 생성됨 — 열기</a>}
+                {notionMsg?.err && <p className="text-[13px] font-semibold text-unpaid">❌ {notionMsg.err}</p>}
+              </div>
+            </div>
           </div>
         </div>
 
