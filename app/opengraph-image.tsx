@@ -1,10 +1,9 @@
-// 앱 링크(/) 미리보기 카드 — 노션/줌처럼 심플하게: CBMC 심볼 + "새서울 CBMC" 중앙 배치.
-//   설명("사랑하고 축복합니다…")은 og:description(layout.tsx)에서 카드 아래에 표시됨.
+// 앱 링크(/) 미리보기 카드 — 로고만 위, 아래 새서울지회·아름다운 만남, 그 밑 환영 문구.
 import { ImageResponse } from "next/og";
 import { readFile } from "fs/promises";
 import path from "path";
 
-export const alt = "새서울 CBMC";
+export const alt = "새서울지회 · 아름다운 만남";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -25,10 +24,11 @@ export default async function Image() {
 
   return new ImageResponse(
     (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", background: "#ffffff", fontFamily: fonts ? "Pretendard" : "sans-serif", gap: 36 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", background: "#ffffff", fontFamily: fonts ? "Pretendard" : "sans-serif" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {logo && <img src={logo} alt="CBMC" width={300} style={{ objectFit: "contain" }} />}
-        <div style={{ fontSize: 70, fontWeight: 700, color: "#16181d", letterSpacing: -2 }}>새서울 CBMC</div>
+        {logo && <img src={logo} alt="CBMC" width={300} style={{ objectFit: "contain", marginBottom: 44 }} />}
+        <div style={{ fontSize: 60, fontWeight: 700, color: "#16181d", letterSpacing: -2 }}>새서울지회 · 아름다운 만남</div>
+        <div style={{ fontSize: 34, color: "#5b616b", marginTop: 22, letterSpacing: -1 }}>환영합니다. 축복합니다. 카카오 로그인하세요</div>
       </div>
     ),
     { ...size, fonts },

@@ -4,11 +4,11 @@ import SiteNav from "./SiteNav";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "새서울 CBMC",
-  description: "사랑하고 축복합니다. 카카오 로그인 후 이용하세요",
+  title: "새서울지회 · 아름다운 만남",
+  description: "환영합니다. 축복합니다. 카카오 로그인하세요",
   openGraph: {
-    title: "새서울 CBMC",
-    description: "사랑하고 축복합니다. 카카오 로그인 후 이용하세요",
+    title: "새서울지회 · 아름다운 만남",
+    description: "환영합니다. 축복합니다. 카카오 로그인하세요",
   },
 };
 
