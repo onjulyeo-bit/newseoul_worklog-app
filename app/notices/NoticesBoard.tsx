@@ -18,6 +18,13 @@ const fmt = (d: string) => { const t = new Date(d); return `${t.getFullYear()}.$
 const dayOf = (d: string) => DAYS[new Date(d + "T00:00").getDay()];
 const mdOf = (d: string) => { const t = new Date(d + "T00:00"); return `${t.getMonth() + 1}월 ${t.getDate()}일`; };
 const catTone = (c: string) => (c === "경조사" ? "warm" : c === "일반" ? "gray" : "brand");
+// 공지 본문/제목에서 온·오프라인 감지 → 태그
+const modeOf = (n: Announcement): "online" | "offline" | null => {
+  const s = `${n.title || ""} ${n.body || ""}`;
+  if (s.includes("온라인")) return "online";
+  if (s.includes("오프라인")) return "offline";
+  return null;
+};
 const CatIcon = ({ c, size = 22 }: { c: string; size?: number }) => (c === "경조사" ? <Heart size={size} /> : c === "포럼" ? <Presentation size={size} /> : <Megaphone size={size} />);
 const excerpt = (b: string, n = 80) => { const t = b.replace(/\n+/g, " "); return t.length > n ? t.slice(0, n) + "…" : t; };
 
@@ -56,6 +63,7 @@ export default function NoticesBoard({ isAdmin, initial, memberHero }: { isAdmin
         </div>
         <article className="nt-doc">
           <span className={`badge b-${catTone(n.category)}`}>{n.category}</span>
+          {modeOf(n) && <span className={`badge mode-${modeOf(n)}`} style={{ marginLeft: 6 }}>{modeOf(n) === "online" ? "온라인" : "오프라인"}</span>}
           <h1 className="nt-title">{n.title}</h1>
           <div className="nt-meta">{fmt(n.created_at)}</div>
           {n.image_url && (
@@ -115,7 +123,7 @@ export default function NoticesBoard({ isAdmin, initial, memberHero }: { isAdmin
               {!n.image_url && <CatIcon c={n.category} />}
             </div>
             <div className="nt-card-body">
-              <div className="nt-card-top"><span className={`badge b-${catTone(n.category)}`}>{n.category}</span><span className="nt-date">{fmt(n.created_at)}</span></div>
+              <div className="nt-card-top"><span className={`badge b-${catTone(n.category)}`}>{n.category}</span>{modeOf(n) && <span className={`badge mode-${modeOf(n)}`}>{modeOf(n) === "online" ? "온라인" : "오프라인"}</span>}<span className="nt-date">{fmt(n.created_at)}</span></div>
               <h3 className="nt-card-title">{n.title}</h3>
               <p className="nt-card-ex">{excerpt(n.body)}</p>
             </div>
@@ -170,6 +178,8 @@ const NT_CSS = `
 .moim-nt h1,.moim-nt h2,.moim-nt h3,.moim-nt p{ margin:0; }
 .moim-nt .badge{ display:inline-flex; align-items:center; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; }
 .moim-nt .b-brand{ background:var(--brand-soft); color:var(--brand-strong); }
+.moim-nt .mode-online{ background:#dbe9ff; color:#0b3d91; }
+.moim-nt .mode-offline{ background:#d9f3e6; color:#0a5a3a; }
 .moim-nt .b-warm{ background:#fcefe7; color:#b5562a; }
 .moim-nt .b-gray{ background:#eff0f2; color:#6b717c; }
 .moim-nt .ui-btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600; border-radius:var(--radius-btn); border:0; cursor:pointer; transition:background .15s; }

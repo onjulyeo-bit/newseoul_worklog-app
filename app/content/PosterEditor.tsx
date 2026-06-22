@@ -373,6 +373,10 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
                 {el.kind === "logo" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src="/cbmc-logo.png" alt="CBMC" className="pointer-events-none w-full" style={{ filter: el.invert ? "brightness(0) invert(1)" : "none" }} />
+                ) : el.role === "modeLabel" ? (
+                  <div style={{ textAlign: el.align }}>
+                    <span style={{ display: "inline-block", fontFamily: fontCss(el.font), fontSize: el.fontSize, fontWeight: 800, lineHeight: 1.2, letterSpacing: el.letterSpacing, color: el.text.includes("온라인") ? "#0b3d91" : "#0a5a3a", background: el.text.includes("온라인") ? "#dbe9ff" : "#d9f3e6", padding: "0.22em 0.85em", borderRadius: 999, whiteSpace: "nowrap" }}>{el.text}</span>
+                  </div>
                 ) : (
                   <div style={{ fontFamily: fontCss(el.font), fontSize: el.fontSize, fontWeight: el.weight, color: el.color, textAlign: el.align, lineHeight: el.lineHeight, letterSpacing: el.letterSpacing, whiteSpace: "pre-wrap", wordBreak: "keep-all" }}>
                     {el.text}
