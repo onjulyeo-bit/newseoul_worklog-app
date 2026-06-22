@@ -7,7 +7,7 @@ export default async function ContentPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("meetings")
-    .select("id, date, session_no, mode, title, speaker")
+    .select("id, date, session_no, mode, title, speaker, program")
     .eq("chapter_id", "새서울")
     .in("mode", ["online", "offline"])
     .order("date", { ascending: false });
