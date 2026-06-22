@@ -1,11 +1,11 @@
 // 주보를 노션 데이터베이스에 직접 생성. 운영진(로그인)만. 준비 단계용(발표엔 영향 없음).
 //   NOTION_TOKEN 필요. DB 속성은 실행 시 자동 인식(이름/타입 매칭)해서 채움.
+//   기존 주보 포맷: 각 순서를 '토글 heading'으로 만들고 내용은 그 안에 접어둠.
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 const DB_ID = process.env.NOTION_DB_ID || "2aaa504e896b807d91b4c616f5524d8e";
 const NV = "2022-06-28";
-const IDENTITY = "CBMC는 실업인과 전문인들에게 복음을 전하여 예수 그리스도가 구주이심을 증거하고, 주님의 지상 명령을 성취하는 국제적 사명 공동체입니다.";
 const SLOGAN = ["예수님께 속한, 새서울!", "사랑으로 하나되는, 새서울!", "성령님과 동행하는, 새서울!"];
 
 type Body = {
@@ -13,11 +13,33 @@ type Body = {
   topic: string; verse: string; speaker: string; host: string;
   praiseTitle: string; praiseLink: string; scripture: string; discussion: string; ads: string; whoLabel: string;
 };
-const rt = (content: string) => [{ type: "text", text: { content } }];
-const h2 = (t: string) => ({ object: "block", type: "heading_2", heading_2: { rich_text: rt(t) } });
-const h3 = (t: string) => ({ object: "block", type: "heading_3", heading_3: { rich_text: rt(t) } });
-const p = (t: string) => ({ object: "block", type: "paragraph", paragraph: { rich_text: rt(t) } });
-const bullet = (t: string) => ({ object: "block", type: "bulleted_list_item", bulleted_list_item: { rich_text: rt(t) } });
+
+// ── 노션 블록 헬퍼 ──────────────────────────────────────────────
+type Anno = { bold?: boolean; color?: string };
+const t = (content: string, o: Anno & { url?: string } = {}) => ({
+  type: "text",
+  text: { content, ...(o.url ? { link: { url: o.url } } : {}) },
+  ...(o.bold || o.color ? { annotations: { ...(o.bold ? { bold: true } : {}), ...(o.color ? { color: o.color } : {}) } } : {}),
+});
+const rt = (content: string) => [t(content)];
+const h1 = (text: string) => ({ object: "block", type: "heading_1", heading_1: { rich_text: rt(text) } });
+const h3 = (text: string) => ({ object: "block", type: "heading_3", heading_3: { rich_text: rt(text) } });
+const bullet = (text: string) => ({ object: "block", type: "bulleted_list_item", bulleted_list_item: { rich_text: rt(text) } });
+const video = (url: string) => ({ object: "block", type: "video", video: { type: "external", external: { url } } });
+// 토글되는 heading_2 (내용이 있으면 안에 접어둠)
+const toggle = (text: string, children: unknown[]) => {
+  const h2: Record<string, unknown> = { rich_text: rt(text), is_toggleable: true };
+  if (children.length) h2.children = children;
+  return { object: "block", type: "heading_2", heading_2: h2 };
+};
+// youtu.be / 공유링크 → watch URL (노션 영상 임베드 안정화)
+const ytWatch = (u: string) => { const m = u.match(/(?:youtu\.be\/|[?&]v=)([\w-]{11})/); return m ? `https://www.youtube.com/watch?v=${m[1]}` : u; };
+// 긴 본문을 노션 rich_text 한도(2000자) 아래로 쪼개 여러 블록으로
+const chunk = (text: string, size = 1800) => {
+  const out: string[] = []; let s = text;
+  while (s.length > size) { let cut = s.lastIndexOf("\n", size); if (cut < size * 0.5) cut = size; out.push(s.slice(0, cut)); s = s.slice(cut).replace(/^\n/, ""); }
+  if (s) out.push(s); return out;
+};
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -45,6 +67,7 @@ export async function POST(req: Request) {
     const type = def.type;
     if (type === "title") properties[name] = { title: rt(b.title) };
     else if (type === "date") { if (b.date) properties[name] = { date: { start: b.date } }; }
+    else if (type === "multi_select") properties[name] = { multi_select: [{ name: modeLabel }] };
     else if (type === "select") properties[name] = { select: { name: modeLabel } };
     else if (type === "rich_text") {
       if (name.includes("강사") || name.includes("진행")) { if (b.speaker) properties[name] = { rich_text: rt(b.speaker) }; }
@@ -52,23 +75,48 @@ export async function POST(req: Request) {
     }
   }
 
-  // 2) 본문 블록 구성
+  // 2) 본문 블록 구성 — 기존 주보 포맷(순서별 토글)
+  const sess = b.title.replace(/_.*$/, "");
   const children: unknown[] = [];
-  children.push(h2(`🏛 ${b.title.replace(/_.*$/, "")} 새서울 CBMC 아름다운 만남`));
-  if (b.host) children.push(p(`사회 : ${b.host}`));
-  children.push(h3("1. CBMC 정체성 선언"));
-  children.push(p(IDENTITY));
-  children.push(h3(`2. 찬양${b.praiseTitle ? ` : ${b.praiseTitle}` : ""}`));
-  if (b.praiseLink) children.push({ object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: "▶ 찬양 영상", link: { url: b.praiseLink } } }] } });
-  children.push(h3(`3. ${b.whoLabel || "설교"}${b.topic ? ` - ${b.topic}` : ""}${b.verse ? ` (${b.verse})` : ""}`));
-  if (b.scripture.trim()) children.push(p(b.scripture.trim()));
-  children.push(h3("4. 소그룹 모임 및 기도 나눔"));
-  b.discussion.split("\n").map((s) => s.trim()).filter(Boolean).forEach((q, i) => children.push(p(`${i + 1}. ${q}`)));
-  children.push(h3(`5. 합심 기도 및 마침 기도${b.speaker ? ` (${b.speaker})` : ""}`));
-  children.push(h3("6. 광고"));
-  b.ads.split("\n").map((s) => s.trim()).filter(Boolean).forEach((a) => children.push(bullet(a)));
-  children.push({ object: "block", type: "callout", callout: { icon: { emoji: "🙌" }, rich_text: rt(`2026 새서울 구호\n${SLOGAN.join("\n")}`) } });
-  children.push(p(`💖 ${b.title.replace(/_.*$/, "")} 새서울 CBMC 아름다운 만남을 폐회합니다.`));
+  children.push(h1(`💒 ${sess} 새서울 CBMC 아름다운 만남`));
+  if (b.host) children.push(h3(`사회 : ${b.host}`));
+
+  // 1. 정체성 선언 (CBMC 파랑 + 굵게)
+  const identity = {
+    object: "block", type: "heading_3",
+    heading_3: { rich_text: [
+      t("CBMC", { color: "blue", bold: true }),
+      t("는 실업인과 전문인들에게 복음을 전하여 예수 그리스도가 구주이심을 증거하고, 주님의 지상 명령을 성취하는 국제적 사명 공동체입니다.", { bold: true }),
+    ] },
+  };
+  children.push(toggle("1. CBMC 정체성 선언", [identity]));
+
+  // 2. 찬양 (영상 임베드)
+  const praiseKids: unknown[] = [];
+  if (b.praiseLink && b.praiseLink.trim()) praiseKids.push(video(ytWatch(b.praiseLink.trim())));
+  children.push(toggle(`2. 찬양${b.praiseTitle ? ` : ${b.praiseTitle}` : ""}`, praiseKids));
+
+  // 3. 말씀/발제 (성경 본문)
+  const sermonKids: unknown[] = [];
+  if (b.scripture && b.scripture.trim()) chunk(b.scripture.trim()).forEach((c) => sermonKids.push(h3(c)));
+  children.push(toggle(`3. ${b.whoLabel || "설교"}${b.topic ? ` - ${b.topic}` : ""}${b.verse ? ` (${b.verse})` : ""}`, sermonKids));
+
+  // 4. 소그룹 모임 및 기도 나눔 (나눔 질문)
+  const groupKids: unknown[] = [];
+  (b.discussion || "").split("\n").map((s) => s.trim()).filter(Boolean).forEach((q, i) => groupKids.push(h3(/^\d/.test(q) ? q : `${i + 1}. ${q}`)));
+  children.push(toggle("4. 소그룹 모임 및 기도 나눔", groupKids));
+
+  // 5. 합심 기도 및 마침 기도
+  children.push(toggle(`5. 합심 기도 및 마침 기도${b.speaker ? ` (${b.speaker})` : ""}`, []));
+
+  // 6. 광고 (불릿)
+  const adKids = (b.ads || "").split("\n").map((s) => s.trim()).filter(Boolean).map((a) => bullet(a));
+  children.push(toggle("6. 광고", adKids));
+
+  // 구호 (파랑 배경 콜아웃)
+  children.push({ object: "block", type: "callout", callout: { icon: { emoji: "🙌" }, color: "blue_background", rich_text: rt(`2026 새서울 구호\n${SLOGAN.join("\n")}`) } });
+  // 폐회 (주황)
+  children.push({ object: "block", type: "heading_3", heading_3: { rich_text: [t(`💖 ${sess} 새서울 CBMC 아름다운 만남을 폐회합니다.`, { color: "orange" })] } });
 
   // 3) 페이지 생성
   try {
