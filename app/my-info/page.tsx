@@ -239,7 +239,7 @@ const MI_CSS = `
 .mi-card{ width:100%; max-width:480px; background:var(--card); border:1px solid var(--line); border-radius:24px; padding:28px 24px; box-shadow:0 1px 2px rgba(0,0,0,.03), 0 12px 32px rgba(20,20,28,.06); }
 .mi-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
 .mi-brand{ display:flex; align-items:center; gap:9px; }
-.mi-mark{ width:32px; height:32px; border-radius:9px; background:#f1f2f5; display:grid; place-items:center; overflow:hidden; }
+.mi-mark{ width:32px; height:32px; border-radius:9px; background:#fff; border:1px solid var(--line); display:grid; place-items:center; overflow:hidden; }
 .mi-mark img{ width:22px; height:22px; object-fit:contain; }
 .mi-bname{ font-size:14.5px; font-weight:800; }
 .mi-dim{ color:var(--faint); font-weight:700; }

@@ -136,7 +136,7 @@ const CSS = `
 .lf *{ box-sizing:border-box; }
 .lf-card{ width:100%; max-width:460px; background:#fff; border:1px solid #ecedf0; border-radius:22px; padding:24px; box-shadow:0 4px 20px rgba(20,30,60,.06); align-self:flex-start; }
 .lf-top{ display:flex; align-items:center; gap:9px; margin-bottom:14px; }
-.lf-mark{ width:32px; height:32px; border-radius:9px; background:#f1f2f5; display:grid; place-items:center; overflow:hidden; }
+.lf-mark{ width:32px; height:32px; border-radius:9px; background:#fff; border:1px solid #ecedf0; display:grid; place-items:center; overflow:hidden; }
 .lf-mark img{ width:22px; height:22px; object-fit:contain; }
 .lf-bname{ font-size:14.5px; font-weight:800; }
 .lf-dim{ color:#86868b; font-weight:700; }
