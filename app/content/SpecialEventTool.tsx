@@ -62,6 +62,7 @@ export default function SpecialEventTool() {
     speaker: f.fee ? `참가비 ${f.fee}` : (f.apply || ""),
     dateLine: f.when || "",
     modeLabel: f.where || "",
+    place: "",
   };
 
   async function publish() {

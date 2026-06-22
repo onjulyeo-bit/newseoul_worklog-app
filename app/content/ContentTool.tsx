@@ -127,7 +127,7 @@ const lab = "mb-1 block text-[13px] font-bold text-ink-soft";
 export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   const [f, setF] = useState<Form>({
     session: "", mode: "online", program: "예배", date: "", title: "", verse: "", speaker: "",
-    praiseTitle: "", praiseVerse: "", discussion: "", place: "충현교회", fee: "", account: "",
+    praiseTitle: "", praiseVerse: "", discussion: "", place: "충현교회 제3교육관 2층", fee: "", account: "",
     zoomLink: "https://us06web.zoom.us/j/3226796758?pwd=cy8yMCtHOXVjaDFpaTFxZDVNNGh2QT09", zoomId: "322 679 6758", zoomPw: "newseoul",
     sender: "박정윤",
   });
@@ -156,6 +156,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
     speaker: f.speaker ? `${whoOf(f.program)} : ${f.speaker}` : "",
     dateLine: f.date ? `${fmtPosterDate(f.date)} 오전 7시` : "",
     modeLabel: modeL(f.mode),
+    place: f.mode === "offline" ? (f.place || "") : "",
   };
 
   return (
