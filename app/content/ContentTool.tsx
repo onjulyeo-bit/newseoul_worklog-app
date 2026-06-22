@@ -19,8 +19,8 @@ const LABEL: Record<string, string> = { 예배: "설교", 포럼: "발제", 특�
 const secOf = (p: string) => SECTION[p] ?? "모임";
 const whoOf = (p: string) => LABEL[p] ?? "발제";
 
-const ORDER_OFFLINE = ["개회", "여는 기도", "허깅 인사", "찬양", "말씀·설교", "소그룹 나눔", "삼겹줄 기도", "조별 발표", "합심·마침 기도", "광고", "폐회"];
-const ORDER_ONLINE = ["개회", "여는 기도", "찬양", "말씀·설교", "소그룹 나눔(소회의실)", "삼겹줄 기도", "합심·마침 기도", "광고", "폐회"];
+const ORDER_OFFLINE = ["개회 — 다같이", "여는 기도 — 사회자", "허깅 — 다같이", "찬양 — 다같이", "말씀·설교", "소그룹 및 기도제목 나눔", "조별 발표", "합심·마침 기도 — 발제자", "광고 — 총무", "폐회 — 사회자"];
+const ORDER_ONLINE = ["개회 — 다같이", "여는 기도 — 사회자", "찬양 — 다같이", "말씀·설교", "소그룹 및 기도제목 나눔 (소회의실)", "조별 발표", "합심·마침 기도 — 발제자", "광고 — 총무", "폐회 — 사회자"];
 
 type Form = {
   session: string; mode: "online" | "offline"; program: string; date: string;
@@ -94,24 +94,16 @@ function buildOrderMd(f: Form) {
   return t;
 }
 // 강사·목사·회원에게 보내는 자료 요청 메시지
-function deadlineMon(date: string) {
-  if (!date) return "";
-  const t = new Date(date + "T00:00");
-  t.setDate(t.getDate() - 4); // 금요일 모임 → 그 주 월요일
-  return `${t.getMonth() + 1}월 ${t.getDate()}일(${DAYS[t.getDay()]})`;
-}
-function buildRequest(f: Form, sender: string) {
+function buildRequest(_f: Form, sender: string) {
   const who = sender.trim() || "○○○";
-  const sess = f.session !== "" ? `${f.session}회 ` : "";
-  const when = f.date ? `${fmtDate(f.date)} ` : "";
-  const dl = deadlineMon(f.date);
   return (
-    `새서울지회 간사 ${who} 입니다~^^\n` +
-    `${sess}${when}모임 관련 안내드립니다.\n\n` +
-    `이번 주 강의제목, 성경본문과 선정하신 찬양 공유 부탁드립니다.\n` +
-    `PPT 자료가 있으시면 파일로 전달 주시면 됩니다.\n` +
-    `찬양곡을 선정하지 않으시면 운영진이 정하겠습니다.\n\n` +
-    `화요일부터 광고가 나가기 때문에 ${dl ? dl + " " : "모임 주 월요일 "}오후까지 꼭 부탁드립니다. 🙏`
+    `안녕하세요, 새서울지회 간사 ${who}입니다. 😊\n\n` +
+    `다음 주 조찬모임 준비를 위해 연락드립니다.\n\n` +
+    `강의 제목, 성경 본문, 그리고 선정하신 찬양곡을 공유해 주시면 감사하겠습니다.\n` +
+    `PPT 자료가 있으신 경우 파일로 함께 전달 부탁드립니다.\n\n` +
+    `찬양곡을 별도로 선정하지 않으시면 운영진에서 준비하도록 하겠습니다.\n\n` +
+    `화요일부터 광고가 진행될 예정이므로, 가능하시면 월요일 오후까지 회신 부탁드립니다. 🙏\n\n` +
+    `오늘도 평안하고 좋은 하루 보내세요.\n감사합니다.`
   );
 }
 
