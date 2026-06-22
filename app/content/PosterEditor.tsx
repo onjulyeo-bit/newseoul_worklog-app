@@ -4,6 +4,13 @@
 // 레이아웃(틀) 선택 + CBMC 로고(항상 포함) + 배경(테마/AI). 글자는 항상 정확히 렌더(한글 안 깨짐).
 import { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
+
+// PNG 내보내기 옵션 — 확대(transform) 무시하고 원본 크기로, 중심 가이드선은 제외.
+const EXPORT_OPTS = (pixelRatio: number) => ({
+  pixelRatio, cacheBust: true, skipFonts: true,
+  style: { transform: "none", transformOrigin: "top left" },
+  filter: (n: HTMLElement) => !(n instanceof HTMLElement && n.dataset && n.dataset.guide === "1"),
+});
 import { createClient } from "@/lib/supabase/client";
 
 export type Seed = {
@@ -119,6 +126,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
   const [bgTab, setBgTab] = useState<"lib" | "stock" | "ai" | "theme">("lib");
   const [bgColor, setBgColor] = useState(""); // 직접 고른 단색 (있으면 테마 그라데이션 대신 사용)
   const [zoom, setZoom] = useState(1); // 편집 캔버스 확대 배율
+  const [guide, setGuide] = useState(true); // 중심 가이드선(편집용, 내보내기 제외)
 
   const posterRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
@@ -276,7 +284,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
     setSel(null); setSaving(true);
     await new Promise((r) => setTimeout(r, 60));
     try {
-      const url = await toPng(posterRef.current, { pixelRatio: 3, cacheBust: true, skipFonts: true });
+      const url = await toPng(posterRef.current, EXPORT_OPTS(3));
       const a = document.createElement("a"); a.href = url; a.download = `포스터_새서울CBMC.png`; a.click();
     } catch { alert("이미지 저장 실패"); } finally { setSaving(false); }
   }
@@ -293,7 +301,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
       if (posterRef.current) {
         setSel(null);
         await new Promise((r) => setTimeout(r, 80));
-        const dataUrl = await toPng(posterRef.current, { pixelRatio: 2, cacheBust: true, skipFonts: true });
+        const dataUrl = await toPng(posterRef.current, EXPORT_OPTS(2));
         const blob = await (await fetch(dataUrl)).blob();
         const fname = `poster_${crypto.randomUUID()}.png`;
         const { error: upErr } = await supabase.storage.from("posters").upload(fname, blob, { contentType: "image/png" });
@@ -330,6 +338,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
             {([["기본", 1], ["크게", 1.5], ["더크게", 2]] as const).map(([l, z]) => (
               <button key={l} onClick={() => setZoom(z)} className={`rounded-full px-3 py-1 text-[12px] font-semibold ${zoom === z ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`}>{l}</button>
             ))}
+            <button onClick={() => setGuide((v) => !v)} className={`ml-1 rounded-full px-3 py-1 text-[12px] font-semibold ${guide ? "bg-primary text-white" : "border border-line text-ink-soft hover:border-primary"}`} title="중심 가이드선(저장 시 제외)">＋ 중심선</button>
           </div>
           {/* 스케일 래퍼(레이아웃 공간 확보) — posterRef 자체는 320px 유지(드래그·내보내기 일관) */}
           <div className="mx-auto" style={{ width: 320 * zoom, height: 320 * zoom * 4 / 3, maxWidth: "100%" }}>
@@ -341,6 +350,12 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
               className="relative aspect-[3/4] select-none overflow-hidden rounded-[14px]"
               style={{ width: 320, transform: `scale(${zoom})`, transformOrigin: "top left", background: bgColor || THEMES[theme].bg, touchAction: "none" }}
             >
+            {guide && (
+              <div data-guide="1" className="pointer-events-none absolute inset-0" style={{ zIndex: 60 }}>
+                <div className="absolute top-0 bottom-0" style={{ left: "50%", width: 1, transform: "translateX(-0.5px)", background: "rgba(255,64,64,.55)" }} />
+                <div className="absolute left-0 right-0" style={{ top: "50%", height: 1, transform: "translateY(-0.5px)", background: "rgba(255,64,64,.55)" }} />
+              </div>
+            )}
             {bgImage && (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
