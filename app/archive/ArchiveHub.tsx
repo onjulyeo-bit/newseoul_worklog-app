@@ -16,7 +16,7 @@ export default function ArchiveHub({ counts, isAdmin }: { counts: Record<string,
       <style>{ARC_CSS}</style>
       <div className="arc-wrap">
         <h1 className="arc-h1">새서울 CBMC 아카이브</h1>
-        <p className="arc-sub">연혁·역대 지회장·행사 사진·입회 안내·자료실·중앙회 소개를 한곳에 모았어요.</p>
+        <p className="arc-sub">연혁·역대 지회장·행사 사진·자료실·중앙회 소개를 한곳에 모았어요.</p>
 
         <div className="arc-grid">
           {SECTIONS.map((s) => {
