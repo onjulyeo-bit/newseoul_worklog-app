@@ -147,6 +147,20 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   const [orderEdit, setOrderEdit] = useState<string | null>(null);
   const [requestEdit, setRequestEdit] = useState<string | null>(null);
   const [mdCopied, setMdCopied] = useState(false);
+  // 찬양 유튜브 추천
+  const [ytItems, setYtItems] = useState<{ title: string; channel: string; url: string }[] | null>(null);
+  const [ytBusy, setYtBusy] = useState(false);
+  const [ytErr, setYtErr] = useState("");
+  async function searchYoutube() {
+    if (!f.praiseTitle.trim()) { setYtErr("찬양 제목을 먼저 입력해 주세요."); return; }
+    setYtBusy(true); setYtErr(""); setYtItems(null);
+    try {
+      const r = await fetch("/api/youtube-search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: f.praiseTitle }) });
+      const j = await r.json();
+      if (!r.ok) { setYtErr(j.needKey ? "유튜브 API 키 설정이 필요해요(운영자에게 문의)." : (j.error || "검색 실패")); return; }
+      setYtItems(j.items ?? []);
+    } catch { setYtErr("검색 중 오류가 났어요."); } finally { setYtBusy(false); }
+  }
   const noticeVal = noticeEdit ?? buildNotice(f);
   const orderVal = orderEdit ?? buildOrder(f);
   const requestVal = requestEdit ?? buildRequest(f, f.sender);
@@ -212,6 +226,22 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
             <div className="grid grid-cols-2 gap-3">
               <div><label className={lab}>찬양 제목</label><input value={f.praiseTitle} onChange={(e) => set("praiseTitle", e.target.value)} placeholder="하나님의 음성을" className={inp} /></div>
               <div><label className={lab}>찬양 구절</label><input value={f.praiseVerse} onChange={(e) => set("praiseVerse", e.target.value)} placeholder="시40편" className={inp} /></div>
+            </div>
+            <div>
+              <button onClick={searchYoutube} disabled={ytBusy} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3.5 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary disabled:opacity-50">{ytBusy ? "검색 중…" : "🎵 유튜브 추천 (4분 이내 2곡)"}</button>
+              {ytErr && <p className="mt-1.5 text-[13px] font-semibold text-unpaid">{ytErr}</p>}
+              {ytItems && (ytItems.length === 0 ? (
+                <p className="mt-1.5 text-[13px] text-ink-soft">결과가 없어요. 제목을 바꿔 다시 검색해 보세요.</p>
+              ) : (
+                <ul className="mt-2 flex flex-col gap-1.5">
+                  {ytItems.map((v, i) => (
+                    <li key={i} className="rounded-lg border border-line bg-surface-soft px-3 py-2">
+                      <a href={v.url} target="_blank" rel="noreferrer" className="text-[13.5px] font-semibold text-primary hover:underline">▶ {v.title}</a>
+                      <div className="text-[12px] text-ink-soft">{v.channel} · <span className="font-mono">{v.url}</span></div>
+                    </li>
+                  ))}
+                </ul>
+              ))}
             </div>
             <div><label className={lab}>소그룹 토의주제 (한 줄에 하나)</label><textarea value={f.discussion} onChange={(e) => set("discussion", e.target.value)} placeholder={"최근 나는 무엇에 마음을 빼앗기나요?\n스크루테이프가 내 삶을 분석한다면…?"} className={`${inp} min-h-[80px] py-2`} /></div>
 
