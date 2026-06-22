@@ -107,16 +107,22 @@ function buildRequest(_f: Form, sender: string) {
   );
 }
 
-function CopyBox({ label, text }: { label: string; text: string }) {
+// 편집 가능한 결과 박스 — 자동 생성된 글을 직접 고칠 수 있고, '↻ 자동'으로 되돌림.
+function CopyBox({ label, value, edited, onChange, onReset }: { label: string; value: string; edited?: boolean; onChange?: (v: string) => void; onReset?: () => void }) {
   const [c, setC] = useState(false);
+  const rows = Math.max(6, value.split("\n").length + 1);
   return (
     <div>
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="text-[14px] font-bold text-ink-soft">{label}</span>
-        <button onClick={async () => { try { await navigator.clipboard.writeText(text); setC(true); setTimeout(() => setC(false), 1800); } catch {} }}
-          className="rounded-full bg-primary px-3.5 py-1.5 text-[13px] font-semibold text-white hover:bg-primary-pressed">{c ? "✓ 복사됨" : "📋 복사"}</button>
+        <div className="flex items-center gap-1.5">
+          {edited && onReset && <button onClick={onReset} className="rounded-full border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-soft hover:border-primary hover:text-primary">↻ 자동</button>}
+          <button onClick={async () => { try { await navigator.clipboard.writeText(value); setC(true); setTimeout(() => setC(false), 1800); } catch {} }}
+            className="rounded-full bg-primary px-3.5 py-1.5 text-[13px] font-semibold text-white hover:bg-primary-pressed">{c ? "✓ 복사됨" : "📋 복사"}</button>
+        </div>
       </div>
-      <pre className="whitespace-pre-wrap rounded-lg border border-[#2c3654] bg-navy p-4 font-sans text-[14px] leading-relaxed text-on-dark">{text || "정보를 입력하면 자동으로 만들어집니다."}</pre>
+      <textarea value={value} onChange={(e) => onChange?.(e.target.value)} rows={rows} placeholder="정보를 입력하면 자동으로 만들어집니다. 직접 고칠 수도 있어요."
+        className="w-full resize-y whitespace-pre-wrap rounded-lg border border-[#2c3654] bg-navy p-4 font-sans text-[14px] leading-relaxed text-on-dark outline-none focus:border-primary-focus" />
     </div>
   );
 }
@@ -132,6 +138,14 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
     sender: "박정윤",
   });
   const set = (k: keyof Form, v: string) => setF((s) => ({ ...s, [k]: v }));
+
+  // 결과 글 편집 — null이면 자동 생성(폼 따라 갱신), 문자열이면 사용자가 고친 값.
+  const [noticeEdit, setNoticeEdit] = useState<string | null>(null);
+  const [orderEdit, setOrderEdit] = useState<string | null>(null);
+  const [requestEdit, setRequestEdit] = useState<string | null>(null);
+  const noticeVal = noticeEdit ?? buildNotice(f);
+  const orderVal = orderEdit ?? buildOrder(f);
+  const requestVal = requestEdit ?? buildRequest(f, f.sender);
 
   const pickMeeting = (id: string) => {
     const m = meetings.find((x) => x.id === id);
@@ -217,15 +231,15 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
 
         {/* 카톡 글 */}
         <div className="flex flex-col gap-6">
-          <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm"><CopyBox label="📣 카톡 공지글" text={buildNotice(f)} /></div>
+          <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm"><CopyBox label="📣 카톡 공지글" value={noticeVal} edited={noticeEdit !== null} onChange={setNoticeEdit} onReset={() => setNoticeEdit(null)} /></div>
           <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
-            <CopyBox label={`📋 진행 순서지 (${modeL(f.mode)})`} text={buildOrder(f)} />
-            <button onClick={() => downloadMd(`진행순서_${f.session || ""}회.md`, buildOrderMd(f))} className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3.5 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📥 노션용(.md) 저장</button>
+            <CopyBox label={`📋 진행 순서지 (${modeL(f.mode)})`} value={orderVal} edited={orderEdit !== null} onChange={setOrderEdit} onReset={() => setOrderEdit(null)} />
+            <button onClick={() => downloadMd(`진행순서_${f.session || ""}회.md`, orderEdit !== null ? orderVal : buildOrderMd(f))} className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3.5 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📥 노션용(.md) 저장</button>
           </div>
           <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
             <div className="mb-2"><label className={lab}>보내는 사람 (간사)</label><input value={f.sender} onChange={(e) => set("sender", e.target.value)} placeholder="박정윤" className={inp} /></div>
-            <CopyBox label="✉️ 강사·목사·회원 자료 요청 메시지" text={buildRequest(f, f.sender)} />
-            <button onClick={async () => { const text = buildRequest(f, f.sender); try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); alert("복사됐어요. 카톡에서 강사님께 붙여넣어 보내세요."); } } catch {} }}
+            <CopyBox label="✉️ 강사·목사·회원 자료 요청 메시지" value={requestVal} edited={requestEdit !== null} onChange={setRequestEdit} onReset={() => setRequestEdit(null)} />
+            <button onClick={async () => { const text = requestVal; try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); alert("복사됐어요. 카톡에서 강사님께 붙여넣어 보내세요."); } } catch {} }}
               className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#fee500] px-4 py-2 text-[13.5px] font-bold text-[#191600] hover:opacity-90">📲 카톡 등으로 공유 (받는 사람 선택)</button>
             <p className="mt-1.5 text-[12px] text-ink-soft">공유를 누르면 휴대폰 공유창에서 <b>카카오톡</b>을 골라 강사님께 바로 보낼 수 있어요. (PC는 복사됩니다)</p>
           </div>
@@ -233,7 +247,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
       </div>
 
       {/* 포스터 편집기 (전체 폭) */}
-      <PosterEditor seed={seed} publish={{ title: `${f.session ? f.session + "회 " : ""}새서울 CBMC 모임${f.date ? " · " + fmtDate(f.date) : ""}`, body: buildNotice(f) }} />
+      <PosterEditor seed={seed} publish={{ title: `${f.session ? f.session + "회 " : ""}새서울 CBMC 모임${f.date ? " · " + fmtDate(f.date) : ""}`, body: noticeVal }} />
     </div>
   );
 }
