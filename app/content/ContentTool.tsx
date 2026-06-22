@@ -14,7 +14,7 @@ const modeL = (m: string) => (m === "online" ? "온라인" : "오프라인");
 
 // 형식(program)별 섹션 제목 + 진행자 라벨
 const PROGRAMS = ["예배", "포럼", "특강", "회만시", "기타"];
-const SECTION: Record<string, string> = { 예배: "예배", 포럼: "포럼 및 QT", 특강: "특강", 회만시: "회원이 만드는 시간", 기타: "모임" };
+const SECTION: Record<string, string> = { 예배: "예배", 포럼: "포럼", 특강: "특강", 회만시: "회원이 만드는 시간", 기타: "모임" };
 const LABEL: Record<string, string> = { 예배: "설교", 포럼: "발제", 특강: "강사", 회만시: "나눔", 기타: "발제" };
 const secOf = (p: string) => SECTION[p] ?? "모임";
 const whoOf = (p: string) => LABEL[p] ?? "발제";
