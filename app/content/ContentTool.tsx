@@ -87,10 +87,13 @@ function buildOrder(f: Form) {
   orderSteps(f).forEach((s, i) => { t += `${i + 1}. ${s}\n`; });
   return t;
 }
-// 노션 붙여넣기용 마크다운
+// 노션 붙여넣기용 마크다운 (구호·폐회 포함)
 function buildOrderMd(f: Form) {
-  let t = `## 진행순서 — ${f.session !== "" ? f.session + "회 " : ""}${fmtDate(f.date)} (${modeL(f.mode)})\n\n`;
+  const sess = f.session !== "" ? `${f.session}회 ` : "";
+  let t = `## 🏛 ${sess}새서울 CBMC 아름다운 만남\n\n`;
   orderSteps(f).forEach((s, i) => { t += `${i + 1}. ${s}\n`; });
+  t += `\n> **2026 새서울 구호**\n> 예수님께 속한, 새서울!\n> 사랑으로 하나되는, 새서울!\n> 성령님과 동행하는, 새서울!\n\n`;
+  t += `💝 ${sess}새서울 CBMC 아름다운 만남을 폐회합니다.\n`;
   return t;
 }
 // 강사·목사·회원에게 보내는 자료 요청 메시지
@@ -143,6 +146,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   const [noticeEdit, setNoticeEdit] = useState<string | null>(null);
   const [orderEdit, setOrderEdit] = useState<string | null>(null);
   const [requestEdit, setRequestEdit] = useState<string | null>(null);
+  const [mdCopied, setMdCopied] = useState(false);
   const noticeVal = noticeEdit ?? buildNotice(f);
   const orderVal = orderEdit ?? buildOrder(f);
   const requestVal = requestEdit ?? buildRequest(f, f.sender);
@@ -234,7 +238,10 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
           <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm"><CopyBox label="📣 카톡 공지글" value={noticeVal} edited={noticeEdit !== null} onChange={setNoticeEdit} onReset={() => setNoticeEdit(null)} /></div>
           <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
             <CopyBox label={`📋 진행 순서지 (${modeL(f.mode)})`} value={orderVal} edited={orderEdit !== null} onChange={setOrderEdit} onReset={() => setOrderEdit(null)} />
-            <button onClick={() => downloadMd(`진행순서_${f.session || ""}회.md`, orderEdit !== null ? orderVal : buildOrderMd(f))} className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3.5 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📥 노션용(.md) 저장</button>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button onClick={async () => { try { await navigator.clipboard.writeText(orderEdit !== null ? orderVal : buildOrderMd(f)); setMdCopied(true); setTimeout(() => setMdCopied(false), 1800); } catch {} }} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-[13px] font-semibold text-white hover:bg-primary-pressed">{mdCopied ? "✓ 복사됨 — 노션에 붙여넣기" : "📋 노션 복사"}</button>
+              <button onClick={() => downloadMd(`진행순서_${f.session || ""}회.md`, orderEdit !== null ? orderVal : buildOrderMd(f))} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3.5 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📥 .md 저장</button>
+            </div>
           </div>
           <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
             <div className="mb-2"><label className={lab}>보내는 사람 (간사)</label><input value={f.sender} onChange={(e) => set("sender", e.target.value)} placeholder="박정윤" className={inp} /></div>
