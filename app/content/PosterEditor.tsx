@@ -365,12 +365,18 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
                 {scrim && <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(to top, rgba(26,34,56,.85), rgba(26,34,56,.35) 55%, rgba(0,0,0,.2))" }} />}
               </>
             )}
-            {els.map((el) => (
+            {els.map((el) => {
+              // 가운데 정렬 글상자는 포스터 중심선에 자동 정렬(좌우 드래그 대신 항상 중앙)
+              const centered = el.kind === "text" && el.align === "center";
+              const wrapStyle: React.CSSProperties = centered
+                ? { left: "50%", top: `${el.y}%`, width: `${el.width}%`, transform: "translateX(-50%)" }
+                : { left: `${el.x}%`, top: `${el.y}%`, width: `${el.width}%` };
+              return (
               <div
                 key={el.id}
                 onPointerDown={(e) => onDown(e, el)}
                 className={`absolute cursor-move ${sel === el.id ? "outline outline-2 outline-primary" : ""}`}
-                style={{ left: `${el.x}%`, top: `${el.y}%`, width: `${el.width}%` }}
+                style={wrapStyle}
               >
                 {el.kind === "logo" ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -385,7 +391,8 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -595,7 +602,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
                   <div><label className={miniLab}>행간 {cur.lineHeight.toFixed(2)}</label><input type="range" min={0.9} max={2.2} step={0.05} value={cur.lineHeight} onChange={(e) => upd(cur.id, { lineHeight: +e.target.value })} className={rng} /></div>
                   <div><label className={miniLab}>자간 {cur.letterSpacing}px</label><input type="range" min={-2} max={12} step={0.5} value={cur.letterSpacing} onChange={(e) => upd(cur.id, { letterSpacing: +e.target.value })} className={rng} /></div>
                 </div>
-                <div className="mt-2"><label className={miniLab}>글상자 너비 {cur.width}%</label><input type="range" min={20} max={96} value={cur.width} onChange={(e) => upd(cur.id, { width: +e.target.value })} className={rng} /></div>
+                <div className="mt-2"><label className={miniLab}>글상자 너비 {cur.width}%</label><input type="range" min={20} max={100} value={cur.width} onChange={(e) => upd(cur.id, { width: +e.target.value })} className={rng} /></div>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div>
                     <label className={miniLab}>굵기</label>

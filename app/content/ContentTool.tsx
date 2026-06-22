@@ -97,7 +97,7 @@ function buildOrderMd(f: Form) {
 function buildRequest(_f: Form, sender: string) {
   const who = sender.trim() || "○○○";
   return (
-    `안녕하세요, 새서울지회 간사 ${who}입니다. 😊\n\n` +
+    `안녕하세요, 새서울 CBMC 간사 ${who}입니다. 😊\n\n` +
     `다음 주 조찬모임 준비를 위해 연락드립니다.\n\n` +
     `강의 제목, 성경 본문, 그리고 선정하신 찬양곡을 공유해 주시면 감사하겠습니다.\n` +
     `PPT 자료가 있으신 경우 파일로 함께 전달 부탁드립니다.\n\n` +
