@@ -26,7 +26,15 @@ type Form = {
   session: string; mode: "online" | "offline"; program: string; date: string;
   title: string; verse: string; speaker: string; praiseTitle: string; praiseVerse: string; discussion: string;
   place: string; fee: string; account: string; zoomLink: string; zoomId: string; zoomPw: string;
+  sender: string;
 };
+
+function downloadMd(name: string, text: string) {
+  const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
 
 function buildNotice(f: Form) {
   const sess = f.session !== "" ? `${f.session}회 ` : "";
@@ -64,15 +72,47 @@ function buildNotice(f: Form) {
   }
   return t;
 }
-function buildOrder(f: Form) {
-  const steps = f.mode === "online" ? ORDER_ONLINE : ORDER_OFFLINE;
-  let t = `📋 진행순서 — ${f.session !== "" ? f.session + "회 " : ""}${fmtDate(f.date)} (${modeL(f.mode)})\n\n`;
-  steps.forEach((s, i) => {
-    let line = `${i + 1}. ${s}`;
-    if (s === "말씀·설교" && f.speaker) line += ` — ${f.speaker}`;
-    t += line + "\n";
+// 형식별 본문 순서 라벨
+const MAINSTEP: Record<string, string> = { 예배: "말씀·설교", 포럼: "포럼·발제", 특강: "특강 강의", 회만시: "회원 나눔", 기타: "말씀" };
+const orderSteps = (f: Form) => {
+  const base = f.mode === "online" ? ORDER_ONLINE : ORDER_OFFLINE;
+  const main = MAINSTEP[f.program] ?? "말씀·설교";
+  return base.map((s) => {
+    if (s !== "말씀·설교") return s;
+    return main + (f.speaker ? ` — ${f.speaker}` : "");
   });
+};
+function buildOrder(f: Form) {
+  let t = `📋 진행순서 — ${f.session !== "" ? f.session + "회 " : ""}${fmtDate(f.date)} (${modeL(f.mode)})\n\n`;
+  orderSteps(f).forEach((s, i) => { t += `${i + 1}. ${s}\n`; });
   return t;
+}
+// 노션 붙여넣기용 마크다운
+function buildOrderMd(f: Form) {
+  let t = `## 진행순서 — ${f.session !== "" ? f.session + "회 " : ""}${fmtDate(f.date)} (${modeL(f.mode)})\n\n`;
+  orderSteps(f).forEach((s, i) => { t += `${i + 1}. ${s}\n`; });
+  return t;
+}
+// 강사·목사·회원에게 보내는 자료 요청 메시지
+function deadlineMon(date: string) {
+  if (!date) return "";
+  const t = new Date(date + "T00:00");
+  t.setDate(t.getDate() - 4); // 금요일 모임 → 그 주 월요일
+  return `${t.getMonth() + 1}월 ${t.getDate()}일(${DAYS[t.getDay()]})`;
+}
+function buildRequest(f: Form, sender: string) {
+  const who = sender.trim() || "○○○";
+  const sess = f.session !== "" ? `${f.session}회 ` : "";
+  const when = f.date ? `${fmtDate(f.date)} ` : "";
+  const dl = deadlineMon(f.date);
+  return (
+    `새서울지회 간사 ${who} 입니다~^^\n` +
+    `${sess}${when}모임 관련 안내드립니다.\n\n` +
+    `이번 주 강의제목, 성경본문과 선정하신 찬양 공유 부탁드립니다.\n` +
+    `PPT 자료가 있으시면 파일로 전달 주시면 됩니다.\n` +
+    `찬양곡을 선정하지 않으시면 운영진이 정하겠습니다.\n\n` +
+    `화요일부터 광고가 나가기 때문에 ${dl ? dl + " " : "모임 주 월요일 "}오후까지 꼭 부탁드립니다. 🙏`
+  );
 }
 
 function CopyBox({ label, text }: { label: string; text: string }) {
@@ -97,6 +137,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
     session: "", mode: "online", program: "예배", date: "", title: "", verse: "", speaker: "",
     praiseTitle: "", praiseVerse: "", discussion: "", place: "충현교회", fee: "", account: "",
     zoomLink: "https://us06web.zoom.us/j/3226796758?pwd=cy8yMCtHOXVjaDFpaTFxZDVNNGh2QT09", zoomId: "322 679 6758", zoomPw: "newseoul",
+    sender: "박정윤",
   });
   const set = (k: keyof Form, v: string) => setF((s) => ({ ...s, [k]: v }));
 
@@ -184,7 +225,14 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
         {/* 카톡 글 */}
         <div className="flex flex-col gap-6">
           <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm"><CopyBox label="📣 카톡 공지글" text={buildNotice(f)} /></div>
-          <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm"><CopyBox label={`📋 진행 순서지 (${modeL(f.mode)})`} text={buildOrder(f)} /></div>
+          <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
+            <CopyBox label={`📋 진행 순서지 (${modeL(f.mode)})`} text={buildOrder(f)} />
+            <button onClick={() => downloadMd(`진행순서_${f.session || ""}회.md`, buildOrderMd(f))} className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3.5 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-primary hover:text-primary">📥 노션용(.md) 저장</button>
+          </div>
+          <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
+            <div className="mb-2"><label className={lab}>보내는 사람 (간사)</label><input value={f.sender} onChange={(e) => set("sender", e.target.value)} placeholder="박정윤" className={inp} /></div>
+            <CopyBox label="✉️ 강사·목사·회원 자료 요청 메시지" text={buildRequest(f, f.sender)} />
+          </div>
         </div>
       </div>
 
