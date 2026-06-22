@@ -22,6 +22,8 @@ export default function InstructorFormPage() {
 
   async function submit() {
     if (!f.name.trim()) { setErr("성함을 입력해 주세요."); return; }
+    if (!f.phone.trim()) { setErr("연락처를 입력해 주세요."); return; }
+    if (!f.email.trim()) { setErr("이메일을 입력해 주세요."); return; }
     setBusy(true); setErr("");
     const { data, error } = await supabase.rpc("instructor_self_upsert", {
       p_name: f.name.trim(), p_phone: f.phone, p_email: f.email, p_company: f.company,
@@ -59,8 +61,8 @@ export default function InstructorFormPage() {
   }
 
   const FIELDS: [keyof Form, string, string][] = [
-    ["phone", "연락처", "010-0000-0000"],
-    ["email", "이메일", ""],
+    ["phone", "연락처 *", "010-0000-0000"],
+    ["email", "이메일 *", ""],
     ["company", "소속 / 회사", "○○대 / ○○회사"],
     ["position", "직위 / 직함", "교수 / 대표"],
     ["field", "전문분야 · 강의 주제", "리더십 / 신앙간증"],
@@ -74,8 +76,7 @@ export default function InstructorFormPage() {
           <span className="lf-mark">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/cbmc-symbol.webp" alt="CBMC" /></span>
           <span className="lf-bname">CBMC <span className="lf-dim">새서울지회</span></span>
         </div>
-        <h1 className="lf-h1">내 정보 입력</h1>
-        <span className="lf-badge">강사 전용</span>
+        <h1 className="lf-h1">강사님 소개</h1>
 
         {done ? (
           <div className="lf-done">
@@ -85,7 +86,7 @@ export default function InstructorFormPage() {
             <button className="lf-ghost" onClick={() => { setF(BLANK); setDone(false); }}>다시 작성</button>
           </div>
         ) : (<>
-          <p className="lf-sub">강사님 정보를 직접 입력해 주세요. 새서울 CBMC 운영에 소중히 쓰입니다.</p>
+          <p className="lf-sub">귀한 걸음으로 섬겨 주셔서 감사합니다. 아래 정보를 남겨 주시면 정성껏 모시는 데 쓰겠습니다.</p>
 
           <div className="lf-photo-sec">
             {f.photo_url ? (
@@ -105,10 +106,10 @@ export default function InstructorFormPage() {
             <div key={k}><label className="lf-l">{lbl}</label><input className="lf-inp" value={f[k] as string} onChange={(e) => set(k, e.target.value as never)} placeholder={ph} /></div>
           ))}
 
-          <label className="lf-l">자기소개</label>
+          <label className="lf-l">자기소개 <span className="lf-opt">(선택)</span></label>
           <textarea className="lf-inp lf-ta" value={f.intro} onChange={(e) => set("intro", e.target.value)} placeholder={INTRO_EXAMPLE} />
 
-          <label className="lf-l">명함 이미지</label>
+          <label className="lf-l">명함 이미지 <span className="lf-opt">(선택)</span></label>
           {f.business_card_url ? (
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -147,6 +148,7 @@ const CSS = `
 .lf-photo-ph{ display:grid; place-items:center; background:#f1f2f4; color:#86868b; font-size:38px; font-weight:800; }
 .lf-photo-acts{ display:flex; gap:8px; justify-content:center; }
 .lf-l{ display:block; font-size:14px; font-weight:700; color:#3d424d; margin:14px 0 6px; }
+.lf-opt{ font-weight:500; color:#9a9fa8; font-size:13px; }
 .lf-inp{ width:100%; font-size:17px; padding:13px 14px; border:1px solid #ecedf0; border-radius:12px; outline:none; background:#fafafb; font-family:inherit; }
 .lf-inp:focus{ border-color:#003ecc; background:#fff; }
 .lf-ta{ min-height:88px; resize:vertical; line-height:1.6; }
