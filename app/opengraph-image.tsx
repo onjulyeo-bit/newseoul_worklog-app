@@ -18,7 +18,7 @@ export default async function Image() {
 
   let logo = "";
   try {
-    const buf = await readFile(path.join(process.cwd(), "public/cbmc-symbol.png"));
+    const buf = await readFile(path.join(process.cwd(), "public/cbmc-mark.png"));
     logo = `data:image/png;base64,${buf.toString("base64")}`;
   } catch { logo = ""; }
 
@@ -26,7 +26,7 @@ export default async function Image() {
     (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", background: "#ffffff", fontFamily: fonts ? "Pretendard" : "sans-serif" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {logo && <img src={logo} alt="CBMC" width={300} style={{ objectFit: "contain", marginBottom: 44 }} />}
+        {logo && <img src={logo} alt="CBMC" width={170} style={{ objectFit: "contain", marginBottom: 40 }} />}
         <div style={{ fontSize: 60, fontWeight: 700, color: "#16181d", letterSpacing: -2 }}>새서울지회 · 아름다운 만남</div>
         <div style={{ fontSize: 34, color: "#5b616b", marginTop: 22, letterSpacing: -1 }}>환영합니다. 축복합니다. 카카오 로그인하세요</div>
       </div>
