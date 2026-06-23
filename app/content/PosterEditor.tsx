@@ -29,26 +29,19 @@ type El = {
 };
 
 const FONTS = [
-  { key: "pretendard", label: "기본(프리텐다드)", css: "'Pretendard', sans-serif" },
-  { key: "nanumgothic", label: "나눔고딕", css: "'Nanum Gothic', sans-serif" },
-  { key: "gowdodum", label: "고운돋움", css: "'Gowun Dodum', sans-serif" },
-  { key: "dohyeon", label: "도현(굵은고딕)", css: "'Do Hyeon', sans-serif" },
-  { key: "blackhan", label: "검은고딕(굵은제목)", css: "'Black Han Sans', sans-serif" },
-  { key: "jua", label: "주아(둥근제목)", css: "'Jua', sans-serif" },
-  { key: "sunflower", label: "선플라워(둥근굵게)", css: "'Sunflower', sans-serif" },
-  { key: "stylish", label: "스타일리시(가는고딕)", css: "'Stylish', sans-serif" },
-  { key: "myeongjo", label: "나눔명조", css: "'Nanum Myeongjo', serif" },
-  { key: "songmyung", label: "송명(고전명조)", css: "'Song Myung', serif" },
+  { key: "pretendard", label: "프리텐다드", css: "'Pretendard', sans-serif" },
+  { key: "paperlogy", label: "페이퍼로지", css: "'Paperlogy', sans-serif" },
+  { key: "gmarket", label: "G마켓 산스", css: "'Gmarket Sans', sans-serif" },
+  { key: "score", label: "에스코어드림", css: "'S-Core Dream', sans-serif" },
+  { key: "nanumsquare", label: "나눔스퀘어", css: "'Nanum Square', sans-serif" },
+  { key: "aggro", label: "어그로체", css: "'Aggro', sans-serif" },
+  { key: "freesentation", label: "프리젠테이션", css: "'Freesentation', sans-serif" },
+  { key: "chosungulim", label: "조선굴림체", css: "'ChosunGu', sans-serif" },
+  { key: "a2z", label: "에이투지체", css: "'A2Z', sans-serif" },
+  { key: "maruburi", label: "마루 부리", css: "'Maru Buri', serif" },
+  { key: "corncorn", label: "온글잎 콘콘체", css: "'Ownglyph CornCorn', cursive" },
   { key: "gowbatang", label: "고운바탕", css: "'Gowun Batang', serif" },
-  { key: "notoserif", label: "노토명조", css: "'Noto Serif KR', serif" },
-  { key: "gaegu", label: "개구(손글씨)", css: "'Gaegu', cursive" },
-  { key: "pen", label: "나눔펜(펜글씨)", css: "'Nanum Pen Script', cursive" },
-  { key: "gamja", label: "감자꽃(귀여운)", css: "'Gamja Flower', cursive" },
-  { key: "hi", label: "하이멜로디(말랑)", css: "'Hi Melody', cursive" },
-  { key: "poorstory", label: "또박또박", css: "'Poor Story', cursive" },
-  { key: "kirang", label: "기랑해랑(붓)", css: "'Kirang Haerang', cursive" },
-  { key: "dongle", label: "동글(둥근손글씨)", css: "'Dongle', sans-serif" },
-  { key: "yeonsung", label: "연성(붓글씨)", css: "'Yeon Sung', cursive" },
+  { key: "recipekorea", label: "레코체", css: "'Recipekorea', sans-serif" },
 ];
 const fontCss = (k: string) => FONTS.find((f) => f.key === k)?.css ?? FONTS[0].css;
 
@@ -78,21 +71,21 @@ const ROLE_ORDER: Role[] = ["headline", "category", "title", "verse", "speaker",
 // 레이아웃(틀)별 각 역할의 기본 위치·스타일
 const SPECS: Record<string, Record<Role, Partial<El>>> = {
   center: {
-    headline: { y: 4, x: 5, width: 90, align: "center", fontSize: 17, weight: 700 },
-    category: { y: 21, x: 5, width: 90, align: "center", fontSize: 18, weight: 700, color: "#eef3ff" },
-    title: { y: 31, x: 5, width: 90, align: "center", fontSize: 30, weight: 800, lineHeight: 1.15, font: "dohyeon" },
-    verse: { y: 55, x: 5, width: 90, align: "center", fontSize: 17, weight: 700 },
-    speaker: { y: 65, x: 5, width: 90, align: "center", fontSize: 19, weight: 800 },
-    dateLine: { y: 70, x: 5, width: 90, align: "center", fontSize: 20, weight: 800 },
-    modeLabel: { y: 77, x: 5, width: 90, align: "center", fontSize: 17, weight: 700 },
-    host: { y: 84, x: 5, width: 90, align: "center", fontSize: 15, weight: 700, color: "#dbe3f2" },
-    place: { y: 90, x: 5, width: 90, align: "center", fontSize: 14, weight: 700, color: "#dbe3f2" },
+    headline: { y: 4, x: 50, width: 90, align: "center", fontSize: 17, weight: 700 },
+    category: { y: 21, x: 50, width: 90, align: "center", fontSize: 18, weight: 700, color: "#eef3ff" },
+    title: { y: 31, x: 50, width: 90, align: "center", fontSize: 30, weight: 800, lineHeight: 1.15, font: "paperlogy" },
+    verse: { y: 55, x: 50, width: 90, align: "center", fontSize: 17, weight: 700 },
+    speaker: { y: 65, x: 50, width: 90, align: "center", fontSize: 19, weight: 800 },
+    dateLine: { y: 70, x: 50, width: 90, align: "center", fontSize: 20, weight: 800 },
+    modeLabel: { y: 77, x: 50, width: 90, align: "center", fontSize: 17, weight: 700 },
+    host: { y: 84, x: 50, width: 90, align: "center", fontSize: 15, weight: 700, color: "#dbe3f2" },
+    place: { y: 90, x: 50, width: 90, align: "center", fontSize: 14, weight: 700, color: "#dbe3f2" },
   },
   left: {
     headline: { x: 8, y: 8, width: 84, align: "left", fontSize: 17, weight: 700 },
     category: { x: 8, y: 14, width: 84, align: "left", fontSize: 12, weight: 700, color: "#9db8e8", letterSpacing: 1 },
     title: { x: 8, y: 54, width: 84, align: "left", fontSize: 26, weight: 800, lineHeight: 1.2 },
-    verse: { x: 8, y: 72, width: 84, align: "left", fontSize: 14, font: "myeongjo", color: "#dbe3f2" },
+    verse: { x: 8, y: 72, width: 84, align: "left", fontSize: 14, font: "gowbatang", color: "#dbe3f2" },
     speaker: { x: 8, y: 76, width: 84, align: "left", fontSize: 15, weight: 700, color: "#9db8e8" },
     host: { x: 8, y: 82, width: 84, align: "left", fontSize: 13, weight: 700, color: "#9db8e8" },
     dateLine: { x: 8, y: 87, width: 84, align: "left", fontSize: 15, weight: 700 },
@@ -169,12 +162,16 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
     if (!d || !rect) return;
     const dx = ((e.clientX - d.sx) / rect.width) * 100;
     const dy = ((e.clientY - d.sy) / rect.height) * 100;
-    upd(d.id, { x: Math.max(-5, Math.min(95, d.ox + dx)), y: Math.max(-3, Math.min(99, d.oy + dy)) });
+    let nx = Math.max(-5, Math.min(100, d.ox + dx));
+    // 가운데 정렬 글상자는 중심선(50%) 근처에서 딱 맞도록 자석 스냅
+    const el = els.find((x) => x.id === d.id);
+    if (el && el.kind === "text" && el.align === "center" && Math.abs(nx - 50) < 2.2) nx = 50;
+    upd(d.id, { x: nx, y: Math.max(-3, Math.min(99, d.oy + dy)) });
   }
   function onUp() { dragRef.current = null; }
 
   function addText() {
-    const el: El = { id: nid(), kind: "text", text: "새 글자", x: 20, y: 45, width: 60, fontSize: 18, font: "pretendard", weight: 700, color: "#ffffff", align: "center", lineHeight: 1.25, letterSpacing: 0 };
+    const el: El = { id: nid(), kind: "text", text: "새 글자", x: 50, y: 45, width: 60, fontSize: 18, font: "pretendard", weight: 700, color: "#ffffff", align: "center", lineHeight: 1.25, letterSpacing: 0 };
     setEls((p) => [...p, el]); setSel(el.id);
   }
   function addLogo() { const el = logoEl({ x: 40, y: 45 }); setEls((p) => [...p, el]); setSel(el.id); }
@@ -369,9 +366,10 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
             )}
             {els.map((el) => {
               // 가운데 정렬 글상자는 포스터 중심선에 자동 정렬(좌우 드래그 대신 항상 중앙)
+              // 가운데 정렬 글상자는 'el.x'를 중심점으로 사용 → 중앙이 기본이되 좌우로 드래그 이동 가능
               const centered = el.kind === "text" && el.align === "center";
               const wrapStyle: React.CSSProperties = centered
-                ? { left: "50%", top: `${el.y}%`, width: `${el.width}%`, transform: "translateX(-50%)" }
+                ? { left: `${el.x}%`, top: `${el.y}%`, width: `${el.width}%`, transform: "translateX(-50%)" }
                 : { left: `${el.x}%`, top: `${el.y}%`, width: `${el.width}%` };
               return (
               <div
