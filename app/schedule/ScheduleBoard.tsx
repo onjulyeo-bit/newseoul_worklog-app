@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ChevronDown, Sparkles, Save, Upload, Download, Calendar, Star, Trash2, MapPin, Image as ImageIcon, Film, X, Paperclip } from "lucide-react";
 import { useCanEdit } from "@/lib/useCanEdit";
 
-export type ExistingRow = { date: string; session: number | null; mode: string; title: string; speaker: string; host: string; note: string; program: string };
+export type ExistingRow = { date: string; session: number | null; mode: string; title: string; speaker: string; host: string; verse: string; praise: string; note: string; program: string };
 export type EventRow = { id: string; title: string; date: string; end_date: string | null; type: string | null; location: string | null; link: string | null };
 export type MediaMap = Record<string, { poster: string | null; posterManual: string | null; recording: string | null }>;
 
@@ -58,7 +58,7 @@ export default function ScheduleBoard({ existing, events, fee, account, media = 
   const [anchorSession, setAnchorSession] = useState(1385);
   const [feeV, setFeeV] = useState(fee != null ? String(fee) : "");
   const [accountV, setAccountV] = useState(account ?? "");
-  const [rows, setRows] = useState<Row[]>(existing.map((e) => ({ date: e.date, nth: nthOf(e.date), mode: e.mode as Mode, session: e.session, title: e.title, speaker: e.speaker, host: e.host, note: e.note, program: e.program })));
+  const [rows, setRows] = useState<Row[]>(existing.map((e) => ({ date: e.date, nth: nthOf(e.date), mode: e.mode as Mode, session: e.session, title: e.title, speaker: e.speaker, host: e.host, verse: e.verse, praise: e.praise, note: e.note, program: e.program })));
   const [genOpen, setGenOpen] = useState(existing.length === 0);
   const [result, setResult] = useState("");
   const [pending, startTransition] = useTransition();
@@ -78,13 +78,13 @@ export default function ScheduleBoard({ existing, events, fee, account, media = 
     setRows(generateSchedule(year, anchorDate, anchorSession)); setResult("자동 생성됨 — 미정(5번째·공휴일)을 정하고 저장하세요"); setGenOpen(false);
   };
   const setMode = (date: string, mode: Mode) => setRows((prev) => renumber(prev.map((r) => (r.date === date ? { ...r, mode } : r)), anchorDate, anchorSession));
-  const setField = (date: string, k: "title" | "speaker" | "host" | "program", v: string) => setRows((prev) => prev.map((r) => (r.date === date ? { ...r, [k]: v } : r)));
+  const setField = (date: string, k: "title" | "speaker" | "host" | "program" | "verse" | "praise", v: string) => setRows((prev) => prev.map((r) => (r.date === date ? { ...r, [k]: v } : r)));
   const recompute = () => setRows((prev) => renumber([...prev], anchorDate, anchorSession));
   const onSave = () => startTransition(async () => {
-    const res = await saveSchedule(rows.map((r) => ({ date: r.date, mode: r.mode, session: r.session, title: r.title, speaker: r.speaker, host: r.host, note: r.note, program: r.program })), feeV ? Number(feeV) : null, accountV || null);
+    const res = await saveSchedule(rows.map((r) => ({ date: r.date, mode: r.mode, session: r.session, title: r.title, speaker: r.speaker, host: r.host, verse: r.verse, praise: r.praise, note: r.note, program: r.program })), feeV ? Number(feeV) : null, accountV || null);
     setResult(res.error ? "❌ " + res.error : `✅ 저장 완료 — ${res.count}개 일정`);
   });
-  const exportRows = () => rows.map((r) => ({ 회차: r.session ?? "", 날짜: r.date, 요일: wd(r.date), 모드: modeLabelOf(r.mode), 형식: r.program, 주제: r.title, 강사: r.speaker, 사회자: r.host, 비고: r.note }));
+  const exportRows = () => rows.map((r) => ({ 날짜: r.date, 회차: r.session ?? "", 모임형식: r.program, 구분: modeLabelOf(r.mode), "강사(진행자)": r.speaker, "제목(주제)": r.title, 성경본문: r.verse, 찬양: r.praise, 사회자: r.host, 비고: r.note }));
   async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
     try { setRows(parseScheduleXlsx(await file.arrayBuffer())); setResult("파일에서 불러옴 — 확인 후 저장하세요"); }
@@ -238,12 +238,12 @@ export default function ScheduleBoard({ existing, events, fee, account, media = 
         <div className="card table-card">
           <div className="table-scroll">
             <table className="mtable sched-table">
-              <thead><tr><th className="th-name">날짜</th><th>회차</th><th>모드</th><th>형식</th><th>주제</th><th>강사</th><th>사회자</th><th>비고</th></tr></thead>
+              <thead><tr><th className="th-name">날짜</th><th>회차</th><th>모임형식</th><th>구분</th><th>강사(진행자)</th><th>제목(주제)</th><th>성경본문</th><th>찬양</th><th>사회자</th><th>비고</th></tr></thead>
               <tbody>
                 {items.map((it) => {
                   const m = monthOf(it.date);
                   const header = m !== lastMonth ? ((lastMonth = m), m) : null;
-                  const headerRow = header && <tr className="month-row"><td colSpan={8}>{header}</td></tr>;
+                  const headerRow = header && <tr className="month-row"><td colSpan={10}>{header}</td></tr>;
                   if (it.k === "e") {
                     const e = it.ev;
                     return (
@@ -251,7 +251,7 @@ export default function ScheduleBoard({ existing, events, fee, account, media = 
                         <tr className="event-row">
                           <td className="td-name"><span className="ev-tag">★ 행사</span></td>
                           <td className="nowrap">{wd(e.date)}{e.end_date ? `~${wd(e.end_date)}` : ""}</td>
-                          <td colSpan={4}><b className="ev-title">{e.title}</b>{e.type && <span className="ev-type">{e.type}</span>}{e.location && <span className="ev-loc"><MapPin size={12} /> {e.location}</span>}{e.link && <a className="ev-link" href={e.link} target="_blank" rel="noreferrer">링크</a>}</td>
+                          <td colSpan={6}><b className="ev-title">{e.title}</b>{e.type && <span className="ev-type">{e.type}</span>}{e.location && <span className="ev-loc"><MapPin size={12} /> {e.location}</span>}{e.link && <a className="ev-link" href={e.link} target="_blank" rel="noreferrer">링크</a>}</td>
                           <td colSpan={2}>{canEdit && <button className="row-del" onClick={() => removeEvent(e.id, e.title)}><Trash2 size={13} /> 삭제</button>}</td>
                         </tr>
                       </Fragment>
@@ -263,10 +263,12 @@ export default function ScheduleBoard({ existing, events, fee, account, media = 
                       <tr className={`${past ? "row-past" : ""} ${r.mode === "recess" ? "row-recess" : ""}`}>
                         <td className="td-name"><span className="sc-date">{wd(r.date)}</span>{r.date === today && <span className="today-tag">오늘</span>}</td>
                         <td>{r.session != null ? <span className="mono sc-round">{r.session}회</span> : <span className="fld-empty">—</span>}</td>
-                        <td><div className="inline-sel"><select className="prog-sel mode-sel" value={r.mode} onChange={(e) => setMode(r.date, e.target.value as Mode)}>{MODES.map((mm) => <option key={mm.v} value={mm.v}>{mm.label}</option>)}</select><ChevronDown size={14} /></div></td>
                         <td><div className="inline-sel"><select className="prog-sel" value={r.program} onChange={(e) => setField(r.date, "program", e.target.value)}>{PROGRAMS.map((p) => <option key={p} value={p}>{p || "—"}</option>)}</select><ChevronDown size={14} /></div></td>
-                        <td><input className="cell-inp w-topic" value={r.title} onChange={(e) => setField(r.date, "title", e.target.value)} placeholder={past ? "—" : "주제"} /></td>
+                        <td><div className="inline-sel"><select className="prog-sel mode-sel" value={r.mode} onChange={(e) => setMode(r.date, e.target.value as Mode)}>{MODES.map((mm) => <option key={mm.v} value={mm.v}>{mm.label}</option>)}</select><ChevronDown size={14} /></div></td>
                         <td><input className="cell-inp w-spk" value={r.speaker} onChange={(e) => setField(r.date, "speaker", e.target.value)} placeholder="강사" /></td>
+                        <td><input className="cell-inp w-topic" value={r.title} onChange={(e) => setField(r.date, "title", e.target.value)} placeholder={past ? "—" : "주제"} /></td>
+                        <td><input className="cell-inp w-verse" value={r.verse} onChange={(e) => setField(r.date, "verse", e.target.value)} placeholder="행 9:10-22" /></td>
+                        <td><input className="cell-inp w-praise" value={r.praise} onChange={(e) => setField(r.date, "praise", e.target.value)} placeholder="찬양곡" /></td>
                         <td><input className="cell-inp w-spk" value={r.host} onChange={(e) => setField(r.date, "host", e.target.value)} placeholder="사회자" /></td>
                         <td className="nowrap sc-note">
                           <div className="sc-note-cell">
@@ -375,7 +377,7 @@ const SCHED_CSS = `
 .moim-sched .table-card{ overflow:hidden; }
 .moim-sched .table-scroll{ overflow-x:auto; }
 .moim-sched .mtable{ width:100%; border-collapse:collapse; font-size:13.5px; }
-.moim-sched .sched-table{ min-width:760px; }
+.moim-sched .sched-table{ min-width:1080px; }
 .moim-sched .mtable th{ text-align:left; font-weight:700; color:var(--ink-3); font-size:12.5px; padding:12px 12px; border-bottom:1px solid var(--line); white-space:nowrap; background:var(--bg-warm); }
 .moim-sched .mtable td{ padding:8px 12px; border-bottom:1px solid var(--line); color:var(--ink-2); vertical-align:middle; }
 .moim-sched .th-name,.moim-sched .td-name{ padding-left:16px !important; }
@@ -447,8 +449,10 @@ const SCHED_CSS = `
 .moim-sched .inline-sel svg{ position:absolute; right:8px; color:var(--ink-3); pointer-events:none; }
 .moim-sched .cell-inp{ font-family:inherit; font-size:13px; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:9px; padding:7px 9px; outline:0; }
 .moim-sched .cell-inp:focus{ border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft); }
-.moim-sched .w-topic{ width:180px; }
-.moim-sched .w-spk{ width:120px; }
+.moim-sched .w-topic{ width:170px; }
+.moim-sched .w-spk{ width:104px; }
+.moim-sched .w-verse{ width:108px; }
+.moim-sched .w-praise{ width:120px; }
 .moim-sched .event-row td{ background:rgba(0,102,204,.05); }
 .moim-sched .ev-tag{ font-size:12px; font-weight:800; color:var(--brand); }
 .moim-sched .ev-title{ font-weight:800; color:var(--ink); }

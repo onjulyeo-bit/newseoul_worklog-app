@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import PosterEditor, { type Seed } from "./PosterEditor";
 
-export type MeetingOpt = { id: string; date: string; session_no: number | null; mode: string; title: string | null; speaker: string | null; program: string | null };
+export type MeetingOpt = { id: string; date: string; session_no: number | null; mode: string; title: string | null; speaker: string | null; host: string | null; verse: string | null; praise: string | null; program: string | null; fee: number | null; account_info: string | null };
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 function fmtDate(d: string) { if (!d) return ""; const t = new Date(d + "T00:00"); return `${t.getMonth() + 1}월 ${t.getDate()}일(${DAYS[t.getDay()]})`; }
@@ -188,7 +188,20 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   const pickMeeting = (id: string) => {
     const m = meetings.find((x) => x.id === id);
     if (!m) return;
-    setF((s) => ({ ...s, session: m.session_no != null ? String(m.session_no) : "", mode: (m.mode === "online" ? "online" : "offline"), program: m.program && PROGRAMS.includes(m.program) ? m.program : s.program, date: m.date, title: m.title ?? s.title, speaker: m.speaker ?? s.speaker }));
+    setF((s) => ({
+      ...s,
+      session: m.session_no != null ? String(m.session_no) : "",
+      mode: (m.mode === "online" ? "online" : "offline"),
+      program: m.program && PROGRAMS.includes(m.program) ? m.program : s.program,
+      date: m.date,
+      title: m.title ?? s.title,
+      speaker: m.speaker ?? s.speaker,
+      host: m.host ?? s.host,
+      verse: m.verse ?? s.verse,
+      praiseTitle: m.praise ?? s.praiseTitle,
+      fee: m.fee != null ? String(m.fee) : s.fee,
+      account: m.account_info ?? s.account,
+    }));
   };
 
   // 포스터 편집기에 넘길 초기 글자(양식에서 자동) — 업로드한 포스터 구조 기준

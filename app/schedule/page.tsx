@@ -8,7 +8,7 @@ export default async function SchedulePage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("meetings")
-    .select("date, session_no, mode, title, speaker, host, note, fee, account_info, program, poster_url, recording_url")
+    .select("date, session_no, mode, title, speaker, host, verse, praise, note, fee, account_info, program, poster_url, recording_url")
     .eq("chapter_id", "새서울")
     .order("date", { ascending: true });
 
@@ -38,7 +38,8 @@ export default async function SchedulePage() {
 
   const existing: ExistingRow[] = (data ?? []).map((m) => ({
     date: m.date, session: m.session_no, mode: m.mode,
-    title: m.title ?? "", speaker: m.speaker ?? "", host: m.host ?? "", note: m.note ?? "", program: m.program ?? "",
+    title: m.title ?? "", speaker: m.speaker ?? "", host: m.host ?? "",
+    verse: m.verse ?? "", praise: m.praise ?? "", note: m.note ?? "", program: m.program ?? "",
   }));
 
   // 회차별 자료 맵 — poster: 수동 지정 우선, 없으면 자동 매칭. recording: 수동 링크만.

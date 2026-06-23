@@ -11,6 +11,8 @@ export type Row = {
   title: string;
   speaker: string;
   host: string;        // 사회자
+  verse: string;       // 성경본문 (구절 표기)
+  praise: string;      // 찬양 (곡 제목)
   note: string;
   program: string;     // 형식: 예배/포럼/특강/기타
 };
@@ -52,7 +54,7 @@ export function generateSchedule(year: number, anchorDate: string, anchorSession
     else if (nth === 5) { mode = "pending"; note = "5번째 금요일"; }
     else if (nth === 1 || nth === 3) { mode = "online"; }
     else { mode = "offline"; }
-    return { date, nth, mode, session: null, title: "", speaker: "", host: "", note, program: "" };
+    return { date, nth, mode, session: null, title: "", speaker: "", host: "", verse: "", praise: "", note, program: "" };
   });
   return renumber(rows, anchorDate, anchorSession);
 }
