@@ -206,6 +206,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
     title: f.title || "주제",
     verse: f.verse || "",
     speaker: f.speaker ? `${whoOf(f.program)} : ${f.speaker}` : "",
+    host: f.host ? `사회 : ${f.host}` : "",
     dateLine: f.date ? `${fmtPosterDate(f.date)} 오전 7시` : "",
     modeLabel: modeL(f.mode),
     place: f.mode === "offline" ? (f.place || "") : "",

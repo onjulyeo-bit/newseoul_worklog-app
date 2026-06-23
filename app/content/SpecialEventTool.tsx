@@ -60,6 +60,7 @@ export default function SpecialEventTool() {
     title: f.name || `${type}`,
     verse: f.extra || "",
     speaker: f.fee ? `참가비 ${f.fee}` : (f.apply || ""),
+    host: "",
     dateLine: f.when || "",
     modeLabel: f.where || "",
     place: "",

@@ -15,11 +15,11 @@ import { createClient } from "@/lib/supabase/client";
 
 export type Seed = {
   headline: string; category: string; title: string;
-  verse: string; speaker: string; dateLine: string; modeLabel: string; place: string;
+  verse: string; speaker: string; host: string; dateLine: string; modeLabel: string; place: string;
 };
 
 type Kind = "text" | "logo";
-type Role = "headline" | "category" | "title" | "verse" | "speaker" | "dateLine" | "modeLabel" | "place";
+type Role = "headline" | "category" | "title" | "verse" | "speaker" | "host" | "dateLine" | "modeLabel" | "place";
 type El = {
   id: string; kind: Kind; text: string; invert?: boolean; role?: Role;
   x: number; y: number; width: number;
@@ -73,7 +73,7 @@ function logoEl(o: Partial<El>): El {
   return { id: nid(), kind: "logo", text: "", invert: true, x: 39, y: 90, width: 22, fontSize: 16, font: "pretendard", weight: 700, color: "#fff", align: "center", lineHeight: 1, letterSpacing: 0, ...o };
 }
 
-const ROLE_ORDER: Role[] = ["headline", "category", "title", "verse", "speaker", "dateLine", "modeLabel", "place"];
+const ROLE_ORDER: Role[] = ["headline", "category", "title", "verse", "speaker", "host", "dateLine", "modeLabel", "place"];
 
 // 레이아웃(틀)별 각 역할의 기본 위치·스타일
 const SPECS: Record<string, Record<Role, Partial<El>>> = {
@@ -84,16 +84,18 @@ const SPECS: Record<string, Record<Role, Partial<El>>> = {
     verse: { y: 55, x: 5, width: 90, align: "center", fontSize: 17, weight: 700 },
     speaker: { y: 65, x: 5, width: 90, align: "center", fontSize: 19, weight: 800 },
     dateLine: { y: 70, x: 5, width: 90, align: "center", fontSize: 20, weight: 800 },
-    modeLabel: { y: 78, x: 5, width: 90, align: "center", fontSize: 17, weight: 700 },
-    place: { y: 86, x: 5, width: 90, align: "center", fontSize: 14, weight: 700, color: "#dbe3f2" },
+    modeLabel: { y: 77, x: 5, width: 90, align: "center", fontSize: 17, weight: 700 },
+    host: { y: 84, x: 5, width: 90, align: "center", fontSize: 15, weight: 700, color: "#dbe3f2" },
+    place: { y: 90, x: 5, width: 90, align: "center", fontSize: 14, weight: 700, color: "#dbe3f2" },
   },
   left: {
     headline: { x: 8, y: 8, width: 84, align: "left", fontSize: 17, weight: 700 },
     category: { x: 8, y: 14, width: 84, align: "left", fontSize: 12, weight: 700, color: "#9db8e8", letterSpacing: 1 },
     title: { x: 8, y: 54, width: 84, align: "left", fontSize: 26, weight: 800, lineHeight: 1.2 },
     verse: { x: 8, y: 72, width: 84, align: "left", fontSize: 14, font: "myeongjo", color: "#dbe3f2" },
-    speaker: { x: 8, y: 79, width: 84, align: "left", fontSize: 15, weight: 700, color: "#9db8e8" },
-    dateLine: { x: 8, y: 86, width: 84, align: "left", fontSize: 15, weight: 700 },
+    speaker: { x: 8, y: 76, width: 84, align: "left", fontSize: 15, weight: 700, color: "#9db8e8" },
+    host: { x: 8, y: 82, width: 84, align: "left", fontSize: 13, weight: 700, color: "#9db8e8" },
+    dateLine: { x: 8, y: 87, width: 84, align: "left", fontSize: 15, weight: 700 },
     modeLabel: { x: 8, y: 92, width: 84, align: "left", fontSize: 14, weight: 500, color: "#c9d4ea" },
     place: { x: 8, y: 97, width: 84, align: "left", fontSize: 12, weight: 500, color: "#c9d4ea" },
   },
@@ -154,7 +156,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seed.headline, seed.category, seed.title, seed.verse, seed.speaker, seed.dateLine, seed.modeLabel, seed.place, layout]);
+  }, [seed.headline, seed.category, seed.title, seed.verse, seed.speaker, seed.host, seed.dateLine, seed.modeLabel, seed.place, layout]);
 
   function onDown(e: React.PointerEvent, el: El) {
     e.stopPropagation(); setSel(el.id);
