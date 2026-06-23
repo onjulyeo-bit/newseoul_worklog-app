@@ -26,6 +26,7 @@ type El = {
   fontSize: number; font: string; weight: number;
   color: string; align: "left" | "center" | "right";
   lineHeight: number; letterSpacing: number;
+  bgColor?: string;   // 배지(모임형식) 배경색
 };
 
 const FONTS = [
@@ -77,7 +78,7 @@ const SPECS: Record<string, Record<Role, Partial<El>>> = {
     verse: { y: 55, x: 50, width: 90, align: "center", fontSize: 17, weight: 700 },
     speaker: { y: 65, x: 50, width: 90, align: "center", fontSize: 19, weight: 800 },
     dateLine: { y: 70, x: 50, width: 90, align: "center", fontSize: 20, weight: 800 },
-    modeLabel: { y: 77, x: 50, width: 90, align: "center", fontSize: 17, weight: 700 },
+    modeLabel: { y: 77, x: 50, width: 90, align: "center", fontSize: 17, weight: 800, color: "#1e2353", bgColor: "#ffffff" },
     host: { y: 84, x: 50, width: 90, align: "center", fontSize: 15, weight: 700, color: "#dbe3f2" },
     place: { y: 90, x: 50, width: 90, align: "center", fontSize: 14, weight: 700, color: "#dbe3f2" },
   },
@@ -89,7 +90,7 @@ const SPECS: Record<string, Record<Role, Partial<El>>> = {
     speaker: { x: 8, y: 76, width: 84, align: "left", fontSize: 15, weight: 700, color: "#9db8e8" },
     host: { x: 8, y: 82, width: 84, align: "left", fontSize: 13, weight: 700, color: "#9db8e8" },
     dateLine: { x: 8, y: 87, width: 84, align: "left", fontSize: 15, weight: 700 },
-    modeLabel: { x: 8, y: 92, width: 84, align: "left", fontSize: 14, weight: 500, color: "#c9d4ea" },
+    modeLabel: { x: 8, y: 92, width: 84, align: "left", fontSize: 14, weight: 800, color: "#1e2353", bgColor: "#ffffff" },
     place: { x: 8, y: 97, width: 84, align: "left", fontSize: 12, weight: 500, color: "#c9d4ea" },
   },
 };
@@ -383,7 +384,7 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
                   <img src="/cbmc-logo.png" alt="CBMC" className="pointer-events-none w-full" style={{ filter: el.invert ? "brightness(0) invert(1)" : "none" }} />
                 ) : el.role === "modeLabel" ? (
                   <div style={{ textAlign: el.align }}>
-                    <span style={{ display: "inline-block", fontFamily: fontCss(el.font), fontSize: el.fontSize, fontWeight: 800, lineHeight: 1.2, letterSpacing: el.letterSpacing, color: el.text.includes("온라인") ? "#0b3d91" : "#0a5a3a", background: el.text.includes("온라인") ? "#dbe9ff" : "#d9f3e6", padding: "0.22em 0.85em", borderRadius: 999, whiteSpace: "nowrap" }}>{el.text}</span>
+                    <span style={{ display: "inline-block", fontFamily: fontCss(el.font), fontSize: el.fontSize, fontWeight: el.weight, lineHeight: 1.2, letterSpacing: el.letterSpacing, color: el.color, background: el.bgColor || "#ffffff", padding: "0.22em 0.95em", borderRadius: 999, whiteSpace: "nowrap", border: (el.bgColor || "#ffffff").toLowerCase() === "#ffffff" ? "1px solid rgba(0,0,0,.06)" : "none" }}>{el.text}</span>
                   </div>
                 ) : (
                   <div style={{ fontFamily: fontCss(el.font), fontSize: el.fontSize, fontWeight: el.weight, color: el.color, textAlign: el.align, lineHeight: el.lineHeight, letterSpacing: el.letterSpacing, whiteSpace: "pre-wrap", wordBreak: "keep-all" }}>
@@ -622,6 +623,17 @@ export default function PosterEditor({ seed, publish }: { seed: Seed; publish?: 
                     </div>
                   </div>
                 </div>
+                {cur.role === "modeLabel" && (
+                  <div className="mt-3 rounded-md border border-line bg-surface-soft p-2.5">
+                    <label className={miniLab}>배지 스타일 (온·오프라인)</label>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <button onClick={() => upd(cur.id, { bgColor: "#ffffff", color: "#1e2353" })} className={`rounded-full border px-3 py-1 text-[12px] font-bold ${(cur.bgColor || "#ffffff").toLowerCase() === "#ffffff" ? "border-primary ring-1 ring-primary" : "border-line"}`} style={{ background: "#ffffff", color: "#1e2353" }}>흰 배경·남색</button>
+                      <button onClick={() => upd(cur.id, { bgColor: "#1e2353", color: "#ffffff" })} className={`rounded-full border px-3 py-1 text-[12px] font-bold ${(cur.bgColor || "").toLowerCase() === "#1e2353" ? "border-primary ring-1 ring-primary" : "border-line"}`} style={{ background: "#1e2353", color: "#ffffff" }}>남색 배경·흰색</button>
+                      <label className="ml-1 flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-ink-soft">배경색<input type="color" value={cur.bgColor || "#ffffff"} onChange={(e) => upd(cur.id, { bgColor: e.target.value })} className="h-7 w-8 cursor-pointer rounded border border-line bg-card" /></label>
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-muted">글씨색은 위 <b>색</b>에서 바꿀 수 있어요.</p>
+                  </div>
+                )}
               </div>
             )
           ) : (
