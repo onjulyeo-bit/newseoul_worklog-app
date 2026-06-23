@@ -1,7 +1,7 @@
 "use client";
 
 // 주간 콘텐츠 도구 — 회차 선택 → 카톡 공지글·순서지·포스터(PNG) 자동 생성.
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import PosterEditor, { type Seed } from "./PosterEditor";
 
@@ -144,6 +144,27 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
   });
   const set = (k: keyof Form, v: string) => setF((s) => ({ ...s, [k]: v }));
 
+  // 작업 임시저장 — 폼 내용을 브라우저에 자동 저장하고, 다시 오면 이어서 작성.
+  const DRAFT_KEY = "cbmc-content-draft-v1";
+  const draftLoaded = useRef(false);
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) { const d = JSON.parse(raw); setF((s) => ({ ...s, ...d })); if (d && (d.title || d.session || d.ads || d.scripture)) setRestored(true); }
+    } catch {}
+    draftLoaded.current = true;
+  }, []);
+  useEffect(() => {
+    if (!draftLoaded.current) return;
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(f)); } catch {}
+  }, [f]);
+  function resetDraft() {
+    if (!confirm("작성 중인 내용을 모두 비우고 새로 시작할까요?")) return;
+    try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    location.reload();
+  }
+
   // 결과 글 편집 — null이면 자동 생성(폼 따라 갱신), 문자열이면 사용자가 고친 값.
   const [noticeEdit, setNoticeEdit] = useState<string | null>(null);
   const [orderEdit, setOrderEdit] = useState<string | null>(null);
@@ -230,6 +251,10 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
       <div className="grid gap-6 md:grid-cols-2">
         {/* 입력 */}
         <div className="rounded-[18px] border border-line bg-card p-6 shadow-sm">
+          <div className="mb-3 flex items-center justify-between gap-2 rounded-lg bg-surface-soft px-3 py-2">
+            <span className="text-[12px] font-semibold text-ink-soft">{restored ? "💾 이어서 작성 중 — 자동 저장됨" : "💾 작성 내용은 이 기기에 자동 저장돼요"}</span>
+            <button onClick={resetDraft} className="rounded-full border border-line bg-card px-2.5 py-1 text-[12px] font-semibold text-ink-soft hover:border-primary hover:text-primary">새로 시작</button>
+          </div>
           {/* 회차 선택 */}
           <label className={lab}>회차 선택 (연간 일정에서 불러오기)</label>
           {meetings.length > 0 ? (
@@ -332,7 +357,7 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
       </div>
 
       {/* 포스터 편집기 (전체 폭) */}
-      <PosterEditor seed={seed} publish={{ title: `${f.session ? f.session + "회 " : ""}새서울 CBMC 모임${f.date ? " · " + fmtDate(f.date) : ""}`, body: noticeVal }} />
+      <PosterEditor seed={seed} meetingDate={f.date || undefined} publish={{ title: `${f.session ? f.session + "회 " : ""}새서울 CBMC 모임${f.date ? " · " + fmtDate(f.date) : ""}`, body: noticeVal }} />
     </div>
   );
 }

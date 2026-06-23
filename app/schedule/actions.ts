@@ -81,6 +81,19 @@ export async function setMeetingMedia(
   return { ok: true };
 }
 
+// 만든 포스터를 해당 회차에 저장(poster_url만 갱신, 영상 링크는 보존). 콘텐츠 편집기에서 호출.
+export async function setMeetingPoster(date: string, posterUrl: string): Promise<{ ok?: boolean; error?: string }> {
+  if (!date || !posterUrl) return { error: "날짜/이미지가 없어요." };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("meetings")
+    .update({ poster_url: posterUrl })
+    .eq("chapter_id", "새서울").eq("date", date);
+  if (error) return { error: error.message };
+  revalidatePath("/schedule");
+  return { ok: true };
+}
+
 export async function deleteEvent(id: string): Promise<{ ok?: boolean; error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase.from("events").delete().eq("id", id);

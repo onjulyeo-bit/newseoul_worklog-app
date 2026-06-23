@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, CalendarDays, ClipboardCheck, ReceiptText,
-  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap, BookText,
+  Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap, BookText, UserRound,
 } from "lucide-react";
 
 type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string };
@@ -31,10 +31,12 @@ const MEMBER: Item[] = [
   { href: "/", label: "공지", Icon: Megaphone },
   { href: "/schedule", label: "연간일정", Icon: CalendarDays },
   { href: "/directory", label: "회원명단", Icon: Contact },
+  { href: "/my-info", label: "내 정보", Icon: UserRound },
   { href: "/archive", label: "아카이브", Icon: Archive },
 ];
 const GUEST: Item[] = [
   { href: "/", label: "공지", Icon: Megaphone },
+  { href: "/my-info", label: "내 정보", Icon: UserRound },
   { href: "/archive", label: "아카이브", Icon: Archive },
 ];
 

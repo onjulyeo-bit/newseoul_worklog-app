@@ -63,6 +63,20 @@ export default function ScheduleBoard({ existing, events, fee, account, media = 
   const [result, setResult] = useState("");
   const [pending, startTransition] = useTransition();
 
+  // 노션 과거 회차 본문에서 성경본문·찬양 가져오기 (빈 칸만)
+  const [importing, setImporting] = useState(false);
+  async function importNotion() {
+    if (!confirm("노션 과거 회차 페이지 본문에서 성경본문·찬양을 가져와 빈 칸을 채울까요?\n(이미 입력한 값은 그대로 둡니다)")) return;
+    setImporting(true);
+    try {
+      const r = await fetch("/api/notion-import", { method: "POST" });
+      const j = await r.json();
+      if (!r.ok) { setResult("❌ " + (j.error || "노션 가져오기 실패") + (j.detail ? ` (${j.detail})` : "")); return; }
+      setResult(`✅ 노션에서 ${j.updated}개 회차 채움 (검사 ${j.scanned}개)${j.samples?.length ? " · 예: " + j.samples[0] : ""}`);
+      router.refresh();
+    } catch { setResult("❌ 노션 가져오는 중 오류가 났어요."); } finally { setImporting(false); }
+  }
+
   const [showEvent, setShowEvent] = useState(false);
   const [ev, setEv] = useState({ title: "", date: "", endDate: "", type: "한국대회", location: "", link: "" });
   const setEvF = (k: keyof typeof ev, v: string) => setEv((s) => ({ ...s, [k]: v }));
@@ -120,6 +134,7 @@ export default function ScheduleBoard({ existing, events, fee, account, media = 
           {canEdit && rows.length > 0 && <button className="ui-btn ui-primary ui-sm" onClick={onSave} disabled={pending}><Save size={16} /> {pending ? "저장 중…" : "저장"}</button>}
           {canEdit && <button className="ui-btn ui-ghost ui-sm" onClick={() => setGenOpen((v) => !v)}><Sparkles size={16} /> 자동 생성</button>}
           {canEdit && <label className="ui-btn ui-ghost ui-sm" style={{ cursor: "pointer" }}><Upload size={16} /> 업로드<input type="file" accept=".xlsx,.xls,.csv" onChange={onUpload} hidden /></label>}
+          {canEdit && <button className="ui-btn ui-ghost ui-sm" onClick={importNotion} disabled={importing}><Download size={16} /> {importing ? "가져오는 중…" : "노션 본문"}</button>}
         </div>
       </div>
 
