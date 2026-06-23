@@ -377,7 +377,10 @@ const SCHED_CSS = `
 .moim-sched .table-card{ overflow:hidden; }
 .moim-sched .table-scroll{ overflow-x:auto; }
 .moim-sched .mtable{ width:100%; border-collapse:collapse; font-size:13.5px; }
-.moim-sched .sched-table{ min-width:1080px; }
+.moim-sched .sched-table{ min-width:940px; }
+.moim-sched .sched-table th{ padding:10px 8px; }
+.moim-sched .sched-table td{ padding:7px 8px; }
+.moim-sched .sched-table .th-name,.moim-sched .sched-table .td-name{ padding-left:14px !important; }
 .moim-sched .mtable th{ text-align:left; font-weight:700; color:var(--ink-3); font-size:12.5px; padding:12px 12px; border-bottom:1px solid var(--line); white-space:nowrap; background:var(--bg-warm); }
 .moim-sched .mtable td{ padding:8px 12px; border-bottom:1px solid var(--line); color:var(--ink-2); vertical-align:middle; }
 .moim-sched .th-name,.moim-sched .td-name{ padding-left:16px !important; }
@@ -449,10 +452,10 @@ const SCHED_CSS = `
 .moim-sched .inline-sel svg{ position:absolute; right:8px; color:var(--ink-3); pointer-events:none; }
 .moim-sched .cell-inp{ font-family:inherit; font-size:13px; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:9px; padding:7px 9px; outline:0; }
 .moim-sched .cell-inp:focus{ border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft); }
-.moim-sched .w-topic{ width:170px; }
-.moim-sched .w-spk{ width:104px; }
-.moim-sched .w-verse{ width:108px; }
-.moim-sched .w-praise{ width:120px; }
+.moim-sched .w-topic{ width:140px; }
+.moim-sched .w-spk{ width:80px; }
+.moim-sched .w-verse{ width:84px; }
+.moim-sched .w-praise{ width:96px; }
 .moim-sched .event-row td{ background:rgba(0,102,204,.05); }
 .moim-sched .ev-tag{ font-size:12px; font-weight:800; color:var(--brand); }
 .moim-sched .ev-title{ font-weight:800; color:var(--ink); }

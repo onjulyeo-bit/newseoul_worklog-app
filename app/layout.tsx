@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SiteNav from "./SiteNav";
 import { createClient } from "@/lib/supabase/server";
@@ -6,11 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "새서울지회 · 아름다운 만남",
   description: "환영합니다. 축복합니다. 카카오 로그인하세요",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "새서울CBMC" },
+  icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
   openGraph: {
     title: "새서울지회 · 아름다운 만남",
     description: "환영합니다. 축복합니다. 카카오 로그인하세요",
   },
 };
+
+export const viewport: Viewport = { themeColor: "#1e2353" };
 
 export default async function RootLayout({
   children,
