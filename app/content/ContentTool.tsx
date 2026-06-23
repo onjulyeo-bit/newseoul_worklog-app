@@ -240,9 +240,10 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
               <select value={f.program} onChange={(e) => set("program", e.target.value)} className={inp}>{PROGRAMS.map((p) => <option key={p} value={p}>{p}</option>)}</select>
             </div>
             <div><label className={lab}>제목 (말씀·주제)</label><input value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="예) 다시 보아라 / '스크루테이프의 편지'" className={inp} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div><label className={lab}>본문 (성경구절)</label><input value={f.verse} onChange={(e) => set("verse", e.target.value)} placeholder="행9:10-22" className={inp} /></div>
               <div><label className={lab}>{whoOf(f.program)} ({f.program})</label><input value={f.speaker} onChange={(e) => set("speaker", e.target.value)} placeholder="조동천 목사" className={inp} /></div>
+              <div><label className={lab}>사회자</label><input value={f.host} onChange={(e) => set("host", e.target.value)} placeholder="김용태 대표" className={inp} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className={lab}>찬양 제목</label><input value={f.praiseTitle} onChange={(e) => set("praiseTitle", e.target.value)} placeholder="하나님의 음성을" className={inp} /></div>
@@ -286,12 +287,9 @@ export default function ContentTool({ meetings }: { meetings: MeetingOpt[] }) {
             <div className="mt-1 rounded-lg border border-dashed border-line p-3">
               <div className="mb-2 text-[13px] font-extrabold text-ink-soft">📝 주보(노션)용 추가</div>
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div><label className={lab}>사회자</label><input value={f.host} onChange={(e) => set("host", e.target.value)} placeholder="김용태 대표" className={inp} /></div>
-                  <div><label className={lab}>찬양 유튜브 링크</label><input value={f.praiseLink} onChange={(e) => set("praiseLink", e.target.value)} placeholder="https://youtu.be/…" className={inp} /></div>
-                </div>
-                <div><label className={lab}>설교/발제 본문 (붙여넣기 · 선택)</label><textarea value={f.scripture} onChange={(e) => set("scripture", e.target.value)} placeholder="대한성서공회 등에서 본문을 복사해 붙여넣으세요" className={`${inp} min-h-[70px] py-2`} /></div>
-                <div><label className={lab}>광고 (한 줄에 하나)</label><textarea value={f.ads} onChange={(e) => set("ads", e.target.value)} placeholder={"VIP 소개 (인당 30초)\n6/30(화) 중앙회비 납부 예정\n회비 계좌 …"} className={`${inp} min-h-[70px] py-2`} /></div>
+                <div><label className={lab}>찬양 유튜브 링크</label><input value={f.praiseLink} onChange={(e) => set("praiseLink", e.target.value)} placeholder="https://youtu.be/…" className={inp} /></div>
+                <div><label className={lab}>설교/발제 본문 (붙여넣기 · 선택)</label><textarea value={f.scripture} onChange={(e) => set("scripture", e.target.value)} placeholder="대한성서공회 등에서 본문을 복사해 붙여넣으세요" className={`${inp} min-h-[120px] py-2`} /></div>
+                <div><label className={lab}>광고 (한 줄에 하나)</label><textarea value={f.ads} onChange={(e) => set("ads", e.target.value)} placeholder={"VIP 소개 (인당 30초)\n6/30(화) 중앙회비 납부 예정\n회비 계좌 …"} className={`${inp} min-h-[220px] py-2 leading-relaxed`} /></div>
                 <button onClick={publishNotion} disabled={notionBusy} className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#16181d] px-4 py-2.5 text-[14px] font-bold text-white hover:opacity-90 disabled:opacity-50">{notionBusy ? "노션에 만드는 중…" : "📝 노션에 주보 만들기"}</button>
                 {notionMsg?.url && <a href={notionMsg.url} target="_blank" rel="noreferrer" className="text-[13px] font-semibold text-primary hover:underline">✅ 노션에 생성됨 — 열기</a>}
                 {notionMsg?.err && <p className="text-[13px] font-semibold text-unpaid">❌ {notionMsg.err}</p>}
