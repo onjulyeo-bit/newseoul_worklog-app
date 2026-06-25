@@ -9,7 +9,7 @@ import {
   Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap, BookText, UserRound,
 } from "lucide-react";
 
-type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string };
+type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string; color?: string };
 
 // 업무 흐름순(사용자 지정). 운영 메뉴 → (구분선) → 설정(권한설정).
 const ADMIN: Item[] = [
@@ -28,16 +28,16 @@ const ADMIN: Item[] = [
 ];
 // 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지·아카이브(개인정보 명단 제외).
 const MEMBER: Item[] = [
-  { href: "/", label: "공지", Icon: Megaphone },
-  { href: "/schedule", label: "연간일정", Icon: CalendarDays },
-  { href: "/directory", label: "회원명단", Icon: Contact },
-  { href: "/my-info", label: "내 정보", Icon: UserRound },
-  { href: "/archive", label: "아카이브", Icon: Archive },
+  { href: "/", label: "공지", Icon: Megaphone, color: "#e8643c" },
+  { href: "/schedule", label: "연간일정", Icon: CalendarDays, color: "#003ecc" },
+  { href: "/directory", label: "회원명단", Icon: Contact, color: "#16a34a" },
+  { href: "/my-info", label: "내 정보", Icon: UserRound, color: "#7c5cff" },
+  { href: "/archive", label: "아카이브", Icon: Archive, color: "#b45309" },
 ];
 const GUEST: Item[] = [
-  { href: "/", label: "공지", Icon: Megaphone },
-  { href: "/my-info", label: "내 정보", Icon: UserRound },
-  { href: "/archive", label: "아카이브", Icon: Archive },
+  { href: "/", label: "공지", Icon: Megaphone, color: "#e8643c" },
+  { href: "/my-info", label: "내 정보", Icon: UserRound, color: "#7c5cff" },
+  { href: "/archive", label: "아카이브", Icon: Archive, color: "#b45309" },
 ];
 
 // 현재 경로에 가장 잘 맞는(가장 긴) href 하나만 active
@@ -97,14 +97,15 @@ export default function SiteNav({ role, email, isOwner = false }: { role: string
 
         <nav className="navbar">
           <div className="navbar-in">
-            {items.map(({ href, label, Icon, group }, i) => {
+            {items.map(({ href, label, Icon, group, color }, i) => {
               const on = active === href;
               const prevGroup = i > 0 ? items[i - 1].group : undefined;
               const divider = group && prevGroup && group !== prevGroup;
+              const tabStyle = color ? ({ color, "--tabc": color } as React.CSSProperties) : undefined;
               return (
                 <span key={href} className="nav-cell">
                   {divider && <span className="nav-div" aria-hidden />}
-                  <Link href={href} className={`navtab ${on ? "active" : ""}`}>
+                  <Link href={href} className={`navtab ${on ? "active" : ""} ${color ? "navtab-c" : ""}`} style={tabStyle}>
                     <Icon size={17} strokeWidth={on ? 2.4 : 2} /><span>{label}</span>
                   </Link>
                 </span>
@@ -148,7 +149,8 @@ const SHELL_CSS = `
 .moim-shell .navtab{ position:relative; display:inline-flex; align-items:center; gap:7px; padding:13px 14px 14px; font-size:14.5px; font-weight:600; color:var(--ink-3); white-space:nowrap; text-decoration:none; transition:color .15s; }
 .moim-shell .navtab:hover{ color:var(--ink-2); }
 .moim-shell .navtab.active{ color:var(--brand); }
-.moim-shell .navtab.active::after{ content:""; position:absolute; left:12px; right:12px; bottom:-1px; height:2.5px; border-radius:3px 3px 0 0; background:var(--brand); }
+.moim-shell .navtab.active::after{ content:""; position:absolute; left:12px; right:12px; bottom:-1px; height:2.5px; border-radius:3px 3px 0 0; background:var(--tabc, var(--brand)); }
+.moim-shell .navtab-c span{ font-weight:700; }
 @media (min-width:760px){
   .moim-shell .hdr-in, .moim-shell .navbar-in{ padding-left:24px; padding-right:24px; }
   .moim-shell .who{ display:flex; }

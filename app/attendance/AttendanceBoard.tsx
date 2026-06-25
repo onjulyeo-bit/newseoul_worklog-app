@@ -54,7 +54,11 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
 
   // QR 자가 체크인
   const [qr, setQr] = useState("");
-  const checkinLink = meeting?.checkin_token && typeof window !== "undefined" ? `${window.location.origin}/checkin/${meeting.id}?t=${meeting.checkin_token}` : "";
+  // 공유 링크는 '고정 운영 도메인'으로 — 배포별 임시 URL(접근보호로 막힘) 방지.
+  const siteBase = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`
+    : (typeof window !== "undefined" ? window.location.origin : "");
+  const checkinLink = meeting?.checkin_token ? `${siteBase}/checkin/${meeting.id}?t=${meeting.checkin_token}` : "";
   useEffect(() => { if (checkinLink) QRCode.toDataURL(checkinLink, { width: 240, margin: 1 }).then(setQr).catch(() => setQr("")); else setQr(""); }, [checkinLink]);
 
   // 식대 입금 설정 (지회 단위 → QR 체크인 안내 팝업에 사용)
