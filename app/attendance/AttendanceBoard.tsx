@@ -2,12 +2,14 @@
 
 // 출석·식대 보드 ⑥ — 클로드디자인 시안 + 기존 실기능(식대 납부 체크·미납 독촉 문구) 유지.
 // 추가: 미납자별 [문자] 버튼(폰 문자앱에 안내문 프리필). 실제 RPC/액션 보존.
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/client";
 import { saveAttendance } from "./actions";
+import { addGuests, deleteGuest, setGuestState } from "./guest-actions";
+import { parseGuestLines } from "@/lib/parseGuests";
 import { useCanEdit } from "@/lib/useCanEdit";
 
 export type Meeting = {
@@ -17,6 +19,7 @@ export type Meeting = {
 };
 export type Member = { id: string; name: string; grade: string | null; status: string | null; phone: string | null };
 export type Att = { member_id: string; present: boolean; paid: boolean };
+export type Guest = { id: string; name: string; branch: string | null; present: boolean; paid: boolean };
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const fmtDate = (d: string) => { if (!d) return ""; const t = new Date(d + "T00:00"); return `${t.getMonth() + 1}월 ${t.getDate()}일(${DAYS[t.getDay()]})`; };
@@ -28,8 +31,8 @@ function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   return <span className="att-av" style={{ width: size, height: size, background: color, fontSize: size * 0.42 }}>{ch}</span>;
 }
 
-export default function AttendanceBoard({ meetings, members, selectedId, attendance }: {
-  meetings: Meeting[]; members: Member[]; selectedId: string | null; attendance: Att[];
+export default function AttendanceBoard({ meetings, members, selectedId, attendance, guests }: {
+  meetings: Meeting[]; members: Member[]; selectedId: string | null; attendance: Att[]; guests: Guest[];
 }) {
   const canEdit = useCanEdit();
   const router = useRouter();
@@ -76,6 +79,45 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
     if (error) { showToast("저장 실패: " + error.message); return; }
     showToast("식대 설정을 저장했어요");
   }
+
+  // 게스트(방문자) 명단 — 로컬 미러(참석/식대 토글 즉시 반영) + 붙여넣기 일괄 등록.
+  const [guestRows, setGuestRows] = useState<Guest[]>(guests);
+  useEffect(() => { setGuestRows(guests); }, [guests]);
+  const [guestText, setGuestText] = useState("");
+  const [guestOpen, setGuestOpen] = useState(false);
+  const [guestBusy, setGuestBusy] = useState(false);
+  const guestPreview = useMemo(() => parseGuestLines(guestText), [guestText]);
+
+  async function addGuestList() {
+    if (!selectedId || guestBusy || guestPreview.length === 0) return;
+    setGuestBusy(true);
+    const res = await addGuests(selectedId, guestPreview);
+    setGuestBusy(false);
+    if (res.error) { showToast("등록 실패: " + res.error); return; }
+    setGuestText(""); setGuestOpen(false);
+    showToast(`게스트 ${res.count}명을 추가했어요`);
+    router.refresh();
+  }
+  async function removeGuest(g: Guest) {
+    if (guestBusy) return;
+    if (!confirm(`게스트 '${g.name}'을(를) 삭제할까요?`)) return;
+    setGuestBusy(true);
+    const res = await deleteGuest(g.id);
+    setGuestBusy(false);
+    if (res.error) { showToast("삭제 실패: " + res.error); return; }
+    setGuestRows((prev) => prev.filter((x) => x.id !== g.id));
+  }
+  function toggleGuestPresent(g: Guest, val: boolean) {
+    const next: Guest = { ...g, present: val, paid: val ? g.paid : false };
+    setGuestRows((prev) => prev.map((x) => (x.id === g.id ? next : x)));
+    startTransition(() => { setGuestState(g.id, next.present, next.paid); });
+  }
+  function toggleGuestPaid(g: Guest, val: boolean) {
+    const next: Guest = { ...g, paid: val };
+    setGuestRows((prev) => prev.map((x) => (x.id === g.id ? next : x)));
+    startTransition(() => { setGuestState(g.id, next.present, next.paid); });
+  }
+  const guestPresentCount = guestRows.filter((g) => g.present).length;
 
   function setPresent(id: string, val: boolean) {
     if (!selectedId) return;
@@ -238,6 +280,73 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
             </div>
           )}
 
+          {/* 게스트(방문자) 명단 — 모임별. 이름 + 지회명. QR 체크인에도 표시됨 */}
+          {meeting && (
+            <div className="card guest-card">
+              <div className="sec-row">
+                <h2 className="sec-title">게스트 명단 <span className="guest-sub">(방문자)</span></h2>
+                <span className="guest-count">{guestRows.length}명{guestPresentCount > 0 ? ` · 참석 ${guestPresentCount}` : ""}</span>
+              </div>
+
+              {guestRows.length === 0 ? (
+                <p className="guest-empty">아직 등록된 게스트가 없어요. 아래 <b>명단 붙여넣기</b>로 한 번에 추가하세요.</p>
+              ) : (
+                <ul className="guest-list">
+                  {guestRows.map((g) => (
+                    <li key={g.id} className="guest-row">
+                      <Avatar name={g.name} size={34} />
+                      <div className="guest-who">
+                        <span className="guest-name">{g.name}</span>
+                        {g.branch && <span className="guest-branch">{g.branch}</span>}
+                      </div>
+                      {!isOnline && g.present && (
+                        canEdit
+                          ? <button className={`paid-chip ${g.paid ? "on" : ""}`} onClick={() => toggleGuestPaid(g, !g.paid)}>{g.paid ? "납부✓" : "미납"}</button>
+                          : <span className={`paid-chip ${g.paid ? "on" : ""}`}>{g.paid ? "납부✓" : "미납"}</span>
+                      )}
+                      {canEdit ? (
+                        <div className="seg">
+                          <button className={`seg-btn ${g.present ? "on" : ""}`} onClick={() => toggleGuestPresent(g, true)}>참석</button>
+                          <button className={`seg-btn ${!g.present ? "off" : ""}`} onClick={() => toggleGuestPresent(g, false)}>결석</button>
+                        </div>
+                      ) : (
+                        <span className={`rs ${g.present ? "rs-on" : "rs-off"}`}>{g.present ? "참석" : "결석"}</span>
+                      )}
+                      {canEdit && <button className="guest-del" onClick={() => removeGuest(g)} aria-label="삭제" title="삭제">✕</button>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {canEdit && (
+                <div className="guest-add">
+                  {!guestOpen ? (
+                    <button className="ui-btn ui-ghost ui-sm" onClick={() => setGuestOpen(true)}>＋ 명단 붙여넣기</button>
+                  ) : (
+                    <>
+                      <textarea
+                        className="guest-ta"
+                        value={guestText}
+                        onChange={(e) => setGuestText(e.target.value)}
+                        placeholder={"한 줄에 한 명, 또는 번호로 이어서 붙여넣기\n예) 1.김병민(다니엘) 2.황혜진(153) 3.최성근(무역센터)"}
+                        rows={5}
+                      />
+                      <p className="guest-hint">
+                        {guestPreview.length > 0
+                          ? <>인식된 게스트 <b>{guestPreview.length}명</b>{guestPreview.some((g) => g.branch) ? " · (괄호)는 지회명" : ""}</>
+                          : "이름(지회명) 형식으로 붙여넣으면 자동 인식돼요."}
+                      </p>
+                      <div className="guest-add-actions">
+                        <button className="ui-btn ui-primary ui-sm" onClick={addGuestList} disabled={guestBusy || guestPreview.length === 0}>{guestBusy ? "추가 중…" : `${guestPreview.length}명 추가`}</button>
+                        <button className="ui-btn ui-ghost ui-sm" onClick={() => { setGuestOpen(false); setGuestText(""); }}>취소</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* 식대 정산 — 미납자 문자 + 독촉 문구 (오프라인) */}
           {meeting && !isOnline && (
             <div className="settle">
@@ -382,6 +491,25 @@ const ATT_CSS = `
 .moim-att .remind-hint{ font-size:12px; color:var(--ink-3); margin-top:8px; font-weight:500; }
 
 .moim-att .toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:80; background:var(--ink); color:#fff; font-size:13.5px; font-weight:600; padding:12px 20px; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+
+.moim-att .guest-card{ padding:18px; margin-top:16px; }
+.moim-att .guest-sub{ font-size:13px; font-weight:600; color:var(--ink-3); letter-spacing:-0.01em; }
+.moim-att .guest-count{ font-size:13px; font-weight:700; color:var(--ink-2); }
+.moim-att .guest-empty{ color:var(--ink-3); font-size:14px; font-weight:500; padding:6px 0 12px; line-height:1.6; }
+.moim-att .guest-empty b{ color:var(--brand-strong); font-weight:700; }
+.moim-att .guest-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.moim-att .guest-row{ display:flex; align-items:center; gap:11px; padding:9px 11px; background:var(--bg-warm); border:1px solid var(--line); border-radius:12px; }
+.moim-att .guest-who{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.moim-att .guest-name{ font-weight:700; font-size:14.5px; letter-spacing:-0.02em; }
+.moim-att .guest-branch{ font-size:11.5px; font-weight:700; color:var(--brand-strong); background:var(--brand-soft); padding:3px 9px; border-radius:999px; white-space:nowrap; }
+.moim-att .guest-del{ width:28px; height:28px; border-radius:8px; display:grid; place-items:center; color:var(--ink-3); background:#fff; border:1px solid var(--line); flex-shrink:0; cursor:pointer; font-size:13px; }
+.moim-att .guest-del:hover{ color:#c8392c; border-color:#f0c5c0; }
+.moim-att .guest-add{ border-top:1px solid var(--line); padding-top:14px; }
+.moim-att .guest-ta{ width:100%; font-family:inherit; font-size:14.5px; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:12px; padding:11px 13px; outline:0; resize:vertical; line-height:1.6; transition:border-color .15s, box-shadow .15s; }
+.moim-att .guest-ta:focus{ border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft); }
+.moim-att .guest-hint{ font-size:12px; color:var(--ink-3); font-weight:600; margin:8px 0 10px; }
+.moim-att .guest-hint b{ color:var(--brand-strong); font-weight:800; }
+.moim-att .guest-add-actions{ display:flex; align-items:center; gap:9px; }
 
 @media (min-width:860px){
   .moim-att .att-grid{ display:grid; grid-template-columns:330px 1fr; align-items:start; }

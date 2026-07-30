@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Row = { member_id: string; name: string; present: boolean };
+type GuestRow = { guest_id: string; name: string; branch: string | null; present: boolean };
 type Meal = { mode: string; fee: number | null; account: string | null; pay_link: string | null };
 
 const AV_COLORS = ["#003ecc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
@@ -18,11 +19,12 @@ function Avatar({ name, size = 38 }: { name: string; size?: number }) {
 export default function CheckinClient({ meetingId, token }: { meetingId: string; token: string }) {
   const supabase = createClient();
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [guests, setGuests] = useState<GuestRow[]>([]);
   const [err, setErr] = useState(false);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [meal, setMeal] = useState<Meal | null>(null);
-  const [modal, setModal] = useState<Row | null>(null);
+  const [modal, setModal] = useState<{ name: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -34,6 +36,8 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
       setRows(data as Row[]);
       const info = await supabase.rpc("checkin_info", { p_meeting: meetingId, p_token: token });
       if (alive && info.data) setMeal((info.data[0] as Meal) ?? null);
+      const gs = await supabase.rpc("checkin_guests", { p_meeting: meetingId, p_token: token });
+      if (alive && gs.data) setGuests(gs.data as GuestRow[]);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,7 +68,27 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
     setBusy(null);
     if (error) { alert("출석 처리 중 문제가 생겼어요. 잠시 후 다시 눌러 주세요."); return; }
     setRows((prev) => prev?.map((x) => (x.member_id === r.member_id ? { ...x, present: true } : x)) ?? null);
-    setModal({ ...r, present: true });
+    setModal({ name: r.name });
+  }
+
+  async function undoGuest(g: GuestRow) {
+    if (busy) return;
+    if (!confirm(`${g.name}님(게스트) 출석을 취소할까요?`)) return;
+    setBusy(g.guest_id);
+    const { error } = await supabase.rpc("check_out_guest", { p_meeting: meetingId, p_guest: g.guest_id, p_token: token });
+    setBusy(null);
+    if (error) { alert("취소 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요."); return; }
+    setGuests((prev) => prev.map((x) => (x.guest_id === g.guest_id ? { ...x, present: false } : x)));
+  }
+
+  async function checkInGuest(g: GuestRow) {
+    if (g.present || busy) return;
+    setBusy(g.guest_id);
+    const { error } = await supabase.rpc("check_in_guest", { p_meeting: meetingId, p_guest: g.guest_id, p_token: token });
+    setBusy(null);
+    if (error) { alert("출석 처리 중 문제가 생겼어요. 잠시 후 다시 눌러 주세요."); return; }
+    setGuests((prev) => prev.map((x) => (x.guest_id === g.guest_id ? { ...x, present: true } : x)));
+    setModal({ name: g.name });
   }
 
   const filtered = useMemo(() => {
@@ -73,7 +97,12 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
     return k ? rows.filter((r) => r.name.includes(k)) : rows;
   }, [rows, q]);
 
-  const doneCount = rows?.filter((r) => r.present).length ?? 0;
+  const filteredGuests = useMemo(() => {
+    const k = q.trim();
+    return k ? guests.filter((g) => g.name.includes(k) || (g.branch ?? "").includes(k)) : guests;
+  }, [guests, q]);
+
+  const doneCount = (rows?.filter((r) => r.present).length ?? 0) + guests.filter((g) => g.present).length;
 
   return (
     <div className="moim-ck">
@@ -124,8 +153,32 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
                   </div>
                 );
               })}
-              {filtered.length === 0 && <div className="ck-empty">‘{q}’ 와 일치하는 이름이 없어요.</div>}
+              {filtered.length === 0 && filteredGuests.length === 0 && <div className="ck-empty">‘{q}’ 와 일치하는 이름이 없어요.</div>}
             </div>
+
+            {filteredGuests.length > 0 && (
+              <div className="ck-guests">
+                <div className="ck-gsec">게스트 <span className="ck-gsec-c">{guests.length}</span></div>
+                <div className="ck-grid">
+                  {filteredGuests.map((g) => {
+                    const on = g.present;
+                    return (
+                      <div key={g.guest_id} className={`ck-item ${on ? "done" : ""}`}>
+                        <button className="ck-name-btn" onClick={() => on ? undefined : checkInGuest(g)} disabled={busy === g.guest_id}>
+                          <Avatar name={g.name} size={38} />
+                          <span className="ck-name">{g.name}{g.branch && <span className="ck-branch">{g.branch}</span>}</span>
+                          {busy === g.guest_id ? <span className="ck-chev-t">처리 중…</span>
+                            : on ? <span className="ck-tag"><CheckIcon /> 참석</span>
+                            : <span className="ck-chev"><ChevIcon /></span>}
+                        </button>
+                        {on && <button className="ck-cancel" onClick={() => undoGuest(g)} disabled={busy === g.guest_id}>취소</button>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="ck-foot">출석 체크는 한 번이면 됩니다 · 새서울 CBMC</div>
           </>
         )}
@@ -212,6 +265,11 @@ const CK_CSS = `
 .moim-ck .ck-cancel{ background:#fff; border:1.5px solid var(--line); border-radius:14px; padding:0 17px; font-size:13.5px; font-weight:700; color:var(--ink-3); flex-shrink:0; cursor:pointer; transition:color .14s, border-color .14s; }
 .moim-ck .ck-cancel:hover{ color:#c8392c; border-color:#f0c5c0; }
 .moim-ck .ck-empty{ padding:32px; text-align:center; color:var(--ink-3); font-size:15px; font-weight:500; }
+.moim-ck .ck-branch{ display:inline-block; margin-left:8px; font-size:12px; font-weight:700; color:var(--brand-strong); background:var(--brand-soft); padding:2px 8px; border-radius:999px; vertical-align:middle; }
+.moim-ck .ck-guests{ margin-top:8px; }
+.moim-ck .ck-gsec{ display:flex; align-items:center; gap:8px; margin:6px 22px 12px; font-size:13px; font-weight:800; color:var(--ink-3); letter-spacing:-0.01em; }
+.moim-ck .ck-gsec::before,.moim-ck .ck-gsec::after{ content:""; height:1px; background:var(--line); flex:1; }
+.moim-ck .ck-gsec-c{ display:inline-grid; place-items:center; min-width:20px; height:20px; padding:0 6px; background:var(--brand-soft); color:var(--brand-strong); border-radius:999px; font-size:11.5px; font-weight:800; }
 .moim-ck .ck-err{ margin:22px; padding:36px 20px; text-align:center; color:var(--ink-3); font-size:15px; font-weight:500; line-height:1.6; background:var(--bg-warm); border:1px solid var(--line); border-radius:16px; }
 .moim-ck .ck-loading{ padding:48px; text-align:center; color:var(--ink-3); font-size:15px; }
 .moim-ck .ck-foot{ text-align:center; font-size:12px; color:var(--ink-3); padding:20px 22px 40px; font-weight:500; }

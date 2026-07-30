@@ -1,6 +1,6 @@
 // 출석·식대 페이지 (서버) — 연간일정의 '회차(모임)'를 불러와 보드에 전달.
 import { createClient } from "@/lib/supabase/server";
-import AttendanceBoard, { type Meeting, type Member, type Att } from "./AttendanceBoard";
+import AttendanceBoard, { type Meeting, type Member, type Att, type Guest } from "./AttendanceBoard";
 
 export default async function AttendancePage({
   searchParams,
@@ -36,12 +36,20 @@ export default async function AttendancePage({
   const selectedId = meeting && meetings.some((m) => m.id === meeting) ? meeting : currentId;
 
   let attendance: Att[] = [];
+  let guests: Guest[] = [];
   if (selectedId) {
     const { data: attData } = await supabase
       .from("attendance")
       .select("member_id, present, paid")
       .eq("meeting_id", selectedId);
     attendance = attData ?? [];
+
+    const { data: guestData } = await supabase
+      .from("guests")
+      .select("id, name, branch, present, paid")
+      .eq("meeting_id", selectedId)
+      .order("sort_order", { ascending: true, nullsFirst: false });
+    guests = guestData ?? [];
   }
 
   return (
@@ -51,6 +59,7 @@ export default async function AttendancePage({
       members={members}
       selectedId={selectedId ?? null}
       attendance={attendance}
+      guests={guests}
     />
   );
 }
