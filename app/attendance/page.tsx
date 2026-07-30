@@ -36,12 +36,19 @@ export default async function AttendancePage({
   const selectedId = meeting && meetings.some((m) => m.id === meeting) ? meeting : currentId;
 
   let attendance: Att[] = [];
+  let guestCount = 0;
   if (selectedId) {
     const { data: attData } = await supabase
       .from("attendance")
       .select("member_id, present, paid")
       .eq("meeting_id", selectedId);
     attendance = attData ?? [];
+
+    const { count } = await supabase
+      .from("guest_checkins")
+      .select("*", { count: "exact", head: true })
+      .eq("meeting_id", selectedId);
+    guestCount = count ?? 0;
   }
 
   return (
@@ -51,6 +58,7 @@ export default async function AttendancePage({
       members={members}
       selectedId={selectedId ?? null}
       attendance={attendance}
+      guestCount={guestCount}
     />
   );
 }

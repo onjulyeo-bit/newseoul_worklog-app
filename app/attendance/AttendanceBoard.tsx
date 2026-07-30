@@ -28,8 +28,8 @@ function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   return <span className="att-av" style={{ width: size, height: size, background: color, fontSize: size * 0.42 }}>{ch}</span>;
 }
 
-export default function AttendanceBoard({ meetings, members, selectedId, attendance }: {
-  meetings: Meeting[]; members: Member[]; selectedId: string | null; attendance: Att[];
+export default function AttendanceBoard({ meetings, members, selectedId, attendance, guestCount = 0 }: {
+  meetings: Meeting[]; members: Member[]; selectedId: string | null; attendance: Att[]; guestCount?: number;
 }) {
   const canEdit = useCanEdit();
   const router = useRouter();
@@ -47,6 +47,19 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
   const showToast = (t: string) => { setToast(t); setTimeout(() => setToast(""), 2000); };
 
   const [supabase] = useState(() => createClient());
+
+  // 게스트(명단 밖 방문자) — 이름 없이 인원수만, 식대 포함. 회원 QR과 같은 토큰 재사용.
+  const [guests, setGuests] = useState(guestCount);
+  const [guestBusy, setGuestBusy] = useState(false);
+  async function guestAdjust(dir: 1 | -1) {
+    if (guestBusy || !meeting?.checkin_token || (dir < 0 && guests <= 0)) return;
+    setGuestBusy(true);
+    const fn = dir > 0 ? "guest_check_in" : "guest_check_out";
+    const { data, error } = await supabase.rpc(fn, { p_meeting: meeting.id, p_token: meeting.checkin_token });
+    setGuestBusy(false);
+    if (error) { showToast("게스트 반영 실패: " + error.message); return; }
+    if (typeof data === "number") setGuests(data);
+  }
 
   // 회차 탭 자동 스크롤
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -204,10 +217,24 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
                       <span className="rs rs-on"><b>{present.length}</b> 참석</span>
                       <span className="rs rs-off"><b>{members.length - present.length}</b> 결석</span>
                       {!isOnline && <span className="rs rs-paid"><b>{paid.length}</b> 납부</span>}
+                      <span className="rs rs-guest"><b>{guests}</b> 게스트</span>
                       <span className="rs rs-total">총 {members.length}명</span>
                     </div>
                     {canEdit && <button className="ui-btn ui-ghost ui-sm" onClick={allPresent}>전체 참석</button>}
                   </div>
+                  {canEdit && (
+                    <div className="guest-bar">
+                      <div className="guest-bar-info">
+                        <span className="guest-bar-t">게스트 (명단 밖 방문자)</span>
+                        <span className="guest-bar-s">{isOnline ? "온라인 회차 · 식대 없음" : "식대 포함 · QR로도 직접 체크인돼요"}</span>
+                      </div>
+                      <div className="guest-step">
+                        <button className="guest-step-btn" onClick={() => guestAdjust(-1)} disabled={guestBusy || guests <= 0} aria-label="게스트 줄이기">−</button>
+                        <span className="guest-step-num">{guests}</span>
+                        <button className="guest-step-btn" onClick={() => guestAdjust(1)} disabled={guestBusy} aria-label="게스트 늘리기">＋</button>
+                      </div>
+                    </div>
+                  )}
                   <div className="roster-search">🔍<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름 검색" /></div>
                   <ul className="roster-list">
                     {shown.map((m) => {
@@ -242,7 +269,7 @@ export default function AttendanceBoard({ meetings, members, selectedId, attenda
           {meeting && !isOnline && (
             <div className="settle">
               <div className="card settle-card">
-                <div className="sec-row"><h2 className="sec-title">미납자 안내</h2><span className="settle-sum">수금 {totalAmount.toLocaleString("ko-KR")}원 · 미납 {unpaid.length}명</span></div>
+                <div className="sec-row"><h2 className="sec-title">미납자 안내</h2><span className="settle-sum">수금 {totalAmount.toLocaleString("ko-KR")}원 · 미납 {unpaid.length}명{guests > 0 ? ` · 게스트 ${guests}명(식대 ${(guests * fee).toLocaleString("ko-KR")}원)` : ""}</span></div>
                 {unpaid.length === 0 ? (
                   <p className="settle-empty">{present.length === 0 ? "출석을 체크하면 미납자가 표시돼요." : "🎉 참석자 전원 납부 완료!"}</p>
                 ) : (
@@ -352,6 +379,16 @@ const ATT_CSS = `
 .moim-att .rs-on b{ color:var(--green); }
 .moim-att .rs-off b{ color:var(--ink-2); }
 .moim-att .rs-paid b{ color:var(--brand); }
+.moim-att .rs-guest b{ color:#7c5cff; }
+.moim-att .guest-bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 16px; border-bottom:1px solid var(--line); background:var(--brand-softer); }
+.moim-att .guest-bar-info{ display:flex; flex-direction:column; gap:1px; min-width:0; }
+.moim-att .guest-bar-t{ font-size:13px; font-weight:800; letter-spacing:-0.02em; }
+.moim-att .guest-bar-s{ font-size:11.5px; color:var(--ink-3); font-weight:500; }
+.moim-att .guest-step{ display:flex; align-items:center; gap:4px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:3px; flex-shrink:0; }
+.moim-att .guest-step-btn{ width:32px; height:32px; border-radius:9px; border:0; background:var(--bg-warm); color:var(--ink); font-size:18px; font-weight:800; line-height:1; cursor:pointer; display:grid; place-items:center; }
+.moim-att .guest-step-btn:not(:disabled):hover{ background:var(--brand-soft); color:var(--brand-strong); }
+.moim-att .guest-step-btn:disabled{ opacity:.4; cursor:default; }
+.moim-att .guest-step-num{ min-width:30px; text-align:center; font-size:16px; font-weight:800; letter-spacing:-0.03em; }
 .moim-att .roster-search{ display:flex; align-items:center; gap:7px; padding:11px 16px; border-bottom:1px solid var(--line); color:var(--ink-3); }
 .moim-att .roster-search input{ border:0; outline:0; font-family:inherit; font-size:14px; color:var(--ink); background:none; flex:1; min-width:0; }
 .moim-att .roster-list{ display:flex; flex-direction:column; max-height:600px; overflow-y:auto; }

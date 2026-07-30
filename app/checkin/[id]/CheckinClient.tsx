@@ -24,6 +24,9 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
   const [meal, setMeal] = useState<Meal | null>(null);
   const [modal, setModal] = useState<Row | null>(null);
   const [copied, setCopied] = useState(false);
+  const [guests, setGuests] = useState(0);        // 이번 회차 게스트 총원
+  const [guestBusy, setGuestBusy] = useState(false);
+  const [guestModal, setGuestModal] = useState(false); // 게스트 체크인 완료 안내
 
   useEffect(() => {
     let alive = true;
@@ -34,6 +37,8 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
       setRows(data as Row[]);
       const info = await supabase.rpc("checkin_info", { p_meeting: meetingId, p_token: token });
       if (alive && info.data) setMeal((info.data[0] as Meal) ?? null);
+      const g = await supabase.rpc("guest_count", { p_meeting: meetingId, p_token: token });
+      if (alive && typeof g.data === "number") setGuests(g.data);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,6 +70,26 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
     if (error) { alert("출석 처리 중 문제가 생겼어요. 잠시 후 다시 눌러 주세요."); return; }
     setRows((prev) => prev?.map((x) => (x.member_id === r.member_id ? { ...x, present: true } : x)) ?? null);
     setModal({ ...r, present: true });
+  }
+
+  // 게스트(명단에 없는 방문자) 체크인 — 이름 없이 인원수만, 식대 포함
+  async function guestIn() {
+    if (guestBusy) return;
+    setGuestBusy(true);
+    const { data, error } = await supabase.rpc("guest_check_in", { p_meeting: meetingId, p_token: token });
+    setGuestBusy(false);
+    if (error) { alert("게스트 체크인 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요."); return; }
+    if (typeof data === "number") setGuests(data);
+    setGuestModal(true);
+  }
+  async function guestOut() {
+    if (guestBusy || guests <= 0) return;
+    if (!confirm("방금 등록한 게스트 1명을 취소할까요?")) return;
+    setGuestBusy(true);
+    const { data, error } = await supabase.rpc("guest_check_out", { p_meeting: meetingId, p_token: token });
+    setGuestBusy(false);
+    if (error) { alert("취소 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요."); return; }
+    if (typeof data === "number") setGuests(data);
   }
 
   const filtered = useMemo(() => {
@@ -126,6 +151,24 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
               })}
               {filtered.length === 0 && <div className="ck-empty">‘{q}’ 와 일치하는 이름이 없어요.</div>}
             </div>
+
+            {/* 게스트(명단에 없는 방문자) 체크인 */}
+            <div className="ck-guest">
+              <div className="ck-guest-head">
+                <span className="ck-guest-t">처음 오셨나요?</span>
+                <span className="ck-guest-s">명단에 없는 게스트도 여기서 체크인해요{hasFee ? " · 식대 포함" : ""}.</span>
+              </div>
+              <button className="ck-guest-btn" onClick={guestIn} disabled={guestBusy}>
+                {guestBusy ? "처리 중…" : "＋ 게스트로 체크인"}
+              </button>
+              {guests > 0 && (
+                <div className="ck-guest-count">
+                  <span><CheckIcon /> 게스트 {guests}명 체크인됨</span>
+                  <button className="ck-guest-undo" onClick={guestOut} disabled={guestBusy}>방금 취소</button>
+                </div>
+              )}
+            </div>
+
             <div className="ck-foot">출석 체크는 한 번이면 됩니다 · 새서울 CBMC</div>
           </>
         )}
@@ -153,6 +196,32 @@ export default function CheckinClient({ meetingId, token }: { meetingId: string;
               <div className="ck-nofee">🎉 이번 회차는 식대가 없습니다</div>
             )}
             <button className="ck-modal-ok" onClick={() => setModal(null)}>확인</button>
+          </div>
+        </div>
+      )}
+
+      {/* 게스트 체크인 완료 안내 (식대 포함) */}
+      {guestModal && (
+        <div className="ck-modal-root" onClick={() => setGuestModal(false)}>
+          <div className="ck-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ck-modal-ic"><CheckIcon size={34} /></div>
+            <h2 className="ck-modal-t">게스트 체크인 완료!</h2>
+            <p className="ck-modal-name">방문해 주셔서 반갑습니다 🙏</p>
+            {hasFee ? (
+              <div className="ck-fee">
+                <div className="ck-fee-row"><span>식대</span><strong>{meal!.fee!.toLocaleString("ko-KR")}원</strong></div>
+                {meal?.account && (
+                  <div className="ck-fee-acct">
+                    <div><div className="ck-fee-lbl">입금 계좌</div><div className="ck-fee-num">{meal.account}</div></div>
+                    <button className="ck-copy" onClick={copyAcct}><CopyIcon /> {copied ? "복사됨" : "복사"}</button>
+                  </div>
+                )}
+                {meal?.pay_link && <a className="ck-paylink" href={meal.pay_link} target="_blank" rel="noreferrer">💸 간편 송금</a>}
+              </div>
+            ) : (
+              <div className="ck-nofee">🎉 이번 회차는 식대가 없습니다</div>
+            )}
+            <button className="ck-modal-ok" onClick={() => setGuestModal(false)}>확인</button>
           </div>
         </div>
       )}
@@ -215,6 +284,20 @@ const CK_CSS = `
 .moim-ck .ck-err{ margin:22px; padding:36px 20px; text-align:center; color:var(--ink-3); font-size:15px; font-weight:500; line-height:1.6; background:var(--bg-warm); border:1px solid var(--line); border-radius:16px; }
 .moim-ck .ck-loading{ padding:48px; text-align:center; color:var(--ink-3); font-size:15px; }
 .moim-ck .ck-foot{ text-align:center; font-size:12px; color:var(--ink-3); padding:20px 22px 40px; font-weight:500; }
+
+.moim-ck .ck-guest{ margin:8px 22px 4px; padding:16px; background:var(--brand-softer); border:1px dashed #c3d7f3; border-radius:16px; }
+.moim-ck .ck-guest-head{ display:flex; flex-direction:column; gap:2px; margin-bottom:12px; }
+.moim-ck .ck-guest-t{ font-size:15px; font-weight:800; letter-spacing:-0.02em; color:var(--ink); }
+.moim-ck .ck-guest-s{ font-size:12.5px; color:var(--ink-3); font-weight:500; }
+.moim-ck .ck-guest-btn{ width:100%; background:var(--brand); color:#fff; font-size:15.5px; font-weight:700; padding:14px; border:0; border-radius:14px; cursor:pointer; transition:background .14s, transform .1s; }
+.moim-ck .ck-guest-btn:not(:disabled):hover{ background:var(--brand-strong); }
+.moim-ck .ck-guest-btn:not(:disabled):active{ transform:scale(.99); }
+.moim-ck .ck-guest-btn:disabled{ opacity:.6; cursor:default; }
+.moim-ck .ck-guest-count{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:11px; }
+.moim-ck .ck-guest-count > span{ display:inline-flex; align-items:center; gap:5px; font-size:13.5px; font-weight:700; color:var(--green); }
+.moim-ck .ck-guest-undo{ background:#fff; border:1.5px solid var(--line); border-radius:12px; padding:7px 13px; font-size:13px; font-weight:700; color:var(--ink-3); cursor:pointer; }
+.moim-ck .ck-guest-undo:hover{ color:#c8392c; border-color:#f0c5c0; }
+.moim-ck .ck-guest-undo:disabled{ opacity:.5; cursor:default; }
 
 .moim-ck .ck-modal-root{ position:fixed; inset:0; z-index:70; background:rgba(20,24,34,.5); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:24px; }
 .moim-ck .ck-modal{ background:#fff; border-radius:26px; padding:32px 26px 26px; max-width:360px; width:100%; text-align:center; box-shadow:0 30px 70px rgba(0,0,0,.3); animation:ck-pop .26s cubic-bezier(.2,.8,.2,1); }
