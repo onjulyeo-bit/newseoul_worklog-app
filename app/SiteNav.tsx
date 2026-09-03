@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, CalendarDays, ClipboardCheck, ReceiptText,
   Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap, BookText, UserRound,
+  PenLine,
 } from "lucide-react";
 
 type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string; color?: string };
@@ -20,6 +21,7 @@ const ADMIN: Item[] = [
   { href: "/content", label: "콘텐츠", Icon: ImageIcon, group: "main" },
   { href: "/notices", label: "공지", Icon: Megaphone, group: "main" },
   { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, group: "main" },
+  { href: "/sign", label: "서명", Icon: PenLine, group: "main" },
   { href: "/finance", label: "회계", Icon: ReceiptText, group: "main" },
   { href: "/attendance/stats", label: "통계", Icon: BarChart3, group: "main" },
   { href: "/archive", label: "아카이브", Icon: Archive, group: "main" },
