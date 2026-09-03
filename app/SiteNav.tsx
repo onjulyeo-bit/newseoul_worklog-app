@@ -57,7 +57,7 @@ function activeHref(pathname: string, items: Item[]): string | null {
 export default function SiteNav({ role, email, isOwner = false }: { role: string | null; email?: string | null; isOwner?: boolean }) {
   const pathname = usePathname() ?? "";
 
-  if (pathname.startsWith("/checkin") || pathname.startsWith("/preview-landing") || pathname.startsWith("/my-info") || pathname.startsWith("/instructor-form")) return null;
+  if (pathname.startsWith("/checkin") || pathname.startsWith("/preview-landing") || pathname.startsWith("/my-info") || pathname.startsWith("/instructor-form") || pathname.startsWith("/s/")) return null;
   if (!role) return null; // 익명 → 랜딩 자체 헤더만
 
   const isAdmin = role === "admin";

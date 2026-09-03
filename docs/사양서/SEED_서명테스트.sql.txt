@@ -1,0 +1,24 @@
+-- 서명 모듈 실기기 테스트용 시드 (사양서 §6-2: 더미 요청 1건으로 서명자 화면 테스트)
+-- 전제: 0057_sign_module.sql, 0058_sign_no_service_role.sql 적용 완료.
+-- Supabase SQL Editor 에 통째로 실행 → 결과의 token 을 복사해 https://cbmc-app.vercel.app/s/<token> 를 폰에서 연다.
+-- 테스트 PDF(A4 1쪽, 790바이트)가 base64 로 내장돼 있어 파일 업로드 불필요.
+-- 서명란 슬롯(100,150 / 200x60 pt, 좌하단 원점)은 PDF 안에 그려진 파란 사각형과 정확히 일치한다.
+-- 테스트 끝나면: delete from sign_requests where title like '테스트 문서%';  (cascade 로 슬롯·서명자·이벤트 함께 삭제)
+
+with r as (
+  insert into public.sign_requests (title, description, status, source_pdf_data)
+  values (
+    '테스트 문서 (삭제 가능)',
+    '서명 화면 실기기 테스트용입니다. 파란 사각형 안이 서명란입니다.',
+    'active',
+    'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvQ29udGVudHMgNCAwIFIgL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgNSAwIFIgPj4gPj4gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCAyNDUgPj4Kc3RyZWFtCkJUIC9GMSAxOCBUZiA2MCA3NDAgVGQgKFRFU1QgRE9DVU1FTlQgLSBTaWduIGluIHRoZSBib3ggYmVsb3cpIFRqIEVUCkJUIC9GMSAxMiBUZiA2MCA3MTUgVGQgKFRoaXMgaXMgYSBkdW1teSBwYWdlIGZvciB0aGUgZS1TaWduIHNtb2tlIHRlc3QuIFNhZmUgdG8gZGVsZXRlLikgVGogRVQKQlQgL0YxIDExIFRmIDEwMCAyMjIgVGQgKFNpZ25hdHVyZTopIFRqIEVUCjIgdyAwLjIgMC4zIDAuOCBSRyAxMDAgMTUwIDIwMCA2MCByZSBTCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EgPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0MSAwMDAwMCBuIAowMDAwMDAwNTM3IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNjA3CiUlRU9GCg=='
+  )
+  returning id
+), s as (
+  insert into public.sign_slots (request_id, label, page, x, y, w, h, order_no)
+  select id, '테스트 서명자', 1, 100, 150, 200, 60, 1 from r
+  returning id, request_id
+)
+insert into public.sign_signers (request_id, slot_id, name, token)
+select request_id, id, '박경선', 'test' || substr(md5(random()::text || clock_timestamp()::text), 1, 28) from s
+returning token;
