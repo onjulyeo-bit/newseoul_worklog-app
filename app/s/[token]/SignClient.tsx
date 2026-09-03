@@ -203,6 +203,13 @@ export default function SignClient({ token }: { token: string }) {
               </div>
             )}
 
+            {done && (
+              <div className="sg-done-acts">
+                <a className="sg-cta" href={`/api/sign/${encodeURIComponent(token)}/pdf`} target="_blank" rel="noreferrer">📄 내 서명본 보기</a>
+                <a className="sg-cta sg-cta-ghost" href={`/api/sign/${encodeURIComponent(token)}/pdf?dl=1`}>⬇ PDF 저장</a>
+              </div>
+            )}
+
             <div className="sg-doc" ref={wrapRef}>
               {err === "pdf" ? (
                 <div className="sg-err">문서를 표시하지 못했어요. 잠시 후 다시 열어 주세요.</div>
@@ -288,6 +295,9 @@ const SG_CSS = `
 .moim-sg .sg-done-t{ font-weight:800; font-size:16px; letter-spacing:-0.03em; color:var(--green); }
 .moim-sg .sg-done-s{ font-size:13px; color:var(--ink-2); font-weight:600; margin-top:2px; }
 
+.moim-sg .sg-done-acts{ display:flex; gap:8px; margin:12px 20px 0; }
+.moim-sg .sg-done-acts .sg-cta{ flex:1; padding:13px; font-size:15px; text-align:center; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
+.moim-sg .sg-cta-ghost{ background:#fff !important; color:var(--brand-strong) !important; border:1.5px solid #bcd6f5 !important; box-shadow:none !important; }
 .moim-sg .sg-doc{ padding:16px 0 8px; display:flex; flex-direction:column; align-items:center; gap:14px; background:#eef0f3; margin-top:14px; }
 .moim-sg .sg-page{ position:relative; background:#fff; box-shadow:0 2px 10px rgba(20,24,34,.12); }
 .moim-sg .sg-page canvas{ display:block; }
