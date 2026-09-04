@@ -106,10 +106,11 @@ export const SIGN_CSS = `
 .moim-sign .file-ok small{ color:var(--ink-2); font-weight:500; }
 .moim-sign .place-wrap{ display:flex; flex-direction:column; gap:14px; }
 .moim-sign .place-doc{ background:#eef0f3; padding:14px 0; display:flex; flex-direction:column; align-items:center; gap:14px; border-radius:14px; }
-.moim-sign .place-page{ position:relative; background:#fff; box-shadow:0 2px 10px rgba(20,24,34,.12); cursor:crosshair; user-select:none; touch-action:none; }
+.moim-sign .place-page{ position:relative; background:#fff; box-shadow:0 2px 10px rgba(20,24,34,.12); cursor:default; user-select:none; }
+.moim-sign .place-page.adding{ cursor:crosshair; touch-action:none; outline:2px dashed var(--brand); outline-offset:2px; }
 .moim-sign .place-page canvas{ display:block; pointer-events:none; }
 .moim-sign .place-pageno{ position:absolute; right:8px; bottom:6px; font-size:11px; color:var(--ink-3); font-weight:600; background:rgba(255,255,255,.85); padding:2px 6px; border-radius:6px; pointer-events:none; }
-.moim-sign .box{ position:absolute; border:2px solid var(--brand); background:rgba(0,62,204,.10); border-radius:4px; cursor:move; }
+.moim-sign .box{ position:absolute; border:2px solid var(--brand); background:rgba(0,62,204,.10); border-radius:4px; cursor:move; touch-action:none; }
 .moim-sign .box.sel{ border-color:var(--amber); background:rgba(180,83,9,.12); box-shadow:0 0 0 3px rgba(180,83,9,.2); }
 .moim-sign .box-tag{ position:absolute; left:-2px; top:-22px; font-size:11px; font-weight:800; color:#fff; background:var(--brand); padding:2px 8px; border-radius:6px; white-space:nowrap; pointer-events:none; }
 .moim-sign .box.sel .box-tag{ background:var(--amber); }

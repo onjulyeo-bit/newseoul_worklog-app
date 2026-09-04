@@ -47,3 +47,17 @@ export function pxToPt(v: PageView, r: { left: number; top: number; width: numbe
   const w = r.width / v.scale, h = r.height / v.scale;
   return { x: r.left / v.scale, y: v.ptH - r.top / v.scale - h, w, h };
 }
+
+// 서명란 자동 찾기용: 페이지별 텍스트 조각(pt 좌표) 추출
+export async function extractPageText(doc: PDFDocumentProxy): Promise<import("./pdfDetect").PageText[]> {
+  const out: import("./pdfDetect").PageText[] = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p); const vp = page.getViewport({ scale: 1 });
+    const tc = await page.getTextContent();
+    const items = (tc.items as Array<{ str?: string; transform?: number[]; width?: number; height?: number }>)
+      .filter((i) => typeof i.str === "string" && i.transform)
+      .map((i) => ({ str: i.str!, x: i.transform![4], y: i.transform![5], w: i.width ?? 0, h: i.height ?? 0 }));
+    out.push({ page: p, ptW: vp.width, ptH: vp.height, items });
+  }
+  return out;
+}

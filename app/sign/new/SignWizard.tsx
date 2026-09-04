@@ -8,7 +8,8 @@ import { useRouter } from "next/navigation";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { SIGN_CSS } from "../signCss";
 import { createSignRequest } from "../actions";
-import { loadPdf, measurePages, renderPage, ptToPx, pxToPt, type PageView } from "@/lib/pdfPages";
+import { loadPdf, measurePages, renderPage, extractPageText, ptToPx, pxToPt, type PageView } from "@/lib/pdfPages";
+import { detectSignatureSlots } from "@/lib/pdfDetect";
 import type { NewSlot, NewSigner, MemberOpt } from "@/lib/signTypes";
 
 const MAX_PDF = 5 * 1024 * 1024;
@@ -35,6 +36,9 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
   const [slots, setSlots] = useState<NewSlot[]>([]);
   const [sel, setSel] = useState<string | null>(null);
   const [drawing, setDrawing] = useState<{ page: number; rect: Rect } | null>(null);
+  const [addMode, setAddMode] = useState(false);          // 켜져 있을 때만 문서 위 탭/드래그로 박스 생성 (평소엔 스크롤)
+  const [detectMsg, setDetectMsg] = useState("");
+  const autoRan = useRef(false);
   const dragRef = useRef<Drag | null>(null);
   const canvasRefs = useRef<Record<number, HTMLCanvasElement | null>>({});
   const rendered = useRef(false);
@@ -53,10 +57,12 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
     const b64 = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).replace(/^data:[^;]*;base64,/, "")); r.onerror = rej; r.readAsDataURL(f); });
     try {
       const d = await loadPdf(b64);
-      const cw = Math.min(720, (typeof window !== "undefined" ? window.innerWidth : 720) - 48);
+      // 렌더 폭: 화면 폭 기준(최소 320, 최대 720). 숨겨진 탭 등에서 innerWidth 가 0 이어도 음수가 되지 않게.
+      const iw = typeof window !== "undefined" && window.innerWidth > 0 ? window.innerWidth : 720;
+      const cw = Math.max(320, Math.min(720, iw - 48));
       const v = await measurePages(d, cw);
       setDoc(d); setViews(v); setPdfB64(b64); setFileInfo({ name: f.name, size: f.size, pages: d.numPages });
-      setSlots([]); setSel(null); rendered.current = false;
+      setSlots([]); setSel(null); rendered.current = false; autoRan.current = false; setDetectMsg("");
       if (!title) setTitle(f.name.replace(/\.pdf$/i, ""));
     } catch { setErr("PDF 를 읽지 못했어요. 파일이 손상됐거나 암호가 걸려 있을 수 있어요."); }
   }
@@ -67,6 +73,25 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
     rendered.current = true;
     (async () => { for (const v of views) { const c = canvasRefs.current[v.idx]; if (c) await renderPage(doc, v, c); } })();
   }, [step, doc, views]);
+
+  // ② 서명란 자동 찾기 — "(서명)" 표시·표의 빈 '서명' 칸. 기존 박스와 겹치는 건 건너뜀.
+  async function runDetect(silent = false) {
+    if (!doc) return;
+    try {
+      const found = detectSignatureSlots(await extractPageText(doc));
+      const fresh = found.filter((f) => !slots.some((s) => s.page === f.page && Math.abs(s.x - f.x) < 20 && Math.abs(s.y - f.y) < 12));
+      if (fresh.length === 0) { setDetectMsg(silent ? "" : (found.length ? "이미 모두 배치되어 있어요." : "자동으로 찾지 못했어요 — [＋ 서명란 추가]로 직접 놓아 주세요.")); return; }
+      const base = slots.length;
+      setSlots((prev) => [...prev, ...fresh.map((f, i) => ({ key: `s${Date.now().toString(36)}${i}${Math.random().toString(36).slice(2, 5)}`, label: f.label || `서명 ${base + i + 1}`, page: f.page, x: f.x, y: f.y, w: f.w, h: f.h }))]);
+      setDetectMsg(`✨ 서명란 ${fresh.length}개를 자동으로 찾았어요. 위치가 맞는지 확인하고, 필요하면 끌어서 조정하세요.`);
+    } catch { setDetectMsg(silent ? "" : "자동 찾기에 실패했어요. 직접 놓아 주세요."); }
+  }
+  useEffect(() => {
+    if (step !== 2 || !doc || autoRan.current) return;
+    autoRan.current = true;
+    if (slots.length === 0) runDetect(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, doc]);
 
   // ③ 진입 시 라벨=회원이름이면 자동 배정
   useEffect(() => {
@@ -87,6 +112,7 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
   function pos(e: React.PointerEvent, el: HTMLElement) { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
   function onPageDown(e: React.PointerEvent<HTMLDivElement>, page: number) {
     if ((e.target as HTMLElement).closest(".box")) return;
+    if (!addMode) { setSel(null); return; }                 // 평소엔 스크롤만 (터치에서 박스가 마구 생기던 문제)
     const p = pos(e, e.currentTarget);
     dragRef.current = { kind: "draw", page, sx: p.x, sy: p.y };
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -117,11 +143,14 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
   function onPageUp(e: React.PointerEvent<HTMLDivElement>, page: number) {
     const d = dragRef.current; dragRef.current = null;
     if (!d || d.page !== page) return;
-    if (d.kind === "draw" && drawing && drawing.rect.width > 10 && drawing.rect.height > 8) {
+    if (d.kind === "draw") {
       const v = viewOf(page);
       const key = `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
       const n = slots.length + 1;
-      setSlots((prev) => [...prev, { key, label: `서명 ${n}`, page, ...pxToPt(v, drawing.rect) }]);
+      const dragged = drawing && drawing.rect.width > 10 && drawing.rect.height > 8;
+      // 탭(거의 안 움직임)이면 기본 크기(150×28pt) 박스를 탭한 자리에 중앙 배치
+      const rect: Rect = dragged ? drawing!.rect : (() => { const w = 150 * v.scale, h = 28 * v.scale; return { left: clamp(d.sx - w / 2, 0, v.width - w), top: clamp(d.sy - h / 2, 0, v.height - h), width: w, height: h }; })();
+      setSlots((prev) => [...prev, { key, label: `서명 ${n}`, page, ...pxToPt(v, rect) }]);
       setSel(key);
     }
     setDrawing(null);
@@ -196,10 +225,15 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
           {step === 2 && (
             <div className="place-wrap">
               <div>
-                <div className="place-hint" style={{ marginBottom: 12 }}>📐 문서 위에서 <b>마우스(손가락)로 끌어</b> 서명란 박스를 그리세요. 박스는 끌어서 옮기고 오른쪽 아래 손잡이로 크기를 바꿉니다. 동의서 표처럼 같은 칸이 여러 개면 하나 그리고 <b>[아래로 복제]</b>를 누르세요.</div>
+                <div className="place-hint" style={{ marginBottom: 12 }}>
+                  {detectMsg ? <div style={{ marginBottom: 6 }}>{detectMsg}</div> : null}
+                  {addMode
+                    ? <>➕ <b>추가 모드</b> — 문서에서 서명란이 들어갈 자리를 <b>한 번 탭</b>하면 박스가 생깁니다(끌어서 그려도 됨). 다 놓았으면 <b>[완료]</b>를 누르세요.</>
+                    : <>📐 파란 박스가 서명란입니다. 박스는 <b>끌어서 옮기고</b> 오른쪽 아래 손잡이로 크기를 바꿉니다. 빠진 칸은 <b>[＋ 서명란 추가]</b>, 같은 칸이 여러 개면 <b>[아래로 복제]</b>.</>}
+                </div>
                 <div className="place-doc">
                   {views.map((v) => (
-                    <div key={v.idx} className="place-page" style={{ width: v.width, height: v.height }}
+                    <div key={v.idx} className={`place-page ${addMode ? "adding" : ""}`} style={{ width: v.width, height: v.height }}
                       onPointerDown={(e) => onPageDown(e, v.idx)} onPointerMove={(e) => onPageMove(e, v.idx)} onPointerUp={(e) => onPageUp(e, v.idx)} onPointerCancel={(e) => onPageUp(e, v.idx)}>
                       <canvas ref={(el) => { canvasRefs.current[v.idx] = el; }} />
                       {slots.filter((s) => s.page === v.idx).map((s) => {
@@ -218,13 +252,14 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
                 </div>
               </div>
               <div className="slot-panel">
-                <div className="sec-row"><h2 className="sec-title">서명란 {slots.length}개</h2>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="ui-btn ui-ghost ui-sm" onClick={dupBelow} disabled={!sel}>⤓ 아래로 복제</button>
-                    <button className="ui-btn ui-danger ui-sm" onClick={() => sel && removeSlot(sel)} disabled={!sel}>삭제</button>
-                  </div>
+                <div className="sec-row"><h2 className="sec-title">서명란 {slots.length}개</h2></div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                  <button className={`ui-btn ${addMode ? "ui-primary" : "ui-ghost"} ui-sm`} onClick={() => setAddMode((v) => !v)}>{addMode ? "✓ 완료" : "＋ 서명란 추가"}</button>
+                  <button className="ui-btn ui-ghost ui-sm" onClick={() => runDetect(false)}>✨ 자동 찾기</button>
+                  <button className="ui-btn ui-ghost ui-sm" onClick={dupBelow} disabled={!sel}>⤓ 아래로 복제</button>
+                  <button className="ui-btn ui-danger ui-sm" onClick={() => sel && removeSlot(sel)} disabled={!sel}>삭제</button>
                 </div>
-                {slots.length === 0 && <p className="fhint">아직 서명란이 없어요. 문서 위에서 드래그해 그려 주세요.</p>}
+                {slots.length === 0 && <p className="fhint">아직 서명란이 없어요. <b>[✨ 자동 찾기]</b>를 누르거나, <b>[＋ 서명란 추가]</b> 후 문서를 탭해 놓아 주세요.</p>}
                 {slots.map((s, i) => (
                   <div key={s.key} className={`slot-row ${sel === s.key ? "sel" : ""}`} onClick={() => setSel(s.key)}>
                     <span className="slot-no">{i + 1}</span>
