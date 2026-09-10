@@ -13,8 +13,8 @@ const AV_COLORS = ["#003ecc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a0
 const fmtDT = (s: string | null) => { if (!s) return ""; const d = new Date(s); const p = (n: number) => String(n).padStart(2, "0"); return `${d.getMonth() + 1}.${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 const fmtD = (s: string | null) => { if (!s) return ""; const d = new Date(s); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`; };
 
-export default function SignStatus({ request, slots, signers, sentIds, canEdit }: {
-  request: SignRequestRow; slots: SignSlotRow[]; signers: SignSignerRow[]; sentIds: string[]; canEdit: boolean;
+export default function SignStatus({ request, slots, signers, sentIds, canEdit, groupToken }: {
+  request: SignRequestRow; slots: SignSlotRow[]; signers: SignSignerRow[]; sentIds: string[]; canEdit: boolean; groupToken?: string | null;
 }) {
   const router = useRouter();
   const [, start] = useTransition();
@@ -47,6 +47,15 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit }
     const lines = rows.filter((r) => r.signer).map((r) => `${r.signer!.name}: ${linkOf(r.signer!)}`);
     await copy(`[${request.title}] 서명 링크\n\n${lines.join("\n")}`, `${lines.length}명 링크 목록을 복사했어요`);
     rows.forEach((r) => r.signer && noteSent(r.signer));
+  }
+  // 단체 링크 — 단톡방에 1개만 올리면 각자 명단에서 본인을 눌러 서명 (0061)
+  const groupUrl = groupToken ? `${siteBase}/s/g/${groupToken}` : null;
+  async function shareGroup() {
+    if (!groupUrl) return;
+    const text = `[새서울 CBMC] 「${request.title}」 전자서명 안내\n아래 링크를 열어 명단에서 본인 이름을 누른 뒤 서명해 주세요. (한 번이면 됩니다)\n${groupUrl}`;
+    rows.forEach((r) => r.signer && noteSent(r.signer));
+    if (typeof navigator !== "undefined" && navigator.share) { try { await navigator.share({ title: request.title, text }); return; } catch { /* 취소 */ } }
+    await copy(text, "단체 안내 문구+링크를 복사했어요 — 단톡방에 붙여넣으세요");
   }
   async function cancel() {
     if (!confirm("이 서명 요청을 취소할까요? 서명자 링크가 모두 막힙니다.")) return;
@@ -94,12 +103,19 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit }
           <div className="st-prog"><span className={`bar ${isDone ? "done" : ""}`}><i style={{ width: `${pct}%` }} /></span><span className="st-prog-n">{done} / {total} 서명</span></div>
           {canEdit && (
             <div className="st-actions">
-              {isActive && <button className="ui-btn ui-primary ui-sm" onClick={copyAll}>📋 전체 링크 목록 복사</button>}
+              {isActive && groupUrl && <button className="ui-btn ui-primary ui-sm" onClick={shareGroup}>🔗 단체 링크 (단톡방용)</button>}
+              {isActive && <button className="ui-btn ui-ghost ui-sm" onClick={copyAll}>📋 개인별 링크 목록 복사</button>}
               {isActive && <button className="ui-btn ui-danger ui-sm" onClick={cancel}>요청 취소</button>}
               {!isActive && <button className="ui-btn ui-danger ui-sm" onClick={remove}>삭제</button>}
             </div>
           )}
-          {isActive && canEdit && <p className="fhint" style={{ marginTop: 10 }}>각 서명자에게 링크를 카톡으로 보내세요. 아래 [공유]는 폰에서 카톡 공유창이 바로 열리고, PC에서는 문구+링크가 복사됩니다.</p>}
+          {isActive && canEdit && (
+            <p className="fhint" style={{ marginTop: 10 }}>
+              {groupUrl
+                ? "제일 쉬운 방법: [단체 링크] 하나를 단톡방에 올리면, 각자 명단에서 본인 이름을 누르고 서명합니다. 개인별 링크도 그대로 쓸 수 있어요."
+                : "각 서명자에게 링크를 카톡으로 보내세요. 단체 링크(단톡방용)를 쓰려면 0061 마이그레이션을 적용하세요."}
+            </p>
+          )}
         </div>
 
         <div className="card">

@@ -1,0 +1,154 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1788533284503,
+  "projectRoot": "/Users/parkkyungsun/PROJECT_claude/my_OS/cbmc-app",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.2.6",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.4",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase",
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "app",
+      "docs",
+      "lib",
+      "public"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "app": {
+      "path": "app",
+      "purpose": "Application code",
+      "fileCount": 10,
+      "lastAccessed": 1788533284484,
+      "keyFiles": [
+        "Landing.tsx",
+        "MemberClaim.tsx",
+        "SiteNav.tsx",
+        "Welcome.tsx",
+        "favicon.ico"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 1,
+      "lastAccessed": 1788533284488,
+      "keyFiles": [
+        "design-briefs.md"
+      ]
+    },
+    "lib": {
+      "path": "lib",
+      "purpose": "Library code",
+      "fileCount": 16,
+      "lastAccessed": 1788533284489,
+      "keyFiles": [
+        "classifyTxn.ts",
+        "exportTable.ts",
+        "generateSchedule.ts",
+        "parseDuesXlsx.ts",
+        "parseGuests.ts"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 13,
+      "lastAccessed": 1788533284490,
+      "keyFiles": [
+        "apple-touch-icon.png",
+        "cbmc-logo.png",
+        "cbmc-mark.png",
+        "cbmc-symbol.png",
+        "cbmc-symbol.webp"
+      ]
+    },
+    "supabase": {
+      "path": "supabase",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1788533284491,
+      "keyFiles": []
+    },
+    "app/api": {
+      "path": "app/api",
+      "purpose": "API routes",
+      "fileCount": 0,
+      "lastAccessed": 1788533284492,
+      "keyFiles": []
+    },
+    "supabase/migrations": {
+      "path": "supabase/migrations",
+      "purpose": "Database migrations",
+      "fileCount": 57,
+      "lastAccessed": 1788533284494,
+      "keyFiles": [
+        "0001_profiles_and_roles.sql",
+        "0002_chapters_members_officers.sql",
+        "0003_import_members_2024.sql"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

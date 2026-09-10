@@ -2,7 +2,9 @@
 //   사양서 §4 'PDF 합성': 박스 안 비율 유지·여백 6%, 서명 아래 7pt 회색 '서명일시', 마지막에 서명 증빙 페이지 1장.
 //   최종 PDF는 저장하지 않고 볼 때마다 합성한다(원본·서명이 모두 DB에 있어 언제든 동일 재생성 — service_role·추가 마이그레이션 불필요).
 //   미서명 슬롯은 건너뛰므로 '현재까지 서명본'(부분 합성)도 같은 함수로 만든다.
-//   한글 폰트: lib/fonts/Pretendard.ttf (OFL, TrueType — CFF OTF 는 fontkit 서브셋 불가). next.config outputFileTracingIncludes 로 서버리스 함수에 포함.
+//   한글 폰트: lib/fonts/Pretendard-Sub.ttf — 가변 TTF를 fonttools 로 정적화+한글 전체 사전 서브셋(2.5MB)한 파일.
+//   ⚠️ pdf-lib embedFont 는 반드시 subset:false — @pdf-lib/fontkit 의 런타임 서브셋이 이 폰트 글리프를 깨뜨림(2026-09-11 확인).
+//   next.config outputFileTracingIncludes 로 서버리스 함수에 포함.
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { readFile } from "fs/promises";
@@ -25,7 +27,7 @@ export type ComposeInput = {
 
 let fontBytes: Uint8Array | null = null;
 async function loadFont(): Promise<Uint8Array> {
-  if (!fontBytes) fontBytes = new Uint8Array(await readFile(path.join(process.cwd(), "lib/fonts/Pretendard.ttf")));
+  if (!fontBytes) fontBytes = new Uint8Array(await readFile(path.join(process.cwd(), "lib/fonts/Pretendard-Sub.ttf")));
   return fontBytes;
 }
 
@@ -49,7 +51,7 @@ function maskIp(ip: string | null): string {
 export async function composeSignedPdf(input: ComposeInput): Promise<Uint8Array> {
   const pdf = await PDFDocument.load(Buffer.from(input.sourceB64, "base64"), { ignoreEncryption: true });
   pdf.registerFontkit(fontkit);
-  const font = await pdf.embedFont(await loadFont(), { subset: true });
+  const font = await pdf.embedFont(await loadFont(), { subset: false });
   const pages = pdf.getPages();
   const gray = rgb(0.45, 0.47, 0.52);
 

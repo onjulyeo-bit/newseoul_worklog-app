@@ -24,12 +24,20 @@ export async function createSignRequest(input: {
   if (missing.length) return { error: `서명자가 배정되지 않은 서명란이 ${missing.length}개 있어요: ${missing.map((s) => s.label).join(", ")}` };
 
   const supabase = await createClient();
-  const base = { chapter_id: "새서울", title, description: input.description?.trim() || null, expires_at: input.expires_at || null, status: "active", source_pdf_data: input.pdf_b64 };
+  const base: Record<string, unknown> = { chapter_id: "새서울", title, description: input.description?.trim() || null, expires_at: input.expires_at || null, status: "active", source_pdf_data: input.pdf_b64 };
   const doc_category = isDocCategory(input.doc_category) ? input.doc_category : DEFAULT_DOC_CATEGORY;
-  let { data: req, error: e1 } = await supabase.from("sign_requests").insert({ ...base, doc_category }).select("id").single();
-  if (e1 && /doc_category/.test(e1.message)) {
-    // 0060 미적용(컬럼 없음) → 분류 없이 저장 (보관 서류에선 기본 분류로 표시)
-    ({ data: req, error: e1 } = await supabase.from("sign_requests").insert(base).select("id").single());
+  const group_token = "g" + nanoid(28); // 단체(공용) 링크 /s/g/{token} (0061)
+  // 0060(doc_category)·0061(group_token) 미적용 환경 폴백 — 있는 컬럼 조합으로 순차 시도
+  const variants: Record<string, unknown>[] = [
+    { ...base, doc_category, group_token },
+    { ...base, doc_category },
+    { ...base, group_token },
+    base,
+  ];
+  let req: { id: string } | null = null; let e1: { message: string } | null = null;
+  for (const v of variants) {
+    ({ data: req, error: e1 } = await supabase.from("sign_requests").insert(v).select("id").single());
+    if (!e1 || !/doc_category|group_token/.test(e1.message)) break; // 성공 또는 컬럼 문제가 아닌 오류면 중단
   }
   if (e1 || !req) return { error: e1?.message ?? "요청 생성 실패" };
 
