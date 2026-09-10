@@ -13,7 +13,7 @@ export async function updateManualSection(key: string, body: string): Promise<{ 
     .upsert({ chapter_id: "새서울", key, body }, { onConflict: "chapter_id,key" });
   if (error) return { error: error.message };
   revalidatePath(`/manual/${key}`);
-  revalidatePath("/manual");
+  revalidatePath("/ops");
   return { ok: true };
 }
 

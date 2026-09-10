@@ -5,6 +5,7 @@ export type SignerStatus = "pending" | "viewed" | "signed" | "declined";
 export type SignRequestRow = {
   id: string; title: string; description: string | null; status: SignStatus;
   expires_at: string | null; created_at: string; updated_at: string;
+  doc_category?: string | null; // 보관 서류 분류 (0060)
 };
 export type SignSlotRow = {
   id: string; request_id: string; label: string; page: number;

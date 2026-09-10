@@ -7,12 +7,11 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, CalendarDays, ClipboardCheck, ReceiptText,
   Image as ImageIcon, Megaphone, BarChart3, Archive, LogOut, UserCog, Contact, GraduationCap, BookText, UserRound,
-  PenLine,
 } from "lucide-react";
 
 type Item = { href: string; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; group?: string; color?: string };
 
-// 업무 흐름순(사용자 지정). 운영 메뉴 → (구분선) → 설정(권한설정).
+// 업무 흐름순(사용자 지정). 운영 메뉴 → (구분선) → 지회 운영·권한설정. (2026-09-10 서명 탭은 지회 운영 허브로 이동)
 const ADMIN: Item[] = [
   { href: "/dashboard", label: "대시보드", Icon: LayoutDashboard, group: "main" },
   { href: "/", label: "회원관리", Icon: Users, group: "main" },
@@ -21,11 +20,10 @@ const ADMIN: Item[] = [
   { href: "/content", label: "콘텐츠", Icon: ImageIcon, group: "main" },
   { href: "/notices", label: "공지", Icon: Megaphone, group: "main" },
   { href: "/attendance", label: "체크인·식대", Icon: ClipboardCheck, group: "main" },
-  { href: "/sign", label: "서명", Icon: PenLine, group: "main" },
   { href: "/finance", label: "회계", Icon: ReceiptText, group: "main" },
   { href: "/attendance/stats", label: "통계", Icon: BarChart3, group: "main" },
   { href: "/archive", label: "아카이브", Icon: Archive, group: "main" },
-  { href: "/manual", label: "운영매뉴얼", Icon: BookText, group: "settings" },
+  { href: "/ops", label: "지회 운영", Icon: BookText, group: "settings" }, // 허브: 매뉴얼(/manual/*) + 서류함(/sign/*, /ops/docs)
   { href: "/roles", label: "권한설정", Icon: UserCog, group: "settings" },
 ];
 // 회원(member): 공지·회원명단·아카이브. 관심(guest): 공지·아카이브(개인정보 명단 제외).
@@ -50,7 +48,9 @@ function activeHref(pathname: string, items: Item[]): string | null {
       ? pathname === "/" || pathname.startsWith("/members")
       : href === "/attendance/stats"
         ? pathname.startsWith("/attendance/stats") || pathname.startsWith("/attendance/registration") // 통계 탭(등록현황 포함)
-        : pathname === href || pathname.startsWith(href + "/");
+        : href === "/ops"
+          ? pathname.startsWith("/ops") || pathname.startsWith("/manual") || pathname.startsWith("/sign") // 지회 운영 탭(매뉴얼·서명 포함)
+          : pathname === href || pathname.startsWith(href + "/");
     if (match && (best === null || href.length > best.length)) best = href;
   }
   return best;

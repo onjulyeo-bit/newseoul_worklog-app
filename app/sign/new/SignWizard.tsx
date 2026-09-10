@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { SIGN_CSS } from "../signCss";
 import { createSignRequest } from "../actions";
+import { DOC_CATEGORIES, DEFAULT_DOC_CATEGORY } from "@/lib/docCategories";
 import { loadPdf, measurePages, renderPage, extractPageText, ptToPx, pxToPt, type PageView } from "@/lib/pdfPages";
 import { detectSignatureSlots } from "@/lib/pdfDetect";
 import type { NewSlot, NewSigner, MemberOpt } from "@/lib/signTypes";
@@ -26,6 +27,7 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [expires, setExpires] = useState("");
+  const [category, setCategory] = useState<string>(DEFAULT_DOC_CATEGORY);
   const [pdfB64, setPdfB64] = useState("");
   const [fileInfo, setFileInfo] = useState<{ name: string; size: number; pages: number } | null>(null);
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
@@ -182,7 +184,7 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
     setErr("");
     if (mappedCount < slots.length) { setErr(`서명자가 배정되지 않은 서명란이 ${slots.length - mappedCount}개 있어요.`); return; }
     setBusy(true);
-    const res = await createSignRequest({ title, description: desc || null, expires_at: expires ? new Date(expires + "T23:59:59").toISOString() : null, pdf_b64: pdfB64, slots, signers: slots.map((s) => signers[s.key]) });
+    const res = await createSignRequest({ title, description: desc || null, doc_category: category, expires_at: expires ? new Date(expires + "T23:59:59").toISOString() : null, pdf_b64: pdfB64, slots, signers: slots.map((s) => signers[s.key]) });
     setBusy(false);
     if (res.error || !res.id) { setErr(res.error ?? "저장 실패"); return; }
     router.push(`/sign/${res.id}`);
@@ -208,6 +210,7 @@ export default function SignWizard({ members }: { members: MemberOpt[] }) {
             <>
               <label className="fld"><span className="flabel">문서 제목</span><input className="inp" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예) 2027 지회장 연임 건의서·동의서" /></label>
               <label className="fld"><span className="flabel">설명 (서명자에게 보임, 선택)</span><textarea className="inp" rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="예) 2027년 지회장 연임에 동의하시면 본인 서명란에 서명해 주세요." /></label>
+              <label className="fld"><span className="flabel">보관 분류</span><select className="inp" value={category} onChange={(e) => setCategory(e.target.value)} style={{ maxWidth: 260 }}>{DOC_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select><span className="fhint">전원 서명이 끝나면 지회 운영 → 보관 서류에 이 분류로 들어갑니다.</span></label>
               <label className="fld"><span className="flabel">서명 마감일 (선택)</span><input className="inp" type="date" value={expires} onChange={(e) => setExpires(e.target.value)} style={{ maxWidth: 220 }} /><span className="fhint">지나면 링크가 막힙니다. 비워두면 마감 없음.</span></label>
               <div className="fld"><span className="flabel">PDF 문서 (5MB 이하)</span>
                 {fileInfo ? (

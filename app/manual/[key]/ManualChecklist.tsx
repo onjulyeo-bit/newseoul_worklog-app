@@ -41,7 +41,7 @@ export default function ManualChecklist({ items, canEdit }: { items: ChecklistIt
   return (
     <div className="moim-mn"><style>{MN_CSS}</style>
       <div className="mn-bar">
-        <Link href="/manual" className="mn-back"><ArrowLeft size={16} /> 운영 매뉴얼</Link>
+        <Link href="/ops" className="mn-back"><ArrowLeft size={16} /> 지회 운영</Link>
         {canEdit && <button className="ui-btn ui-ghost" onClick={reset} disabled={busy}><RotateCcw size={15} /> 초기화</button>}
       </div>
 

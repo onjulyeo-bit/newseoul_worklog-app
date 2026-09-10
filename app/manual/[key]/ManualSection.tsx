@@ -36,7 +36,7 @@ export default function ManualSection({ sectionKey, label, desc, body, canEdit }
   return (
     <div className="moim-mn"><style>{MN_CSS}</style>
       <div className="mn-bar">
-        <Link href="/manual" className="mn-back"><ArrowLeft size={16} /> 운영 매뉴얼</Link>
+        <Link href="/ops" className="mn-back"><ArrowLeft size={16} /> 지회 운영</Link>
         {canEdit && !editing && <button className="ui-btn ui-ghost" onClick={() => { setDraft(body); setEditing(true); }}><Pencil size={15} /> 편집</button>}
         {canEdit && editing && (
           <div style={{ display: "flex", gap: 8 }}>

@@ -7,11 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { nanoid } from "nanoid";
 import type { NewSlot, NewSigner } from "@/lib/signTypes";
+import { DEFAULT_DOC_CATEGORY, isDocCategory } from "@/lib/docCategories";
 
 const MAX_PDF_B64 = 7_000_000; // 원본 PDF 5MB (base64 ≈ 6.7MB)
 
 export async function createSignRequest(input: {
-  title: string; description: string | null; expires_at: string | null;
+  title: string; description: string | null; expires_at: string | null; doc_category?: string;
   pdf_b64: string; slots: NewSlot[]; signers: NewSigner[];
 }) {
   const title = input.title.trim();
@@ -23,10 +24,13 @@ export async function createSignRequest(input: {
   if (missing.length) return { error: `서명자가 배정되지 않은 서명란이 ${missing.length}개 있어요: ${missing.map((s) => s.label).join(", ")}` };
 
   const supabase = await createClient();
-  const { data: req, error: e1 } = await supabase
-    .from("sign_requests")
-    .insert({ chapter_id: "새서울", title, description: input.description?.trim() || null, expires_at: input.expires_at || null, status: "active", source_pdf_data: input.pdf_b64 })
-    .select("id").single();
+  const base = { chapter_id: "새서울", title, description: input.description?.trim() || null, expires_at: input.expires_at || null, status: "active", source_pdf_data: input.pdf_b64 };
+  const doc_category = isDocCategory(input.doc_category) ? input.doc_category : DEFAULT_DOC_CATEGORY;
+  let { data: req, error: e1 } = await supabase.from("sign_requests").insert({ ...base, doc_category }).select("id").single();
+  if (e1 && /doc_category/.test(e1.message)) {
+    // 0060 미적용(컬럼 없음) → 분류 없이 저장 (보관 서류에선 기본 분류로 표시)
+    ({ data: req, error: e1 } = await supabase.from("sign_requests").insert(base).select("id").single());
+  }
   if (e1 || !req) return { error: e1?.message ?? "요청 생성 실패" };
 
   const slotRows = input.slots.map((s, i) => ({ request_id: req.id, label: s.label.trim() || `서명 ${i + 1}`, page: s.page, x: s.x, y: s.y, w: s.w, h: s.h, order_no: i + 1 }));
