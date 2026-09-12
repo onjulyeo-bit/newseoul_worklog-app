@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/sign/**": ["./lib/fonts/**"],
     "/sign/**": ["./lib/fonts/**"],
-    "/opengraph-image": ["./public/cbmc-logo-white.png"],
+    "/opengraph-image": ["./public/cbmc-logo-white.png", "./lib/fonts/NanumSquare*.ttf"],
     "/s/g/**": ["./public/cbmc-logo-white.png"],
   },
 };
