@@ -49,13 +49,19 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
     rows.forEach((r) => r.signer && noteSent(r.signer));
   }
   // 단체 링크 — 단톡방에 1개만 올리면 각자 명단에서 본인을 눌러 서명 (0061)
+  //   ⚠️ navigator.share 에 title 을 주면 카톡이 그 문구를 링크 앞에 덧붙여 지저분해짐 → text 만 넘긴다.
   const groupUrl = groupToken ? `${siteBase}/s/g/${groupToken}` : null;
+  const groupMsg = groupUrl ? `[새서울 CBMC] 전자서명\n본인 이름을 눌러 서명해 주세요 🙏\n${groupUrl}` : "";
   async function shareGroup() {
     if (!groupUrl) return;
-    const text = `[새서울 CBMC] 「${request.title}」 전자서명 안내\n아래 링크를 열어 명단에서 본인 이름을 누른 뒤 서명해 주세요. (한 번이면 됩니다)\n${groupUrl}`;
     rows.forEach((r) => r.signer && noteSent(r.signer));
-    if (typeof navigator !== "undefined" && navigator.share) { try { await navigator.share({ title: request.title, text }); return; } catch { /* 취소 */ } }
-    await copy(text, "단체 안내 문구+링크를 복사했어요 — 단톡방에 붙여넣으세요");
+    if (typeof navigator !== "undefined" && navigator.share) { try { await navigator.share({ text: groupMsg }); return; } catch { /* 취소 */ } }
+    await copy(groupMsg, "안내 문구+링크를 복사했어요 — 단톡방에 붙여넣으세요");
+  }
+  async function copyGroupLink() {
+    if (!groupUrl) return;
+    rows.forEach((r) => r.signer && noteSent(r.signer));
+    await copy(groupUrl, "링크만 복사했어요 — 단톡방에 붙여넣으세요");
   }
   async function cancel() {
     if (!confirm("이 서명 요청을 취소할까요? 서명자 링크가 모두 막힙니다.")) return;
@@ -103,8 +109,9 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
           <div className="st-prog"><span className={`bar ${isDone ? "done" : ""}`}><i style={{ width: `${pct}%` }} /></span><span className="st-prog-n">{done} / {total} 서명</span></div>
           {canEdit && (
             <div className="st-actions">
-              {isActive && groupUrl && <button className="ui-btn ui-primary ui-sm" onClick={shareGroup}>🔗 단체 링크 (단톡방용)</button>}
-              {isActive && <button className="ui-btn ui-ghost ui-sm" onClick={copyAll}>📋 개인별 링크 목록 복사</button>}
+              {isActive && groupUrl && <button className="ui-btn ui-primary ui-sm" onClick={shareGroup}>🔗 단톡방에 공유</button>}
+              {isActive && groupUrl && <button className="ui-btn ui-ghost ui-sm" onClick={copyGroupLink}>링크만 복사</button>}
+              {isActive && <button className="ui-btn ui-ghost ui-sm" onClick={copyAll}>📋 개인별 링크 목록</button>}
               {isActive && <button className="ui-btn ui-danger ui-sm" onClick={cancel}>요청 취소</button>}
               {!isActive && <button className="ui-btn ui-danger ui-sm" onClick={remove}>삭제</button>}
             </div>
@@ -112,7 +119,7 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
           {isActive && canEdit && (
             <p className="fhint" style={{ marginTop: 10 }}>
               {groupUrl
-                ? "제일 쉬운 방법: [단체 링크] 하나를 단톡방에 올리면, 각자 명단에서 본인 이름을 누르고 서명합니다. 개인별 링크도 그대로 쓸 수 있어요."
+                ? "단톡방엔 링크 하나면 됩니다 — 각자 명단에서 본인 이름을 눌러 서명해요. 문구 없이 보내려면 [링크만 복사]."
                 : "각 서명자에게 링크를 카톡으로 보내세요. 단체 링크(단톡방용)를 쓰려면 0061 마이그레이션을 적용하세요."}
             </p>
           )}

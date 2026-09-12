@@ -4,6 +4,7 @@ import GroupClient from "./GroupClient";
 export const metadata = {
   title: "전자서명 · 새서울 CBMC",
   description: "명단에서 본인 이름을 누르고 서명해 주세요.",
+  openGraph: { title: "전자서명 · 새서울 CBMC", description: "명단에서 본인 이름을 누르고 서명해 주세요." },
   robots: { index: false },
 };
 

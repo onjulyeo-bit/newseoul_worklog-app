@@ -3,14 +3,20 @@ import "./globals.css";
 import SiteNav from "./SiteNav";
 import { createClient } from "@/lib/supabase/server";
 
+// 카톡 등 미리보기는 절대 URL 이 필요 — 고정 운영 도메인 기준(배포별 임시 URL 방지).
+const SITE = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`
+  : "https://cbmc-app.vercel.app";
+
 export const metadata: Metadata = {
-  title: "새서울지회 · 아름다운 만남",
+  metadataBase: new URL(SITE),
+  title: "새서울 CBMC 아름다운 만남",
   description: "환영합니다. 축복합니다. 카카오 로그인하세요",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "새서울CBMC" },
   icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
   openGraph: {
-    title: "새서울지회 · 아름다운 만남",
+    title: "새서울 CBMC 아름다운 만남",
     description: "환영합니다. 축복합니다. 카카오 로그인하세요",
   },
 };
