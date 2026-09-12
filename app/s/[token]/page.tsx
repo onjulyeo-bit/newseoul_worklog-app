@@ -2,10 +2,11 @@
 //   Next 16: params 는 await 필요.
 import SignClient from "./SignClient";
 
+// 카드 이미지는 공용 브랜드 마크(루트 opengraph-image 상속) — 무엇을 하는 링크인지는 이 제목·설명이 말한다.
 export const metadata = {
-  title: "서명 · 새서울 CBMC",
+  title: "새서울지회 서명",
   description: "문서를 확인하고 서명해 주세요.",
-  openGraph: { title: "서명 · 새서울 CBMC", description: "문서를 확인하고 서명해 주세요." },
+  openGraph: { title: "새서울지회 서명", description: "문서를 확인하고 서명해 주세요." },
   robots: { index: false },
 };
 

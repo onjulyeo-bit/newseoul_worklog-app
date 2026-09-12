@@ -35,10 +35,12 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
   const badge = isDone ? "b-green" : isActive ? "b-brand" : request.status === "expired" ? "b-amber" : "b-gray";
 
   async function copy(text: string, msg: string) { try { await navigator.clipboard.writeText(text); show(msg); } catch { show("복사에 실패했어요"); } }
+  // 공유 문구용 서류 이름 — 업로드 파일명이라 밑줄이 섞여 있다(2027_지회장_연임_… → 2027 지회장 연임 …).
+  const docName = request.title.replace(/_/g, " ").trim();
   function noteSent(g: SignSignerRow) { if (sent.has(g.id)) return; setSent((p) => new Set(p).add(g.id)); start(() => { markLinkSent(request.id, g.id); }); }
   async function share(g: SignSignerRow) {
     const url = linkOf(g);
-    const text = `[새서울 CBMC] ${g.name}님, 「${request.title}」 서명을 부탁드립니다.\n아래 링크를 열어 서명해 주세요.\n${url}`;
+    const text = `${g.name}님, 「${docName}」 서명 부탁드립니다 🙏\n${url}`;
     noteSent(g);
     if (typeof navigator !== "undefined" && navigator.share) { try { await navigator.share({ title: request.title, text }); return; } catch { /* 취소 */ } }
     await copy(text, "안내 문구+링크를 복사했어요 — 카톡에 붙여넣으세요");
@@ -50,8 +52,10 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
   }
   // 단체 링크 — 단톡방에 1개만 올리면 각자 명단에서 본인을 눌러 서명 (0061)
   //   ⚠️ navigator.share 에 title 을 주면 카톡이 그 문구를 링크 앞에 덧붙여 지저분해짐 → text 만 넘긴다.
+  //   ⚠️ 문구는 한 줄만 — 링크 미리보기가 이미 "새서울지회 전자서명 / 명단에서 본인 이름을 누르고 서명해 주세요"를
+  //      보여주므로, 여기서는 미리보기에 없는 것(무슨 서류인지)만 말한다.
   const groupUrl = groupToken ? `${siteBase}/s/g/${groupToken}` : null;
-  const groupMsg = groupUrl ? `[새서울 CBMC] 전자서명\n본인 이름을 눌러 서명해 주세요 🙏\n${groupUrl}` : "";
+  const groupMsg = groupUrl ? `「${docName}」 서명 부탁드립니다 🙏\n${groupUrl}` : "";
   async function shareGroup() {
     if (!groupUrl) return;
     rows.forEach((r) => r.signer && noteSent(r.signer));
