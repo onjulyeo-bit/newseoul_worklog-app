@@ -79,6 +79,8 @@ export default function GroupClient({ groupToken }: { groupToken: string }) {
                 );
               })}
             </ul>
+            {/* 링크만 열고 멈추시는 분들이 있어 안내를 명단 바로 아래에 둔다(2026-09-12). */}
+            <a className="gs-help" href="/sign-guide" target="_blank" rel="noopener noreferrer">📺 서명하는 방법 보기 (1분)</a>
             <p className="gs-foot">서명은 본인 이름에만 해주세요 · 서명 시각과 접속 정보가 증빙으로 기록됩니다</p>
           </>
         )}
@@ -128,7 +130,9 @@ const CSS = `
 .moim-gsign .gs-name em{ font-style:normal; font-size:12px; color:#9aa0ab; font-weight:600; }
 .moim-gsign .gs-tag{ font-size:12.5px; font-weight:700; color:#0a7d3f; }
 .moim-gsign .gs-go{ font-size:13.5px; font-weight:800; color:#003ecc; }
-.moim-gsign .gs-foot{ margin-top:18px; text-align:center; font-size:12px; color:#9aa0ab; line-height:1.6; }
+.moim-gsign .gs-help{ display:block; margin-top:20px; padding:14px 16px; border:1px solid #d7dbe6; border-radius:12px; background:#fff; text-align:center; font-size:15px; font-weight:700; color:#1e2353; text-decoration:none; }
+.moim-gsign .gs-help:active{ background:#f1f3f8; }
+.moim-gsign .gs-foot{ margin-top:14px; text-align:center; font-size:12px; color:#9aa0ab; line-height:1.6; }
 .moim-gsign .gs-modal-root{ position:fixed; inset:0; z-index:60; background:rgba(20,24,34,.45); display:flex; align-items:center; justify-content:center; padding:24px; }
 .moim-gsign .gs-modal{ width:100%; max-width:340px; background:#fff; border-radius:18px; padding:24px 20px 18px; text-align:center; box-shadow:0 20px 60px rgba(20,30,60,.3); }
 .moim-gsign .gs-modal h2{ font-size:18px; font-weight:800; letter-spacing:-0.02em; }
