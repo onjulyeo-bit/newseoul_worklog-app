@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     "/api/sign/**": ["./lib/fonts/**"],
     "/sign/**": ["./lib/fonts/**"],
     "/opengraph-image": ["./public/cbmc-logo-white.png", "./lib/fonts/NanumSquare*.ttf"],
-    "/s/g/**": ["./public/cbmc-logo-white.png"],
+    "/s/g/**": ["./public/cbmc-logo-white.png", "./lib/fonts/NanumSquare*.ttf"],
   },
 };
 
