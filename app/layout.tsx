@@ -10,14 +10,15 @@ const SITE = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: "새서울 CBMC 아름다운 만남",
-  description: "환영합니다. 축복합니다. 카카오 로그인하세요",
+  // 카톡 미리보기의 글자 부분 — 카드 이미지는 심볼+영문만이라 한글은 여기서 말한다(중복 방지).
+  title: "새서울지회 아름다운 만남",
+  description: "예수님께 속한, 사랑으로 하나되는, 성령님과 동행하는 새서울!",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "새서울CBMC" },
   icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
   openGraph: {
-    title: "새서울 CBMC 아름다운 만남",
-    description: "환영합니다. 축복합니다. 카카오 로그인하세요",
+    title: "새서울지회 아름다운 만남",
+    description: "예수님께 속한, 사랑으로 하나되는, 성령님과 동행하는 새서울!",
   },
 };
 
