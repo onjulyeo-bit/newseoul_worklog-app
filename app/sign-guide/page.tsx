@@ -31,13 +31,7 @@ export default function SignGuidePage() {
           영상을 재생할 수 없습니다. 아래 그림 설명을 봐 주세요.
         </video>
 
-        <p style={{ fontSize: 15, color: "#5b6072", lineHeight: 1.7, margin: "18px 2px 24px" }}>
-          영상이 잘 보이지 않으시면 아래 그림을 천천히 내려 보시면 됩니다. 순서는 같습니다.
-        </p>
-
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/sign-guide.png" alt="전자서명 하는 방법 · 단계별 그림 설명" style={{ width: "100%", borderRadius: 14, display: "block", border: "1px solid #e3e5ec" }} />
-
+        {/* 단계별 그림(/sign-guide.png)은 화면이 복잡해 보여 뺐다(2026-09-12 사용자 판단). 파일은 남겨 둠. */}
         <p style={{ fontSize: 15, color: "#5b6072", lineHeight: 1.7, margin: "26px 2px 0", textAlign: "center" }}>
           잘 안 되시면 언제든 사무국으로 연락 주세요.
           <br />
