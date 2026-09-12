@@ -24,7 +24,7 @@ export default function SignGuidePage() {
           controls
           playsInline
           preload="metadata"
-          poster="/sign-guide.png"
+          poster="/sign-guide-poster.png"
           style={{ width: "100%", borderRadius: 14, background: "#1e2353", display: "block" }}
         >
           <source src="/sign-guide.mp4" type="video/mp4" />
