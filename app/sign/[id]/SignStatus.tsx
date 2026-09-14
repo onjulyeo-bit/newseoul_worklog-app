@@ -6,20 +6,22 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SIGN_CSS } from "../signCss";
-import { cancelSignRequest, deleteSignRequest, markLinkSent } from "../actions";
+import { cancelSignRequest, deleteSignRequest, markLinkSent, setPhoneConsent, revertSigner } from "../actions";
 import { STATUS_LABEL, type SignRequestRow, type SignSlotRow, type SignSignerRow } from "@/lib/signTypes";
 
 const AV_COLORS = ["#003ecc", "#16a34a", "#7c5cff", "#e8643c", "#0d9488", "#d4a017"];
 const fmtDT = (s: string | null) => { if (!s) return ""; const d = new Date(s); const p = (n: number) => String(n).padStart(2, "0"); return `${d.getMonth() + 1}.${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 const fmtD = (s: string | null) => { if (!s) return ""; const d = new Date(s); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`; };
 
-export default function SignStatus({ request, slots, signers, sentIds, canEdit, groupToken }: {
-  request: SignRequestRow; slots: SignSlotRow[]; signers: SignSignerRow[]; sentIds: string[]; canEdit: boolean; groupToken?: string | null;
+export default function SignStatus({ request, slots, signers, sentIds, phoneIds = [], canEdit, groupToken }: {
+  request: SignRequestRow; slots: SignSlotRow[]; signers: SignSignerRow[]; sentIds: string[];
+  phoneIds?: string[]; canEdit: boolean; groupToken?: string | null;
 }) {
   const router = useRouter();
   const [, start] = useTransition();
   const [toast, setToast] = useState("");
   const [sent, setSent] = useState(new Set(sentIds));
+  const phoneSet = new Set(phoneIds);
   const show = (t: string) => { setToast(t); setTimeout(() => setToast(""), 2000); };
 
   const siteBase = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
@@ -31,6 +33,8 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
   const total = rows.length, done = rows.filter((r) => r.signer?.status === "signed").length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const isActive = request.status === "active";
+  // 취소·만료가 아니면 서명자 상태를 고칠 수 있다(완료 후에도 유선 동의로 정정 가능).
+  const canManage = request.status === "active" || request.status === "completed";
   const isDone = request.status === "completed";
   const badge = isDone ? "b-green" : isActive ? "b-brand" : request.status === "expired" ? "b-amber" : "b-gray";
 
@@ -56,6 +60,26 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
     rows.forEach((r) => r.signer && noteSent(r.signer));
     if (typeof navigator !== "undefined" && navigator.share) { try { await navigator.share({ title: request.title, text }); return; } catch { /* 취소 */ } }
     await copy(text, "단체 안내 문구+링크를 복사했어요 — 단톡방에 붙여넣으세요");
+  }
+  // 유선(전화) 동의로 기록 — 자필 서명 이미지가 있으면 지워진다(대리 서명 흔적 제거).
+  async function toPhoneConsent(g: SignSignerRow) {
+    const had = g.status === "signed";
+    const msg = had
+      ? `${g.name}님을 '유선 동의'로 바꿀까요?\n\n· 저장된 서명 이미지가 지워집니다 (되돌릴 수 없어요)\n· 서류의 서명란에는 '유선 동의'라고 표기됩니다\n· 증빙 페이지 인증란도 '유선 동의'로 기록됩니다`
+      : `${g.name}님을 '유선 동의'로 기록할까요?\n\n전화로 동의를 확인한 경우에만 사용하세요. 서류에는 '유선 동의'라고 표기됩니다.`;
+    if (!confirm(msg)) return;
+    const res = await setPhoneConsent(request.id, g.id);
+    if (res.error) { show("실패: " + res.error); return; }
+    show(`${g.name}님을 유선 동의로 기록했어요`);
+    router.refresh();
+  }
+  // 되돌리기 — 다시 링크로 서명받을 수 있는 '대기' 상태로.
+  async function undoSigner(g: SignSignerRow) {
+    if (!confirm(`${g.name}님을 '대기'로 되돌릴까요?\n\n기록된 서명·유선 동의가 지워지고, 링크로 다시 서명받을 수 있어요.`)) return;
+    const res = await revertSigner(request.id, g.id);
+    if (res.error) { show("실패: " + res.error); return; }
+    show(`${g.name}님을 대기로 되돌렸어요`);
+    router.refresh();
   }
   async function cancel() {
     if (!confirm("이 서명 요청을 취소할까요? 서명자 링크가 모두 막힙니다.")) return;
@@ -123,6 +147,7 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
           <ul className="signer-list">
             {rows.map(({ slot, signer: g }, i) => {
               const st = g?.status ?? "pending";
+              const isPhone = st === "signed" && !!g && phoneSet.has(g.id);
               const color = AV_COLORS[((g?.name ?? slot.label).charCodeAt(0) || 0) % AV_COLORS.length];
               return (
                 <li key={slot.id} className="signer-row">
@@ -130,15 +155,21 @@ export default function SignStatus({ request, slots, signers, sentIds, canEdit, 
                   <div className="signer-who">
                     <span className="signer-name">{g?.name ?? "(미배정)"}{slot.label !== g?.name && <span className="signer-lbl">{slot.label}</span>}</span>
                     <span className="signer-sub">
-                      {st === "signed" ? `✓ ${fmtDT(g!.signed_at)} 서명` : st === "viewed" ? `👀 ${fmtDT(g!.viewed_at)} 열람` : st === "declined" ? "거절" : sent.has(g?.id ?? "") ? "링크 보냄 · 대기" : "대기"}
+                      {isPhone ? `☎ ${fmtDT(g!.signed_at)} 유선 동의` : st === "signed" ? `✓ ${fmtDT(g!.signed_at)} 서명` : st === "viewed" ? `👀 ${fmtDT(g!.viewed_at)} 열람` : st === "declined" ? "거절" : sent.has(g?.id ?? "") ? "링크 보냄 · 대기" : "대기"}
                       {` · ${slot.page}쪽 #${i + 1}`}
                     </span>
                   </div>
-                  <span className={`badge ${st === "signed" ? "b-green" : st === "viewed" ? "b-amber" : "b-gray"}`}>{st === "signed" ? "완료" : st === "viewed" ? "열람" : "대기"}</span>
-                  {g && isActive && st !== "signed" && canEdit && (
+                  <span className={`badge ${isPhone ? "b-violet" : st === "signed" ? "b-green" : st === "viewed" ? "b-amber" : "b-gray"}`}>{isPhone ? "유선 동의" : st === "signed" ? "완료" : st === "viewed" ? "열람" : "대기"}</span>
+                  {g && canEdit && canManage && (
                     <div className="signer-acts">
-                      <button className="ico-btn" title="링크 복사" aria-label="링크 복사" onClick={() => { noteSent(g); copy(linkOf(g), `${g.name}님 링크를 복사했어요`); }}>⧉</button>
-                      <button className="ico-btn" title="공유" aria-label="공유" onClick={() => share(g)}>↗</button>
+                      {isActive && st !== "signed" && (
+                        <>
+                          <button className="ico-btn" title="링크 복사" aria-label="링크 복사" onClick={() => { noteSent(g); copy(linkOf(g), `${g.name}님 링크를 복사했어요`); }}>⧉</button>
+                          <button className="ico-btn" title="공유" aria-label="공유" onClick={() => share(g)}>↗</button>
+                        </>
+                      )}
+                      {!isPhone && <button className="ico-btn" title="유선 동의로 기록 (서명 대신 전화 동의)" aria-label="유선 동의로 기록" onClick={() => toPhoneConsent(g)}>☎</button>}
+                      {st !== "pending" && <button className="ico-btn" title="대기로 되돌리기" aria-label="대기로 되돌리기" onClick={() => undoSigner(g)}>↺</button>}
                     </div>
                   )}
                 </li>

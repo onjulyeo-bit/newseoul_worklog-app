@@ -18,6 +18,7 @@ export const SIGN_CSS = `
 .moim-sign .b-green{ background:var(--green-soft); color:var(--green); }
 .moim-sign .b-amber{ background:var(--amber-soft); color:var(--amber); }
 .moim-sign .b-gray{ background:#f1f2f4; color:var(--ink-3); }
+.moim-sign .b-violet{ background:#efeaff; color:#5b3fd6; }  /* 유선(전화) 동의 — 자필 서명과 구분 */
 .moim-sign .b-red{ background:var(--red-soft); color:var(--red); }
 .moim-sign .ui-btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600; letter-spacing:-0.02em; border-radius:var(--radius-btn); border:0; cursor:pointer; text-decoration:none; transition:background .15s, box-shadow .15s, transform .12s; white-space:nowrap; font-family:inherit; }
 .moim-sign .ui-btn:active{ transform:translateY(1px) scale(.99); }

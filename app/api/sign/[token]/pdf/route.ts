@@ -21,7 +21,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
   const source = pdf.data as string | null;
   const s = (sig.data as Array<{ signature_data: string | null; signed_at: string | null; ip: string | null; auth_kakao_id: string | null }> | null)?.[0];
   if (!m || !source) return NextResponse.json({ error: "문서를 찾을 수 없거나 만료되었어요." }, { status: 404 });
-  if (!s?.signature_data) return NextResponse.json({ error: "아직 서명이 완료되지 않았어요." }, { status: 409 });
+  if (!s?.signature_data) return NextResponse.json({ error: s?.signed_at ? "유선 동의로 기록되어 자필 서명본이 없어요." : "아직 서명이 완료되지 않았어요." }, { status: 409 });
 
   let bytes: Uint8Array;
   try {

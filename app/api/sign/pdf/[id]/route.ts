@@ -15,7 +15,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const [{ data: slots }, { data: signers }] = await Promise.all([
     supabase.from("sign_slots").select("id, label, page, x, y, w, h, order_no").eq("request_id", id).order("order_no"),
-    supabase.from("sign_signers").select("slot_id, name, signature_data, signed_at, ip, auth_kakao_id").eq("request_id", id),
+    supabase.from("sign_signers").select("slot_id, name, status, signature_data, signed_at, ip, auth_kakao_id").eq("request_id", id),
   ]);
 
   const composeSlots: ComposeSlot[] = (slots ?? []).map((s) => {
@@ -25,6 +25,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       signerName: g?.name ?? s.label,
       signatureB64: g?.signature_data ?? null, signedAt: g?.signed_at ?? null,
       ip: g?.ip ?? null, authKakao: !!g?.auth_kakao_id,
+      // 서명 완료인데 서명 이미지가 없으면 유선(전화) 동의 (setPhoneConsent)
+      consentPhone: g?.status === "signed" && !g?.signature_data,
     };
   });
 

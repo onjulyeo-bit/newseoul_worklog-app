@@ -17,6 +17,7 @@ export type ComposeSlot = {
   signedAt: string | null;       // ISO
   ip: string | null;
   authKakao: boolean;
+  consentPhone?: boolean;        // 유선(전화) 동의 — 자필 서명 대신 '유선 동의' 표기. signatureB64 는 null.
 };
 export type ComposeInput = {
   title: string;
@@ -40,6 +41,12 @@ export function fmtKST(iso: string | null): string {
   return `${p.year}.${p.month}.${p.day} ${p.hour}:${p.minute}`;
 }
 
+// 유선 동의는 '시각'까지 적으면 자필 서명처럼 보이므로 날짜만 표기한다.
+export function fmtKSTDate(iso: string | null): string {
+  const full = fmtKST(iso);
+  return full ? full.split(" ")[0] : "";
+}
+
 // IP 앞 두 자리만 보이고 나머지 마스킹 (사양서 §4-4).
 function maskIp(ip: string | null): string {
   if (!ip) return "-";
@@ -56,9 +63,29 @@ export async function composeSignedPdf(input: ComposeInput): Promise<Uint8Array>
   const gray = rgb(0.45, 0.47, 0.52);
 
   for (const s of input.slots) {
-    if (!s.signatureB64) continue;
     const page = pages[s.page - 1];
     if (!page) continue;
+
+    // 유선(전화) 동의 — 자필 서명이 없으므로 서명란 안에 '유선 동의'를 글자로 적는다.
+    if (s.consentPhone) {
+      const padX = s.w * 0.06, padY = s.h * 0.06;
+      const boxW = s.w - padX * 2, boxH = s.h - padY * 2;
+      const mark = "유선 동의";
+      let size = Math.min(12, boxH * 0.62);
+      while (size > 5 && font.widthOfTextAtSize(mark, size) > boxW) size -= 0.5;
+      const tw = font.widthOfTextAtSize(mark, size);
+      page.drawText(mark, {
+        x: s.x + padX + Math.max(0, (boxW - tw) / 2),
+        y: s.y + padY + Math.max(0, (boxH - size * 0.72) / 2),
+        size, font, color: rgb(0.09, 0.09, 0.11),
+      });
+      if (s.signedAt) {
+        page.drawText(`유선 동의 확인 ${fmtKSTDate(s.signedAt)}`, { x: s.x + padX, y: Math.max(4, s.y - 9), size: 7, font, color: gray });
+      }
+      continue;
+    }
+
+    if (!s.signatureB64) continue;
     let png;
     try { png = await pdf.embedPng(Buffer.from(s.signatureB64, "base64")); } catch { continue; }
     const padX = s.w * 0.06, padY = s.h * 0.06;
@@ -95,17 +122,21 @@ function addEvidencePage(pdf: PDFDocument, font: PDFFont, input: ComposeInput, l
   hdr.forEach((t, i) => page.drawText(t, { x: cols[i], y, size: 8.5, font, color: gray })); y -= 14;
 
   const signed = input.slots.filter((s) => s.signatureB64).length;
+  const byPhone = input.slots.filter((s) => s.consentPhone).length;
   input.slots.forEach((s, i) => {
     if (y < 60) return;
-    const done = !!s.signatureB64;
+    const phone = !!s.consentPhone;
+    const done = !!s.signatureB64 || phone;
     const who = s.label && s.label !== s.signerName ? `${s.signerName} (${s.label})` : s.signerName;
-    const row = [String(i + 1), who, done ? fmtKST(s.signedAt) : "미서명", done ? (s.authKakao ? "카카오" : "링크") : "-", done ? maskIp(s.ip) : "-"];
+    const row = phone
+      ? [String(i + 1), who, fmtKSTDate(s.signedAt), "유선 동의", "-"]
+      : [String(i + 1), who, done ? fmtKST(s.signedAt) : "미서명", done ? (s.authKakao ? "카카오" : "링크") : "-", done ? maskIp(s.ip) : "-"];
     row.forEach((t, c) => page.drawText(t, { x: cols[c], y, size: 9.5, font, color: done ? ink : gray, maxWidth: c === 1 ? 112 : undefined }));
     y -= 16;
   });
   y -= 6;
   page.drawLine({ start: { x: L, y }, end: { x: R, y }, thickness: 0.8, color: line }); y -= 16;
-  text(`서명 ${signed} / ${input.slots.length}`, L, 9.5, gray);
-  page.drawText("본 페이지는 전자서명 시스템이 자동 생성한 증빙입니다. 각 서명은 서명자 고유 링크로 수집되었으며 서명 시각·접속 정보가 함께 기록되었습니다.",
+  text(`자필 서명 ${signed} / ${input.slots.length}${byPhone ? ` · 유선 동의 ${byPhone}` : ""}`, L, 9.5, gray);
+  page.drawText(`본 페이지는 전자서명 시스템이 자동 생성한 증빙입니다. 각 서명은 서명자 고유 링크로 수집되었으며 서명 시각·접속 정보가 함께 기록되었습니다.${byPhone ? " '유선 동의'는 전화로 동의를 확인하고 운영진이 기록한 항목으로, 자필 서명이 아닙니다." : ""}`,
     { x: L, y: 44, size: 7.5, font, color: gray, maxWidth: R - L, lineHeight: 10 });
 }

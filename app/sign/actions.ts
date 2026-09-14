@@ -82,3 +82,46 @@ export async function markLinkSent(requestId: string, signerId: string) {
   await supabase.from("sign_events").insert({ request_id: requestId, signer_id: signerId, event: "link_sent" });
   return { ok: true };
 }
+
+// ── 유선(전화) 동의 ─────────────────────────────────────────────
+//   전화로 동의를 확인한 서명자를 기록한다. 자필 서명이 아니므로:
+//   - 기존 서명 이미지(signature_data)는 지운다. 대리 서명이 남아 있으면 증빙이 왜곡된다.
+//   - 접속 기록(ip·user_agent)도 지운다 — 본인이 아니라 운영진 접속 기록이기 때문.
+//   - status 는 'signed' 로 둔다(동의 완료 = 진행 완료). 합성 PDF·증빙 페이지는
+//     'signature_data 가 없는 signed' 를 유선 동의로 표기한다(추가 컬럼·마이그레이션 불필요).
+export async function setPhoneConsent(requestId: string, signerId: string, note?: string) {
+  const supabase = await createClient();
+  const { data: cur } = await supabase.from("sign_signers").select("id, name, status, signed_at").eq("id", signerId).eq("request_id", requestId).single();
+  if (!cur) return { error: "서명자를 찾을 수 없어요." };
+
+  const at = cur.signed_at ?? new Date().toISOString();
+  const { error } = await supabase.from("sign_signers")
+    .update({ status: "signed", signed_at: at, signature_data: null, ip: null, user_agent: null })
+    .eq("id", signerId);
+  if (error) return { error: error.message };
+
+  await supabase.from("sign_events").insert({
+    request_id: requestId, signer_id: signerId, event: "phone_consent",
+    meta: { name: cur.name, at, note: note?.trim() || null, prev_status: cur.status },
+  });
+
+  // 전원 완료면 요청도 완료로 (마지막 한 명을 유선 동의로 바꾼 경우)
+  const { count } = await supabase.from("sign_signers").select("id", { count: "exact", head: true }).eq("request_id", requestId).neq("status", "signed");
+  if (!count) await supabase.from("sign_requests").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", requestId).neq("status", "cancelled");
+
+  revalidatePath("/sign"); revalidatePath(`/sign/${requestId}`);
+  return { ok: true };
+}
+
+// 유선 동의·서명을 되돌려 다시 링크로 서명받을 수 있게 한다.
+export async function revertSigner(requestId: string, signerId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("sign_signers")
+    .update({ status: "pending", signed_at: null, viewed_at: null, signature_data: null, ip: null, user_agent: null })
+    .eq("id", signerId).eq("request_id", requestId);
+  if (error) return { error: error.message };
+  await supabase.from("sign_events").insert({ request_id: requestId, signer_id: signerId, event: "reverted" });
+  await supabase.from("sign_requests").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", requestId).eq("status", "completed");
+  revalidatePath("/sign"); revalidatePath(`/sign/${requestId}`);
+  return { ok: true };
+}
